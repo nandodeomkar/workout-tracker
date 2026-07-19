@@ -52,7 +52,7 @@ Rationale: fastest iteration loop for the test-with-friends phase, cross-platfor
 - Single Expo app. No backend.
 - One SQLite database is the single source of truth. Every set logged is written to SQLite immediately (crash-safe).
 - Google account is optional. Without sign-in the app is fully functional; only cloud backup is unavailable.
-- Exercise library (~250 exercises with muscle group and equipment tags, from open data) is seeded into the DB on first launch; users can add custom exercises.
+- Exercise library (~250 exercises with muscle group and equipment tags, sourced from the public-domain free-exercise-db dataset, trimmed and re-tagged) is seeded into the DB on first launch; users can add custom exercises.
 - Weights are stored in kilograms canonically; the UI converts to pounds when the unit setting says so.
 
 ## Data model
