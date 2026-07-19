@@ -93,6 +93,41 @@ Which phases cover which requirements. Filled by roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
+| FNDN-01 | Phase 1 | Pending |
+| FNDN-02 | Phase 1 | Pending |
+| EXER-01 | Phase 1 | Pending |
+| EXER-02 | Phase 1 | Pending |
+| LOG-01 | Phase 2 | Pending |
+| LOG-02 | Phase 2 | Pending |
+| LOG-03 | Phase 2 | Pending |
+| LOG-04 | Phase 2 | Pending |
+| LOG-05 | Phase 2 | Pending |
+| LOG-06 | Phase 2 | Pending |
+| HIST-01 | Phase 2 | Pending |
+| HIST-02 | Phase 2 | Pending |
+| TMPL-01 | Phase 3 | Pending |
+| TMPL-02 | Phase 3 | Pending |
+| TMPL-03 | Phase 3 | Pending |
+| UTIL-01 | Phase 3 | Pending |
+| UTIL-02 | Phase 3 | Pending |
+| UTIL-03 | Phase 3 | Pending |
+| STAT-01 | Phase 4 | Pending |
+| STAT-02 | Phase 4 | Pending |
+| STAT-03 | Phase 4 | Pending |
+| STAT-04 | Phase 4 | Pending |
+| MEAS-01 | Phase 5 | Pending |
+| MEAS-02 | Phase 5 | Pending |
+| PROG-01 | Phase 6 | Pending |
+| PROG-02 | Phase 6 | Pending |
+| PROG-03 | Phase 6 | Pending |
+| PROG-04 | Phase 6 | Pending |
+| BAK-01 | Phase 7 | Pending |
+| BAK-02 | Phase 7 | Pending |
+| BAK-03 | Phase 7 | Pending |
+| UI-01 | Phase 8 | Pending |
+| DIST-01 | Phase 8 | Pending |
+
+**Coverage:** 33/33 v1 requirements mapped ✓
 
 ---
 *Requirements defined: 2026-07-19*
