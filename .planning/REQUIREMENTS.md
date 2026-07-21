@@ -10,7 +10,7 @@
 - [x] **FNDN-01**: App runs offline-first on Android with local SQLite as the sole source of truth (no server)
 - [x] **FNDN-02**: Database migrations run safely on app upgrade without losing existing user data
 - [x] **EXER-01**: User can browse and search a seeded exercise library (~250 exercises from free-exercise-db, tagged by muscle group and equipment)
-- [ ] **EXER-02**: User can create, edit, and archive custom exercises
+- [x] **EXER-02**: User can create, edit, and archive custom exercises
 
 ### Core Workout Logging
 
@@ -96,7 +96,7 @@ Which phases cover which requirements. Filled by roadmap creation.
 | FNDN-01 | Phase 1 | Complete |
 | FNDN-02 | Phase 1 | Complete |
 | EXER-01 | Phase 1 | Complete |
-| EXER-02 | Phase 1 | Pending |
+| EXER-02 | Phase 1 | Complete |
 | LOG-01 | Phase 2 | Pending |
 | LOG-02 | Phase 2 | Pending |
 | LOG-03 | Phase 2 | Pending |
