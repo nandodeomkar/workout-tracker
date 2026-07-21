@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-07-21T12:34:48.176Z"
+stopped_at: Completed 01-03-PLAN.md
+last_updated: "2026-07-21T12:40:38.788Z"
 last_activity: 2026-07-21 -- Phase 01 execution started
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 6
-  completed_plans: 2
+  completed_plans: 3
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-07-19)
 ## Current Position
 
 Phase: 01 (scaffold-data-foundation) — EXECUTING
-Plan: 3 of 6
+Plan: 4 of 6
 Status: Ready to execute
 Last activity: 2026-07-21 -- Phase 01 execution started
 
@@ -54,6 +54,7 @@ Progress: [░░░░░░░░░░] 0%
 *Updated after each plan completion*
 | Phase 01-scaffold-data-foundation P01 | 25min | 3 tasks | 37 files |
 | Phase 01-scaffold-data-foundation P02 | 15min | 2 tasks | 7 files |
+| Phase 01-scaffold-data-foundation P03 | 12min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,7 @@ Recent decisions affecting current work:
 - [Phase ?]: Kept drizzle-kit's standard 0000-indexed migration filename instead of renaming to 0001, to preserve safe forward migration-numbering for later phases (Plan 03 FNDN-02 test)
 - [Phase ?]: Removed the expo-router tabs template's default boilerplate in favor of the project's own theme.ts and 5-tab shell
 - [Phase 01-scaffold-data-foundation]: Curated 873-row free-exercise-db down to 498 rows via auditable category/equipment/level exclusion rules, landing inside the D-03 400-500 target
+- [Phase 01-scaffold-data-foundation]: Generated migration numbered 0001 (not literal 0002) for the FNDN-02 test — drizzle-kit's 0-indexed scheme means the second migration after 0000 is 0001; matches Plan 01's numbering precedent
 
 ### Pending Todos
 
@@ -88,6 +90,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-21T12:34:48.163Z
-Stopped at: Completed 01-02-PLAN.md
+Last session: 2026-07-21T12:40:38.773Z
+Stopped at: Completed 01-03-PLAN.md
 Resume file: None
