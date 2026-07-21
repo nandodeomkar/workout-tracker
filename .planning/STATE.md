@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 1 device UAT found 4 gaps (see 01-UAT.md) — gap-closure planning next
-last_updated: "2026-07-21T13:59:55.646Z"
-last_activity: 2026-07-21 -- Device UAT on plan 01-06: 2 pass, 4 gaps (seed coverage, duplicate detection, stale list after edit, UX rework)
+stopped_at: Phase 1 UAT gaps GAP-1..4 all fixed in code (commits 3f04b35, 5631562, 7673dc5, 1e00407) — awaiting on-device re-UAT of tests 2,3,4,6,7
+last_updated: "2026-07-21T14:25:00.000Z"
+last_activity: 2026-07-21 -- Closed all 4 Phase-1 UAT gaps: near-dup detection (GAP-2), +19 seed staples w/ version bump (GAP-1), reload-on-focus (GAP-3), library UX rework per sketch 001-C (GAP-4). Suite green (48 tests), tsc clean.
 progress:
   total_phases: 8
   completed_phases: 0
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-07-19)
 
 ## Current Position
 
-Phase: 01 (scaffold-data-foundation) — EXECUTING
-Plan: 6 of 6
-Status: Ready to execute
-Last activity: 2026-07-21 -- Phase 01 execution started
+Phase: 01 (scaffold-data-foundation) — EXECUTING (gap closure)
+Plan: 6 of 6 executed; UAT gaps GAP-1..4 fixed in code
+Status: Awaiting on-device re-UAT (tests 2,3,4,6,7) before phase close
+Last activity: 2026-07-21 -- All 4 device-UAT gaps closed; suite green (48 tests), tsc clean
 
 Progress: [░░░░░░░░░░] 0%
 
