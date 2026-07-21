@@ -1,12 +1,46 @@
+import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 
+import { db } from '../db/client';
+import { runSeedIfNeeded } from '../db/seed/runSeed';
+import migrations from '../drizzle/migrations';
 import { theme } from '../theme';
 
-// NOTE: This is a placeholder root layout for Task 1 (scaffold verification).
-// Task 3 replaces this with the real migration-gate + silent-seed wiring
-// (useMigrations + runSeedIfNeeded) before rendering the (tabs) stack.
+// Root layout: gates the app shell on the migration + silent-seed pipeline
+// (FNDN-01/FNDN-02/D-16). While migrations are pending or the first-launch
+// seed is still running, render null — silent, no progress screen. On
+// migration error, hard-stop with an error screen (never a silent crash or
+// partial-migrated render, per T-1-01).
 export default function RootLayout() {
+  const { success, error } = useMigrations(db, migrations);
+  const [seeded, setSeeded] = useState(false);
+
+  useEffect(() => {
+    if (!success || seeded) {
+      return;
+    }
+    let cancelled = false;
+    runSeedIfNeeded(db).finally(() => {
+      if (!cancelled) {
+        setSeeded(true);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [success, seeded]);
+
+  if (error) {
+    return <MigrationErrorScreen error={error} />;
+  }
+
+  if (!success || !seeded) {
+    return null;
+  }
+
   return (
     <>
       <StatusBar style="light" />
@@ -21,3 +55,32 @@ export default function RootLayout() {
     </>
   );
 }
+
+function MigrationErrorScreen({ error }: { error: Error }) {
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Database error</Text>
+      <Text style={styles.message}>{error.message}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.background,
+    padding: theme.spacing.xl,
+  },
+  title: {
+    ...theme.typography.title,
+    color: theme.colors.danger,
+    marginBottom: theme.spacing.sm,
+  },
+  message: {
+    ...theme.typography.body,
+    color: theme.colors.textMuted,
+    textAlign: 'center',
+  },
+});
