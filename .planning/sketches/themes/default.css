@@ -1,0 +1,42 @@
+/* Mirrors the app's dark-only tokens in theme.ts (D-14). */
+:root {
+  /* Colors — from theme.ts */
+  --color-bg: #0B0E11;
+  --color-surface: #161A1F;
+  --color-surface-alt: #1E232A;
+  --color-border: #262C34;
+  --color-text: #F5F7FA;
+  --color-text-muted: #8B94A3;
+  --color-primary: #4F8EF7;
+  --color-primary-hover: #3B7DEB;
+  --color-accent: #F59E0B;
+  --color-danger: #EF4444;
+  --color-success: #22C55E;
+
+  /* Typography */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;   /* caption 13px */
+  --text-base: 1rem;      /* body 16px */
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;     /* title 20px */
+  --text-2xl: 1.5rem;
+
+  /* Spacing — from theme.ts */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* Shapes — from theme.ts */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  /* Shadows (subtle on dark) */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
+  --shadow-md: 0 4px 8px rgba(0,0,0,0.5);
+}
