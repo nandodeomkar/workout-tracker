@@ -10,6 +10,7 @@
 
 import { useCallback, useMemo, useState } from 'react';
 import { Pressable, SectionList, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 
 import { ExerciseRow } from '../../../components/ExerciseRow';
@@ -33,6 +34,7 @@ function sectionLetter(name: string): string {
 
 export default function ExercisesScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [allExercises, setAllExercises] = useState<Exercise[]>([]);
   const [search, setSearch] = useState('');
   const [muscleGroup, setMuscleGroup] = useState<MuscleGroup | null>(null);
@@ -85,7 +87,7 @@ export default function ExercisesScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top }]}>
         <View style={styles.appbar}>
           <Text style={styles.title}>Exercises</Text>
           <Pressable

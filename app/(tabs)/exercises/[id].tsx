@@ -19,6 +19,7 @@ import {
   ToastAndroid,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { FilterChipRow } from '../../../components/FilterChipRow';
@@ -42,6 +43,7 @@ export default function ExerciseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const exerciseId = Number(id);
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const [exercise, setExercise] = useState<Exercise | null>(null);
   const [loading, setLoading] = useState(true);
@@ -150,7 +152,7 @@ export default function ExerciseDetailScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={styles.appbar}>
+      <View style={[styles.appbar, { paddingTop: insets.top + theme.spacing.sm }]}>
         <Pressable onPress={() => router.back()} accessibilityRole="button" style={styles.backButton}>
           <Text style={styles.backText}>‹ Exercises</Text>
         </Pressable>

@@ -17,6 +17,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 
 import { FilterChipRow } from '../../../components/FilterChipRow';
@@ -28,6 +29,7 @@ import { theme } from '../../../theme';
 
 export default function NewExerciseScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [name, setName] = useState('');
   const [muscleGroup, setMuscleGroup] = useState<MuscleGroup>(MUSCLE_GROUPS[0]);
   const [equipment, setEquipment] = useState<EquipmentType>(EQUIPMENT[0]);
@@ -81,7 +83,7 @@ export default function NewExerciseScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <View style={styles.appbar}>
+      <View style={[styles.appbar, { paddingTop: insets.top + theme.spacing.sm }]}>
         <Pressable onPress={() => router.back()} accessibilityRole="button" style={styles.backButton}>
           <Text style={styles.backText}>‹ Exercises</Text>
         </Pressable>
