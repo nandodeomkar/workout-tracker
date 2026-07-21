@@ -1,3 +1,7 @@
 // Bumped whenever the bundled seed data changes (additive updates only —
 // see D-04/D-10: seed updates never overwrite user-edited rows).
-export const CURRENT_SEED_VERSION = 1;
+//
+// v1: Plan 01 stub (5 hardcoded exercises).
+// v2: Plan 02 curated library — 498 rows from free-exercise-db, re-mapped
+//     onto the fixed taxonomy via scripts/curate-exercises.ts.
+export const CURRENT_SEED_VERSION = 2;
