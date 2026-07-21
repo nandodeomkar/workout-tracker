@@ -22,7 +22,7 @@ import { useRouter } from 'expo-router';
 import { FilterChipRow } from '../../../components/FilterChipRow';
 import { EQUIPMENT, MUSCLE_GROUPS, type EquipmentType, type MuscleGroup } from '../../../constants/taxonomy';
 import { db } from '../../../db/client';
-import { createExercise, findByName } from '../../../db/exercises';
+import { createExercise, findDuplicatesByName } from '../../../db/exercises';
 import type { Exercise } from '../../../db/schema';
 import { theme } from '../../../theme';
 
@@ -47,7 +47,7 @@ export default function NewExerciseScreen() {
     }
     let cancelled = false;
     const timer = setTimeout(() => {
-      findByName(db, trimmedName).then((rows) => {
+      findDuplicatesByName(db, trimmedName).then((rows) => {
         if (!cancelled) {
           setDuplicates(rows);
         }

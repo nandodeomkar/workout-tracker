@@ -10,7 +10,13 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { createTestDb } from './test/fixture';
 import { exercises } from './schema';
-import { createExercise, findByName, setArchived, updateExercise } from './exercises';
+import {
+  createExercise,
+  findByName,
+  findDuplicatesByName,
+  setArchived,
+  updateExercise,
+} from './exercises';
 
 describe('createExercise', () => {
   let db: ReturnType<typeof createTestDb>['db'];
@@ -91,6 +97,73 @@ describe('findByName', () => {
 
   it('returns an empty array when no exercise matches', async () => {
     const matches = await findByName(db, 'Nonexistent Exercise');
+    expect(matches).toEqual([]);
+  });
+});
+
+describe('findDuplicatesByName (GAP-2 near-duplicate detection)', () => {
+  let db: ReturnType<typeof createTestDb>['db'];
+
+  beforeEach(() => {
+    ({ db } = createTestDb());
+  });
+
+  it('flags a near-duplicate differing only by case and a trailing plural', async () => {
+    await db.insert(exercises).values({
+      name: 'Seated Cable Rows',
+      muscleGroup: 'Back',
+      equipment: 'Cable',
+      isCustom: false,
+      archived: false,
+    });
+
+    const matches = await findDuplicatesByName(db, 'Seated cable row');
+    expect(matches).toHaveLength(1);
+    expect(matches[0].name).toBe('Seated Cable Rows');
+  });
+
+  it('flags a near-duplicate differing only by surrounding whitespace', async () => {
+    await db.insert(exercises).values({
+      name: 'Pec Deck',
+      muscleGroup: 'Chest',
+      equipment: 'Machine',
+      isCustom: true,
+      archived: false,
+    });
+
+    const matches = await findDuplicatesByName(db, '  pec   deck ');
+    expect(matches).toHaveLength(1);
+  });
+
+  it('surfaces a duplicate that is archived', async () => {
+    await db.insert(exercises).values({
+      name: 'Cable Pullover',
+      muscleGroup: 'Back',
+      equipment: 'Cable',
+      isCustom: true,
+      archived: true,
+    });
+
+    const matches = await findDuplicatesByName(db, 'cable pullover');
+    expect(matches).toHaveLength(1);
+    expect(matches[0].archived).toBe(true);
+  });
+
+  it('does not flag a genuinely different name', async () => {
+    await db.insert(exercises).values({
+      name: 'Cable Fly',
+      muscleGroup: 'Chest',
+      equipment: 'Cable',
+      isCustom: false,
+      archived: false,
+    });
+
+    const matches = await findDuplicatesByName(db, 'Cable Row');
+    expect(matches).toEqual([]);
+  });
+
+  it('returns an empty array for a whitespace-only query', async () => {
+    const matches = await findDuplicatesByName(db, '   ');
     expect(matches).toEqual([]);
   });
 });

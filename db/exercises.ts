@@ -15,6 +15,7 @@ import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core';
 
 import { exercises, type Exercise } from './schema';
 import type { EquipmentType, MuscleGroup } from '../constants/taxonomy';
+import { normalizeExerciseName } from '../lib/exerciseName';
 
 type AnyDrizzleDb = BaseSQLiteDatabase<'async' | 'sync', any, any>;
 
@@ -83,6 +84,27 @@ export async function findByName(db: AnyDrizzleDb, name: string): Promise<Exerci
     .select()
     .from(exercises)
     .where(sql`lower(${exercises.name}) = lower(${name})`);
+}
+
+/**
+ * Returns all exercises that are near-duplicates of `name` — matching after
+ * case/whitespace/punctuation/trailing-plural normalization (GAP-2), not
+ * just an exact case-insensitive match. Powers the D-12 warn-but-allow hint,
+ * so "Seated Cable Rows" surfaces when the user types "Seated cable row".
+ *
+ * Includes archived rows (a duplicate against an archived exercise is still
+ * worth surfacing). The normalization is done in memory over the full table:
+ * this is a rare, debounced on-input lookup on the create/edit form, not the
+ * per-keystroke library re-query anti-pattern (RESEARCH.md) — the live search
+ * list stays purely in-memory via lib/exerciseFilter.ts.
+ */
+export async function findDuplicatesByName(db: AnyDrizzleDb, name: string): Promise<Exercise[]> {
+  const target = normalizeExerciseName(name);
+  if (target.length === 0) {
+    return [];
+  }
+  const all = await db.select().from(exercises);
+  return all.filter((row) => normalizeExerciseName(row.name) === target);
 }
 
 export interface CreateExerciseInput {
