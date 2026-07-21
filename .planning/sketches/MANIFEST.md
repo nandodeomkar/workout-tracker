@@ -12,4 +12,4 @@ StrengthLog-like: familiar muscle-group-first browsing married to a fast search 
 
 | # | Name | Design Question | Winner | Tags |
 |---|------|----------------|--------|------|
-| 001 | library-home | Home structure: muscle-group browse + search coexistence | TBD | layout, exercises, navigation, gap-4 |
+| 001 | library-home | Home structure: muscle-group browse + search coexistence | C: Pills + A–Z | layout, exercises, navigation, gap-4 |

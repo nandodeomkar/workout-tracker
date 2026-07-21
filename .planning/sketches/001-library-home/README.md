@@ -2,7 +2,7 @@
 sketch: 001
 name: library-home
 question: "What's the library home structure — how do muscle-group browse and search coexist?"
-winner: null
+winner: "C"
 tags: [layout, exercises, navigation, gap-4]
 ---
 
