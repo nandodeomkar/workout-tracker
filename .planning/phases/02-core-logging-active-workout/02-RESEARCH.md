@@ -493,19 +493,22 @@ export function workingSetVolume(completedSets: { weightKg: number; reps: number
 | A5 | Doze-mode risk assessment: locally-scheduled exact alarms are materially more reliable than the FCM-push Doze issues found in expo GitHub issues | Common Pitfalls, Pitfall 6 | Medium — if wrong, the "fires reliably with screen off" requirement (LOG-03) could fail in the field despite passing casual testing; this is exactly why CLAUDE.md and this research both insist on real-device screen-off testing before shipping, not just code review. |
 | A6 | Replace-exercise-with-logged-sets handling (Pitfall 3) is left as an open planner decision rather than a fixed recommendation | Common Pitfalls, Pitfall 3 | Medium — if the planner picks silently-reattribute-history without flagging it, PR/volume data could be silently wrong for two exercises after any mid-session replace with prior sets. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Replace-exercise-with-already-logged-sets semantics (FLAG-1 / Pitfall 3)**
+   - **RESOLVED** — Option (a) adopted: replace is disallowed once sets exist on that card (remove+re-add required), per Plan 03 Task 1.
    - What we know: UI-SPEC assumes slot-position preservation; the DB schema makes a naive `UPDATE exercise_id` retroactively reattribute already-completed sets to the new exercise.
    - What's unclear: whether the product intent is (a) disallow replace once sets exist on that card (force remove+re-add), or (b) allow it with an explicit warning that logged sets will count toward the new exercise.
    - Recommendation: planner should pick (a) — disallow/require a confirm-with-explanation dialog — as the safer default; consistent with this app's existing "confirm only when data is actually at risk" pattern from the UI-SPEC's copywriting contract.
 
 2. **Default rest-seconds value**
+   - **RESOLVED** — 90 seconds adopted as the fallback default for `settings.default_rest_seconds`, per Plan 05 Task 2 (matches UI-SPEC example copy).
    - What we know: `settings.default_rest_seconds` needs a fallback when absent; UI-SPEC's Settings-row example shows "Default rest: 90s" as illustrative copy.
    - What's unclear: whether 90s is a locked default or just placeholder UI-SPEC copy.
    - Recommendation: treat 90 as the default (matches the UI-SPEC's own example number) unless the user says otherwise during plan review.
 
 3. **Notification permission denial UX beyond the inline banner**
+   - **RESOLVED** — accepted risk / deferred: Phase 2 ships the general non-blocking inline banner only; Android 14+ exact-alarm-specific denial detection is deferred to the later notification-hardening polish phase, per Plan 06 risk acceptance. Rationale: expo-notifications' JS API does not cleanly expose exact-alarm-grant state separately from general notification permission.
    - What we know: UI-SPEC already specifies a non-blocking inline banner for denied notification permission.
    - What's unclear: whether the app should also detect/surface the Android 14+ exact-alarm-specific denial (separate from the general POST_NOTIFICATIONS permission) with different copy, since the on-screen effect (late/imprecise firing) differs from a fully-denied notification (no firing at all).
    - Recommendation: out of scope to fully resolve in Phase 2 given expo-notifications' JS API does not cleanly expose exact-alarm-grant state separately from general notification permission; flag as a known limitation, rely on the general banner, and note in the finish-summary/pitfall list for future hardening (matches the design spec's Phase 7 "notification hardening" polish phase).
