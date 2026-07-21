@@ -49,7 +49,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 01-04-PLAN.md — Exercise library browse & search UI (flat A–Z, substring search, multi-select chip filters)
+- [x] 01-04-PLAN.md — Exercise library browse & search UI (flat A–Z, substring search, multi-select chip filters)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -173,7 +173,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Scaffold & Data Foundation | 3/6 | In Progress|  |
+| 1. Scaffold & Data Foundation | 4/6 | In Progress|  |
 | 2. Core Logging (Active Workout) | 0/TBD | Not started | - |
 | 3. Templates, Folders & Calculators | 0/TBD | Not started | - |
 | 4. Stats & Charts | 0/TBD | Not started | - |
