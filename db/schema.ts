@@ -10,19 +10,30 @@
 // Phase-1 exercises-table additions required by D-04/D-10/D-11: seed_id,
 // is_custom, archived.
 
-import { int, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, int, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
-export const exercises = sqliteTable("exercises", {
-  id: int().primaryKey({ autoIncrement: true }),
-  name: text().notNull(),
-  muscleGroup: text("muscle_group").notNull(),
-  equipment: text().notNull(),
-  isCustom: int("is_custom", { mode: "boolean" }).notNull().default(false),
-  notes: text(),
-  // Phase-1 additions (D-04/D-10/D-11):
-  seedId: text("seed_id").unique(),
-  archived: int({ mode: "boolean" }).notNull().default(false),
-});
+export const exercises = sqliteTable(
+  "exercises",
+  {
+    id: int().primaryKey({ autoIncrement: true }),
+    name: text().notNull(),
+    muscleGroup: text("muscle_group").notNull(),
+    equipment: text().notNull(),
+    isCustom: int("is_custom", { mode: "boolean" }).notNull().default(false),
+    notes: text(),
+    // Phase-1 additions (D-04/D-10/D-11):
+    seedId: text("seed_id").unique(),
+    archived: int({ mode: "boolean" }).notNull().default(false),
+  },
+  (table) => [
+    // FNDN-02 migration 0002 (Plan 03): additive search/filter indexes
+    // backing the Exercises tab's substring search and chip filtering
+    // (EXER-01) as the library grows.
+    index("idx_exercises_name").on(table.name),
+    index("idx_exercises_muscle_group").on(table.muscleGroup),
+    index("idx_exercises_equipment").on(table.equipment),
+  ],
+);
 
 export const workouts = sqliteTable("workouts", {
   id: int().primaryKey({ autoIncrement: true }),
