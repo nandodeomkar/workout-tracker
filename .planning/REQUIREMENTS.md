@@ -14,8 +14,8 @@
 
 ### Core Workout Logging
 
-- [ ] **LOG-01**: User can start a workout (empty or from template) and log sets with reps and weight in ≤2 taps per set, pre-filled from last performance
-- [ ] **LOG-02**: Every completed set is persisted immediately; an in-progress workout survives app kill, crash, or phone restart
+- [x] **LOG-01**: User can start a workout (empty or from template) and log sets with reps and weight in ≤2 taps per set, pre-filled from last performance
+- [x] **LOG-02**: Every completed set is persisted immediately; an in-progress workout survives app kill, crash, or phone restart
 - [ ] **LOG-03**: User gets a rest timer with auto-start on set completion and a notification that fires reliably with screen off
 - [ ] **LOG-04**: User can add, reorder, replace, and remove exercises during an active workout
 - [x] **LOG-05**: User can finish or discard a workout and see a summary (duration, volume, PRs hit)
@@ -97,8 +97,8 @@ Which phases cover which requirements. Filled by roadmap creation.
 | FNDN-02 | Phase 1 | Complete |
 | EXER-01 | Phase 1 | Complete |
 | EXER-02 | Phase 1 | Complete |
-| LOG-01 | Phase 2 | Pending |
-| LOG-02 | Phase 2 | Pending |
+| LOG-01 | Phase 2 | Complete |
+| LOG-02 | Phase 2 | Complete |
 | LOG-03 | Phase 2 | Pending |
 | LOG-04 | Phase 2 | Pending |
 | LOG-05 | Phase 2 | Complete |
