@@ -55,6 +55,24 @@ export async function loadActiveExercises(db: AnyDrizzleDb): Promise<Exercise[]>
 }
 
 /**
+ * Returns every exercise (including archived), ordered A-Z by name
+ * (case-insensitive) — powers the D-11 "show archived" reveal toggle,
+ * reusing the same ordering as loadActiveExercises.
+ */
+export async function loadAllExercises(db: AnyDrizzleDb): Promise<Exercise[]> {
+  return db.select().from(exercises).orderBy(asc(sql`lower(${exercises.name})`));
+}
+
+/**
+ * Returns a single exercise by id, or undefined if it does not exist —
+ * used by the [id] edit/detail screen.
+ */
+export async function loadExerciseById(db: AnyDrizzleDb, id: number): Promise<Exercise | undefined> {
+  const [row] = await db.select().from(exercises).where(eq(exercises.id, id));
+  return row;
+}
+
+/**
  * Returns all exercises whose name matches `name` case-insensitively
  * (exact match, not substring) — used to power the D-12 duplicate-name
  * warn-but-allow hint. Includes archived rows so a duplicate against an

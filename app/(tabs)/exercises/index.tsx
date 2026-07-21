@@ -6,7 +6,7 @@ import { ExerciseRow } from '../../../components/ExerciseRow';
 import { FilterChipRow } from '../../../components/FilterChipRow';
 import { EQUIPMENT, MUSCLE_GROUPS, type EquipmentType, type MuscleGroup } from '../../../constants/taxonomy';
 import { db } from '../../../db/client';
-import { loadActiveExercises } from '../../../db/exercises';
+import { loadActiveExercises, loadAllExercises } from '../../../db/exercises';
 import type { Exercise } from '../../../db/schema';
 import { filterExercises, type ExerciseFilter } from '../../../lib/exerciseFilter';
 import { theme } from '../../../theme';
@@ -19,11 +19,16 @@ export default function ExercisesScreen() {
   const [search, setSearch] = useState('');
   const [muscleGroups, setMuscleGroups] = useState<MuscleGroup[]>([]);
   const [equipment, setEquipment] = useState<EquipmentType[]>([]);
+  // "Show archived" reveal toggle (D-11) — default OFF, archived hidden.
+  const [showArchived, setShowArchived] = useState(false);
 
-  // Load once on mount (RESEARCH.md Anti-Pattern: no per-keystroke SQL).
+  // Load once per showArchived toggle (RESEARCH.md Anti-Pattern: no
+  // per-keystroke SQL — this reloads only when the reveal toggle flips,
+  // never on search/chip changes, which stay purely in-memory below).
   useEffect(() => {
     let cancelled = false;
-    loadActiveExercises(db).then((rows) => {
+    const load = showArchived ? loadAllExercises(db) : loadActiveExercises(db);
+    load.then((rows) => {
       if (!cancelled) {
         setAllExercises(rows);
       }
@@ -31,7 +36,7 @@ export default function ExercisesScreen() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [showArchived]);
 
   const filter: ExerciseFilter = useMemo(
     () => ({ search, muscleGroups, equipment }),
@@ -89,18 +94,39 @@ export default function ExercisesScreen() {
         </View>
         <FilterChipRow options={MUSCLE_GROUPS} selected={muscleGroups} onToggle={toggleMuscleGroup} />
         <FilterChipRow options={EQUIPMENT} selected={equipment} onToggle={toggleEquipment} />
+        <View style={styles.toolbarRow}>
+          <Pressable
+            onPress={() => setShowArchived((prev) => !prev)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: showArchived }}
+            style={styles.toggleButton}
+          >
+            <Text style={[styles.toggleButtonText, showArchived ? styles.toggleButtonTextActive : null]}>
+              {showArchived ? 'Hide archived' : 'Show archived'}
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => router.push('/exercises/new')}
+            accessibilityRole="button"
+            style={styles.addButton}
+          >
+            <Text style={styles.addButtonText}>+ Add exercise</Text>
+          </Pressable>
+        </View>
       </View>
       <FlatList
         data={visibleExercises}
         keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) => (
-          <ExerciseRow
-            name={item.name}
-            muscleGroup={item.muscleGroup}
-            equipment={item.equipment}
-            isCustom={item.isCustom}
-            onPress={() => router.push(`/exercises/${item.id}`)}
-          />
+          <View style={item.archived ? styles.archivedRow : undefined}>
+            <ExerciseRow
+              name={item.archived ? `${item.name} (Archived)` : item.name}
+              muscleGroup={item.muscleGroup}
+              equipment={item.equipment}
+              isCustom={item.isCustom}
+              onPress={() => router.push(`/exercises/${item.id}`)}
+            />
+          </View>
         )}
         ListEmptyComponent={
           <Text style={styles.emptyText}>
@@ -160,5 +186,39 @@ const styles = StyleSheet.create({
   },
   emptyContent: {
     flexGrow: 1,
+  },
+  toolbarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.sm,
+    gap: theme.spacing.sm,
+  },
+  toggleButton: {
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.sm,
+  },
+  toggleButtonText: {
+    ...theme.typography.caption,
+    color: theme.colors.textMuted,
+  },
+  toggleButtonTextActive: {
+    color: theme.colors.accent,
+    fontWeight: '700',
+  },
+  addButton: {
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    backgroundColor: theme.colors.accent,
+    borderRadius: theme.radius.md,
+  },
+  addButtonText: {
+    ...theme.typography.caption,
+    color: theme.colors.background,
+    fontWeight: '700',
+  },
+  archivedRow: {
+    opacity: 0.55,
   },
 });
