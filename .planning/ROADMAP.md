@@ -13,7 +13,7 @@ The journey runs from a durable offline data foundation, through the fast crash-
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Scaffold & Data Foundation** - Offline-first SQLite foundation with safe migrations and a searchable exercise library (all 6 plans executed 2026-07-21; device UAT found gaps GAP-1..4 — gap closure pending, see 01-UAT.md)
+- [x] **Phase 1: Scaffold & Data Foundation** - Offline-first SQLite foundation with safe migrations and a searchable exercise library (6 plans + gap closure GAP-1..4; device UAT all 7 tests pass 2026-07-21, see 01-UAT.md)
 - [ ] **Phase 2: Core Logging (Active Workout)** - Fast, crash-safe set logging with rest timer and workout history
 - [ ] **Phase 3: Templates, Folders & Calculators** - Reusable workout templates plus plate/1RM/warm-up calculators
 - [ ] **Phase 4: Stats & Charts** - Per-exercise progress charts, weekly volume, and a live-computed PR feed

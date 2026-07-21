@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 1 UAT gaps GAP-1..4 fixed + device-run polish (phantom tabs, safe-area) — layout/offline/rendering verified on-device; interactive tap-driven re-UAT of tests 3,4,5,6 still pending (device blocks input injection)
-last_updated: "2026-07-21T14:35:00.000Z"
-last_activity: 2026-07-21 -- Ran on real device: reworked library + detail render correctly offline; fixed 2 run-surfaced defects (phantom tabs via exercises/_layout, status-bar overlap via safe-area insets). Commits 3f04b35,5631562,7673dc5,1e00407,5856968. Suite green (48 tests), tsc clean.
+stopped_at: Phase 1 COMPLETE — device UAT all 7 tests pass (owner-driven 2026-07-21); GAP-1..4 closed + verified. Ready to plan Phase 2 (Core Logging).
+last_updated: "2026-07-21T14:45:00.000Z"
+last_activity: 2026-07-21 -- Phase 1 closed: gap closure GAP-1..4 + 2 device-run fixes verified on real device offline, owner passed re-UAT (7/7). Suite green (48 tests), tsc clean.
 progress:
   total_phases: 8
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 6
-  completed_plans: 5
-  percent: 0
+  completed_plans: 6
+  percent: 13
 ---
 
 # Project State
@@ -25,12 +25,12 @@ See: .planning/PROJECT.md (updated 2026-07-19)
 
 ## Current Position
 
-Phase: 01 (scaffold-data-foundation) — EXECUTING (gap closure)
-Plan: 6 of 6 executed; UAT gaps GAP-1..4 fixed in code
-Status: Awaiting on-device re-UAT (tests 2,3,4,6,7) before phase close
-Last activity: 2026-07-21 -- All 4 device-UAT gaps closed; suite green (48 tests), tsc clean
+Phase: 01 (scaffold-data-foundation) — COMPLETE
+Plan: 6 of 6 executed; UAT gaps GAP-1..4 closed + verified on device
+Status: Phase 1 done (7/7 UAT pass). Next: plan Phase 2 (Core Logging / Active Workout)
+Last activity: 2026-07-21 -- Owner passed device re-UAT 7/7; Phase 1 closed. Suite green (48 tests), tsc clean
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [█░░░░░░░░░] 13% (1/8 phases)
 
 ## Performance Metrics
 

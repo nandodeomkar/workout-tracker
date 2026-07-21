@@ -1,9 +1,9 @@
 ---
-status: gaps-fixed-pending-reuat
+status: passed
 phase: 01-scaffold-data-foundation
 source: [01-06-SUMMARY.md]
 started: 2026-07-21T13:30:00Z
-updated: 2026-07-21T14:20:00Z
+updated: 2026-07-21T14:45:00Z
 ---
 
 ## Current Test
@@ -11,7 +11,7 @@ updated: 2026-07-21T14:20:00Z
 number: complete
 name: On-device offline foundation smoke test
 expected: All 8 checkpoint steps pass on a real Android device in airplane mode
-awaiting: interactive device re-UAT of tests 2,3,4,6,7 (tap-driven flows)
+awaiting: none — all 7 tests pass on device (owner-driven re-UAT 2026-07-21)
 
 ## Device Verification (2026-07-21, gap-closure session)
 
@@ -37,15 +37,15 @@ result: pass
 
 ### 2. Browse/search/filter ~500 exercises
 expected: A–Z list, live substring search, chip filters with OR-within/AND-across
-result: issue → GAP-1 fixed (seed 517, +19 supplemental staples incl. "Chest Supported Machine Row"); pending device re-UAT
+result: pass — GAP-1 verified on device (seed 517, +19 supplemental staples incl. "Chest Supported Machine Row")
 
 ### 3. Duplicate-name warning on create (D-12)
 expected: Creating "Seated cable row" when "Seated Cable Rows" exists shows non-blocking "already exists — open it?" warning
-result: issue → GAP-2 fixed (normalized near-duplicate detection; unit + DB tests cover the case); pending device re-UAT
+result: pass — GAP-2 verified on device (near-duplicate warning fires for "Seated cable row" vs "Seated Cable Rows")
 
 ### 4. Edit seeded exercise persists everywhere
 expected: Renamed exercise shows new name in list, search results, and detail view
-result: issue → GAP-3 fixed (useFocusEffect reload-on-focus); pending device re-UAT
+result: pass — GAP-3 verified on device (renamed exercise is fresh in list/search on return, no reload)
 
 ### 5. Archive / show-archived / unarchive
 expected: Archived exercise leaves default list, reappears under "Show archived", can be unarchived, no delete option
@@ -53,21 +53,21 @@ result: pass
 
 ### 6. Force-kill + relaunch persistence (offline)
 expected: Custom exercise and seeded-exercise edit persist, no duplicate seeding
-result: pending — re-verify after gap fixes (tester confidence reduced by UX issues)
+result: pass — custom exercise + seeded edit persist across force-kill/relaunch offline; no duplicate seeding
 
 ### 7. Overall usability of the Exercises library
 expected: Layout, search, editing, and archive flows are understandable without instruction
-result: issue → GAP-4 fixed (library reworked per sketch 001-C: pills + sticky A–Z + iconified rows; clearer detail/create headers, archive confirm, save toast); pending device re-UAT
+result: pass — GAP-4 verified on device (library reworked per sketch 001-C: pills + sticky A–Z + iconified rows; clearer detail/create headers, archive confirm, save toast); owner judged it understandable
 
 ## Summary
 
 total: 7
-passed: 2
-issues: 4 (all fixed in code — GAP-1..4; awaiting device re-UAT)
-pending: 1 (test 6 — force-kill persistence, re-verify on device)
+passed: 7
+issues: 0 (GAP-1..4 all fixed and verified on device)
+pending: 0
 skipped: 0
 blocked: 0
-gates_remaining: on-device re-UAT of tests 2, 3, 4, 6, 7 (code verified via typecheck + 48-test vitest suite; no RN component tests in stack)
+gates_remaining: none — Phase 1 UAT green
 
 ## Gaps
 
