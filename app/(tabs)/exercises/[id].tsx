@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -15,16 +16,27 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  ToastAndroid,
   View,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { FilterChipRow } from '../../../components/FilterChipRow';
 import { EQUIPMENT, MUSCLE_GROUPS, type EquipmentType, type MuscleGroup } from '../../../constants/taxonomy';
+import { muscleIcon } from '../../../constants/muscleIcons';
 import { db } from '../../../db/client';
 import { loadExerciseById, setArchived, updateExercise } from '../../../db/exercises';
 import type { Exercise } from '../../../db/schema';
 import { theme } from '../../../theme';
+
+// Android-first transient feedback (the app's target platform). No-op on
+// other platforms — an edit still persists; only the confirmation toast is
+// skipped, which a later iOS build can replace with its own affordance.
+function notify(message: string): void {
+  if (Platform.OS === 'android') {
+    ToastAndroid.show(message, ToastAndroid.SHORT);
+  }
+}
 
 export default function ExerciseDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -73,22 +85,48 @@ export default function ExerciseDetailScreen() {
         notes: notes.trim().length > 0 ? notes.trim() : null,
       });
       setExercise(updated);
+      // Confirms the write landed and, crucially, that it propagates to the
+      // list/search (which reload on focus, GAP-3) — the stale-list confusion
+      // that hurt UAT confidence (GAP-4).
+      notify(`Saved — “${updated.name}” updated everywhere`);
     } finally {
       setSaving(false);
     }
   };
 
-  const handleToggleArchived = async () => {
-    if (!exercise || archiving) {
+  const applyArchived = async (nextArchived: boolean) => {
+    if (archiving) {
       return;
     }
     setArchiving(true);
     try {
-      const updated = await setArchived(db, exerciseId, !exercise.archived);
+      const updated = await setArchived(db, exerciseId, nextArchived);
       setExercise(updated);
+      notify(nextArchived ? `“${updated.name}” archived` : `“${updated.name}” unarchived`);
     } finally {
       setArchiving(false);
     }
+  };
+
+  const handleToggleArchived = () => {
+    if (!exercise || archiving) {
+      return;
+    }
+    if (exercise.archived) {
+      // Unarchive is non-destructive — no confirmation needed.
+      void applyArchived(false);
+      return;
+    }
+    // Archiving hides the exercise from the default library — confirm first,
+    // and make clear it is reversible, not a delete (D-11).
+    Alert.alert(
+      'Archive exercise?',
+      `“${exercise.name}” will be hidden from the library. You can unarchive it any time from "Show archived".`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Archive', style: 'destructive', onPress: () => void applyArchived(true) },
+      ],
+    );
   };
 
   if (loading) {
@@ -112,7 +150,24 @@ export default function ExerciseDetailScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.appbar}>
+        <Pressable onPress={() => router.back()} accessibilityRole="button" style={styles.backButton}>
+          <Text style={styles.backText}>‹ Exercises</Text>
+        </Pressable>
+        {exercise.isCustom ? (
+          <View style={styles.headerBadge}>
+            <Text style={styles.headerBadgeText}>CUSTOM</Text>
+          </View>
+        ) : null}
+      </View>
+      <View style={styles.headerTitleRow}>
+        <Text style={styles.headerIcon}>{muscleIcon(exercise.muscleGroup)}</Text>
+        <Text style={styles.headerTitle} numberOfLines={2}>
+          {exercise.name}
+        </Text>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         {exercise.archived ? (
           <View style={styles.archivedBanner}>
             <Text style={styles.archivedBannerText}>This exercise is archived.</Text>
@@ -196,6 +251,52 @@ const styles = StyleSheet.create({
     ...theme.typography.body,
     color: theme.colors.accent,
     fontWeight: '700',
+  },
+  appbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+  },
+  backButton: {
+    paddingVertical: theme.spacing.xs,
+    paddingRight: theme.spacing.md,
+  },
+  backText: {
+    ...theme.typography.body,
+    color: theme.colors.accent,
+    fontWeight: '700',
+  },
+  headerBadge: {
+    backgroundColor: theme.colors.badge,
+    borderRadius: theme.radius.sm,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+  },
+  headerBadgeText: {
+    ...theme.typography.caption,
+    color: theme.colors.background,
+    fontWeight: '700',
+    fontSize: 10,
+  },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.sm,
+    paddingBottom: theme.spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.colors.border,
+  },
+  headerIcon: {
+    fontSize: 24,
+  },
+  headerTitle: {
+    ...theme.typography.title,
+    color: theme.colors.text,
+    flexShrink: 1,
   },
   container: {
     padding: theme.spacing.lg,

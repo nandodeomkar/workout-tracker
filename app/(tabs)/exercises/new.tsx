@@ -81,7 +81,13 @@ export default function NewExerciseScreen() {
 
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.appbar}>
+        <Pressable onPress={() => router.back()} accessibilityRole="button" style={styles.backButton}>
+          <Text style={styles.backText}>‹ Exercises</Text>
+        </Pressable>
+        <Text style={styles.headerTitle}>New exercise</Text>
+      </View>
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <Text style={styles.label}>Name</Text>
         <TextInput
           value={name}
@@ -150,6 +156,28 @@ const styles = StyleSheet.create({
   flex: {
     flex: 1,
     backgroundColor: theme.colors.background,
+  },
+  appbar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+    paddingBottom: theme.spacing.md,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: theme.colors.border,
+  },
+  backButton: {
+    paddingVertical: theme.spacing.xs,
+  },
+  backText: {
+    ...theme.typography.body,
+    color: theme.colors.accent,
+    fontWeight: '700',
+  },
+  headerTitle: {
+    ...theme.typography.title,
+    color: theme.colors.text,
   },
   container: {
     padding: theme.spacing.lg,

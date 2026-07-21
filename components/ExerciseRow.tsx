@@ -1,9 +1,11 @@
-// A–Z library row (D-08): name + "muscle group · equipment" secondary
-// line, with a small "custom" badge when isCustom is true. Large tappable
-// target. Styling is exclusively via theme.ts tokens (D-14).
+// A–Z library row (D-08 / GAP-4): leading muscle-group glyph + name +
+// "muscle group · equipment" secondary line, a small "custom" badge when
+// isCustom, and a trailing chevron affordance so the row reads as tappable.
+// Large tappable target. Styling is exclusively via theme.ts tokens (D-14).
 
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { muscleIcon } from '../constants/muscleIcons';
 import { theme } from '../theme';
 
 interface ExerciseRowProps {
@@ -11,12 +13,25 @@ interface ExerciseRowProps {
   muscleGroup: string;
   equipment: string;
   isCustom?: boolean;
+  archived?: boolean;
   onPress?: () => void;
 }
 
-export function ExerciseRow({ name, muscleGroup, equipment, isCustom = false, onPress }: ExerciseRowProps) {
+export function ExerciseRow({
+  name,
+  muscleGroup,
+  equipment,
+  isCustom = false,
+  archived = false,
+  onPress,
+}: ExerciseRowProps) {
   return (
-    <Pressable onPress={onPress} style={styles.row} accessibilityRole="button">
+    <Pressable
+      onPress={onPress}
+      style={[styles.row, archived ? styles.rowArchived : null]}
+      accessibilityRole="button"
+    >
+      <Text style={styles.icon}>{muscleIcon(muscleGroup)}</Text>
       <View style={styles.textColumn}>
         <View style={styles.nameLine}>
           <Text style={styles.name} numberOfLines={1}>
@@ -24,7 +39,12 @@ export function ExerciseRow({ name, muscleGroup, equipment, isCustom = false, on
           </Text>
           {isCustom ? (
             <View style={styles.badge}>
-              <Text style={styles.badgeText}>custom</Text>
+              <Text style={styles.badgeText}>CUSTOM</Text>
+            </View>
+          ) : null}
+          {archived ? (
+            <View style={styles.archivedTag}>
+              <Text style={styles.archivedTagText}>ARCHIVED</Text>
             </View>
           ) : null}
         </View>
@@ -32,19 +52,31 @@ export function ExerciseRow({ name, muscleGroup, equipment, isCustom = false, on
           {muscleGroup} · {equipment}
         </Text>
       </View>
+      <Text style={styles.chevron}>›</Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   row: {
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
     paddingVertical: theme.spacing.lg,
     paddingHorizontal: theme.spacing.lg,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: theme.colors.border,
   },
+  rowArchived: {
+    opacity: 0.55,
+  },
+  icon: {
+    fontSize: 20,
+    width: 26,
+    textAlign: 'center',
+  },
   textColumn: {
+    flex: 1,
     gap: theme.spacing.xs,
   },
   nameLine: {
@@ -71,5 +103,24 @@ const styles = StyleSheet.create({
     ...theme.typography.caption,
     color: theme.colors.background,
     fontWeight: '700',
+    fontSize: 10,
+  },
+  archivedTag: {
+    borderRadius: theme.radius.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.textMuted,
+    paddingHorizontal: theme.spacing.xs,
+    paddingVertical: theme.spacing.xs,
+  },
+  archivedTagText: {
+    ...theme.typography.caption,
+    color: theme.colors.textMuted,
+    fontWeight: '700',
+    fontSize: 10,
+  },
+  chevron: {
+    color: theme.colors.textMuted,
+    fontSize: 22,
+    marginLeft: theme.spacing.xs,
   },
 });
