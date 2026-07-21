@@ -40,7 +40,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Plans**: 6 plans (Walking Skeleton)Plans:
 **Wave 1**
 
-- [ ] 01-01-PLAN.md — Walking Skeleton: scaffold + Drizzle wiring + 13-table schema + migration gate + stub seed + minimal Exercises render
+- [x] 01-01-PLAN.md — Walking Skeleton: scaffold + Drizzle wiring + 13-table schema + migration gate + stub seed + minimal Exercises render
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -173,7 +173,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Scaffold & Data Foundation | 0/6 | Planned | - |
+| 1. Scaffold & Data Foundation | 1/6 | In Progress|  |
 | 2. Core Logging (Active Workout) | 0/TBD | Not started | - |
 | 3. Templates, Folders & Calculators | 0/TBD | Not started | - |
 | 4. Stats & Charts | 0/TBD | Not started | - |

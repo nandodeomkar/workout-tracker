@@ -192,3 +192,9 @@ None — no external service configuration required. This phase is fully offline
 ---
 *Phase: 01-scaffold-data-foundation*
 *Completed: 2026-07-21*
+
+## Self-Check: PASSED
+
+- All key files verified present on disk (`db/schema.ts`, `db/client.ts`, `db/seed/seedVersion.ts`, `db/seed/runSeed.ts`, `db/test/fixture.ts`, `db/schema.test.ts`, `drizzle/0000_cloudy_pet_avengers.sql`, `theme.ts`, `app/_layout.tsx`, `app/(tabs)/_layout.tsx`, `app/(tabs)/exercises/index.tsx`).
+- All commit hashes verified present in `git log` (`8b5d629`, `d819af4`, `4a82079`, `d066cfb`, `fbf7f7e`, `e292cc5`).
+- Plan-level verification re-run clean: `npx tsc --noEmit` (0 errors), `npx expo-doctor` (20/20 checks passed), `npx vitest run` (5/5 tests passed).
