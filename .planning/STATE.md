@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-04-PLAN.md
+stopped_at: Phase 1 device UAT found 4 gaps (see 01-UAT.md) — gap-closure planning next
 last_updated: "2026-07-21T13:59:55.646Z"
-last_activity: 2026-07-21 -- Phase 01 execution started
+last_activity: 2026-07-21 -- Device UAT on plan 01-06: 2 pass, 4 gaps (seed coverage, duplicate detection, stale list after edit, UX rework)
 progress:
   total_phases: 8
   completed_phases: 0
