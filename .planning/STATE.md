@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Phase 2 UI-SPEC approved
-last_updated: "2026-07-21T19:29:16.882Z"
-last_activity: 2026-07-21 -- Owner passed device re-UAT 7/7; Phase 1 closed. Suite green (48 tests), tsc clean
+status: executing
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-07-21T19:38:26.373Z"
+last_activity: 2026-07-21 -- Phase 02 execution started
 progress:
   total_phases: 8
   completed_phases: 1
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 13
+  completed_plans: 7
   percent: 13
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-19)
 
 **Core value:** Logging a strength workout in the gym must be fast, offline, and never lose data — free, with no clutter or upsell.
-**Current focus:** Phase 01 — scaffold-data-foundation
+**Current focus:** Phase 02 — core-logging-active-workout
 
 ## Current Position
 
-Phase: 01 (scaffold-data-foundation) — COMPLETE
-Plan: 6 of 6 executed; UAT gaps GAP-1..4 closed + verified on device
-Status: Phase 1 done (7/7 UAT pass). Next: plan Phase 2 (Core Logging / Active Workout)
-Last activity: 2026-07-21 -- Owner passed device re-UAT 7/7; Phase 1 closed. Suite green (48 tests), tsc clean
+Phase: 02 (core-logging-active-workout) — EXECUTING
+Plan: 2 of 7
+Status: Ready to execute
+Last activity: 2026-07-21 -- Phase 02 execution started
 
 Progress: [█░░░░░░░░░] 13% (1/8 phases)
 
@@ -57,6 +57,7 @@ Progress: [█░░░░░░░░░] 13% (1/8 phases)
 | Phase 01-scaffold-data-foundation P03 | 12min | 2 tasks | 6 files |
 | Phase 01-scaffold-data-foundation P04 | 15min | 3 tasks | 6 files |
 | Phase 01-scaffold-data-foundation P05 | 15min | 3 tasks | 5 files |
+| Phase 02-core-logging-active-workout P01 | 4min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,9 @@ Recent decisions affecting current work:
 - [Phase 01-scaffold-data-foundation]: Generated migration numbered 0001 (not literal 0002) for the FNDN-02 test — drizzle-kit's 0-indexed scheme means the second migration after 0000 is 0001; matches Plan 01's numbering precedent
 - [Phase 01-scaffold-data-foundation]: Case-insensitive A-Z ordering via Drizzle sql`lower(name)` in loadActiveExercises — Keeps the query layer the single source of ordering truth rather than sorting in JS
 - [Phase ?]: [Phase 01-scaffold-data-foundation]: Added loadAllExercises/loadExerciseById query helpers and a + Add exercise entry point (Rule 2) so the create/archive-reveal flows are reachable end-to-end
+- [Phase ?]: kg rounding: nearest 0.5 kg; lb rounding: nearest whole lb (plate-loadable, D-14/LOG-06)
+- [Phase ?]: estimate1RM short-circuits reps<=1 to return weightKg unchanged (Assumptions Log A3), carried forward as-is
+- [Phase ?]: detectPRs computes session-best-weight and session-best-e1RM per exercise as independent reductions, since the heaviest set and best-e1RM set are not always the same set
 
 ### Pending Todos
 
@@ -94,6 +98,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-21T16:22:43.988Z
-Stopped at: Phase 2 UI-SPEC approved
-Resume file: .planning/phases/02-core-logging-active-workout/02-UI-SPEC.md
+Last session: 2026-07-21T19:38:26.360Z
+Stopped at: Completed 02-01-PLAN.md
+Resume file: None

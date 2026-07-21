@@ -78,7 +78,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 1**
 
-- [ ] 02-01-PLAN.md — Pure calculators: kg/lb converter, Epley 1RM, working-set volume, PR detection (vitest)
+- [x] 02-01-PLAN.md — Pure calculators: kg/lb converter, Epley 1RM, working-set volume, PR detection (vitest)
 - [ ] 02-02-PLAN.md — Rest-override migration (additive `exercises.rest_seconds`) + crash-safe workout/set data core + settings helper
 
 **Wave 2** *(blocked on Wave 1 completion)*
@@ -196,7 +196,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Scaffold & Data Foundation | 6/6 | Complete   | 2026-07-21 |
-| 2. Core Logging (Active Workout) | 0/7 | Not started | - |
+| 2. Core Logging (Active Workout) | 1/7 | In Progress|  |
 | 3. Templates, Folders & Calculators | 0/TBD | Not started | - |
 | 4. Stats & Charts | 0/TBD | Not started | - |
 | 5. Body Measurements | 0/TBD | Not started | - |

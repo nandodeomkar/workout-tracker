@@ -18,8 +18,8 @@
 - [ ] **LOG-02**: Every completed set is persisted immediately; an in-progress workout survives app kill, crash, or phone restart
 - [ ] **LOG-03**: User gets a rest timer with auto-start on set completion and a notification that fires reliably with screen off
 - [ ] **LOG-04**: User can add, reorder, replace, and remove exercises during an active workout
-- [ ] **LOG-05**: User can finish or discard a workout and see a summary (duration, volume, PRs hit)
-- [ ] **LOG-06**: User can enter weights in kg or lb; values stored canonically in kg
+- [x] **LOG-05**: User can finish or discard a workout and see a summary (duration, volume, PRs hit)
+- [x] **LOG-06**: User can enter weights in kg or lb; values stored canonically in kg
 
 ### History
 
@@ -101,8 +101,8 @@ Which phases cover which requirements. Filled by roadmap creation.
 | LOG-02 | Phase 2 | Pending |
 | LOG-03 | Phase 2 | Pending |
 | LOG-04 | Phase 2 | Pending |
-| LOG-05 | Phase 2 | Pending |
-| LOG-06 | Phase 2 | Pending |
+| LOG-05 | Phase 2 | Complete |
+| LOG-06 | Phase 2 | Complete |
 | HIST-01 | Phase 2 | Pending |
 | HIST-02 | Phase 2 | Pending |
 | TMPL-01 | Phase 3 | Pending |
