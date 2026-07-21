@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sketch 002: Exercise Detail / Edit / Archive</title>
+<link rel="stylesheet" href="../themes/default.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-sans); background: #05070a; color: var(--color-text);
+    padding-top: 56px; display: flex; justify-content: center; min-height: 100vh;
+  }
+  #variant-nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 9998;
+    background: var(--color-surface); border-bottom: 1px solid var(--color-border);
+    padding: 10px 16px; display: flex; gap: 8px; justify-content: center;
+  }
+  .variant-tab {
+    background: var(--color-surface-alt); color: var(--color-text-muted);
+    border: 1px solid var(--color-border); border-radius: var(--radius-full);
+    padding: 6px 14px; font-size: var(--text-sm); cursor: pointer; transition: all 0.15s ease;
+  }
+  .variant-tab:hover { color: var(--color-text); }
+  .variant-tab.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+
+  .phone {
+    width: 375px; height: 740px; margin: 24px 0; background: var(--color-bg);
+    border: 1px solid var(--color-border); border-radius: 24px; overflow: hidden;
+    display: flex; flex-direction: column; box-shadow: var(--shadow-md); position: relative;
+  }
+  .screen { flex: 1; overflow-y: auto; position: relative; }
+
+  .appbar { padding: var(--space-4); display: flex; align-items: center; gap: var(--space-2); }
+  .appbar h1 { font-size: var(--text-xl); font-weight: 700; }
+  .back { background: none; border: none; color: var(--color-primary); font-size: var(--text-base); cursor: pointer; padding: 4px 8px 4px 0; }
+
+  .row {
+    display: flex; align-items: center; gap: var(--space-3);
+    padding: var(--space-3) var(--space-4); border-bottom: 1px solid var(--color-border);
+    cursor: pointer; transition: background 0.3s ease;
+  }
+  .row:hover { background: var(--color-surface-alt); }
+  .row .ic {
+    width: 38px; height: 38px; flex: none; border-radius: var(--radius-full);
+    background: var(--color-surface-alt); border: 1px solid var(--color-border);
+    display: flex; align-items: center; justify-content: center; font-size: 17px;
+  }
+  .row .nm { font-size: var(--text-base); }
+  .row .meta { font-size: var(--text-sm); color: var(--color-text-muted); margin-top: 1px; }
+  .badge {
+    margin-left: auto; flex: none; font-size: 10px; font-weight: 700;
+    color: var(--color-accent); border: 1px solid var(--color-accent);
+    border-radius: var(--radius-sm); padding: 1px 6px;
+  }
+  .badge.arch { color: var(--color-text-muted); border-color: var(--color-text-muted); }
+  .row.flash { background: rgba(79,142,247,0.25); }
+
+  .showarch {
+    padding: var(--space-3) var(--space-4); color: var(--color-text-muted);
+    font-size: var(--text-sm); cursor: pointer; text-align: center;
+  }
+  .showarch:hover { color: var(--color-text); }
+
+  /* pushed screens */
+  .push {
+    position: absolute; inset: 0; background: var(--color-bg);
+    transform: translateX(100%); transition: transform 0.22s ease;
+    display: flex; flex-direction: column; z-index: 5; overflow-y: auto;
+  }
+  .push.open { transform: translateX(0); }
+
+  /* detail view (A) */
+  .dhero { padding: var(--space-4); }
+  .dhero .big { font-size: var(--text-2xl); font-weight: 700; }
+  .dhero .sub { color: var(--color-text-muted); margin-top: 4px; font-size: var(--text-sm); }
+  .card {
+    background: var(--color-surface); border: 1px solid var(--color-border);
+    border-radius: var(--radius-md); margin: 0 var(--space-4) var(--space-3); padding: var(--space-4);
+  }
+  .card .lbl { font-size: var(--text-xs); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; }
+  .card .val { font-size: var(--text-base); }
+
+  .btn {
+    display: block; width: calc(100% - 32px); margin: 0 var(--space-4) var(--space-3);
+    padding: 12px; border-radius: var(--radius-md); font-size: var(--text-base);
+    font-weight: 600; cursor: pointer; border: none; transition: all 0.15s ease; text-align: center;
+  }
+  .btn.primary { background: var(--color-primary); color: #fff; }
+  .btn.primary:hover { background: var(--color-primary-hover); }
+  .btn.ghost { background: transparent; border: 1px solid var(--color-border); color: var(--color-text); }
+  .btn.ghost:hover { border-color: var(--color-text-muted); }
+  .btn.danger { background: transparent; border: 1px solid var(--color-danger); color: var(--color-danger); }
+  .btn.danger:hover { background: rgba(239,68,68,0.1); }
+
+  /* form bits */
+  .field { margin: 0 var(--space-4) var(--space-4); }
+  .field label { display: block; font-size: var(--text-xs); color: var(--color-text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .field input, .field textarea {
+    width: 100%; background: var(--color-surface-alt); border: 1px solid var(--color-border);
+    border-radius: var(--radius-md); color: var(--color-text); padding: 10px 12px;
+    font-size: var(--text-base); outline: none; font-family: var(--font-sans); transition: border 0.15s ease;
+  }
+  .field input:focus, .field textarea:focus { border-color: var(--color-primary); }
+  .pillrow { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+  .pill {
+    background: var(--color-surface-alt); color: var(--color-text-muted);
+    border: 1px solid var(--color-border); border-radius: var(--radius-full);
+    padding: 6px 12px; font-size: var(--text-sm); cursor: pointer; transition: all 0.15s ease;
+  }
+  .pill.on { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+  .dupewarn {
+    margin: -8px var(--space-4) var(--space-4); padding: 10px 12px;
+    background: rgba(245,158,11,0.12); border: 1px solid var(--color-accent);
+    border-radius: var(--radius-md); font-size: var(--text-sm); color: var(--color-accent);
+    display: none;
+  }
+  .dupewarn.show { display: block; }
+
+  /* bottom sheet (B) */
+  .scrim {
+    position: absolute; inset: 0; background: rgba(0,0,0,0.5); opacity: 0;
+    pointer-events: none; transition: opacity 0.2s ease; z-index: 6;
+  }
+  .scrim.open { opacity: 1; pointer-events: auto; }
+  .sheet {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 7;
+    background: var(--color-surface); border-radius: 20px 20px 0 0;
+    border: 1px solid var(--color-border); border-bottom: none;
+    transform: translateY(105%); transition: transform 0.25s ease;
+    max-height: 86%; overflow-y: auto; padding-bottom: var(--space-4);
+  }
+  .sheet.open { transform: translateY(0); }
+  .grab { width: 36px; height: 4px; background: var(--color-border); border-radius: 2px; margin: 10px auto 4px; }
+
+  /* toast */
+  .toast {
+    position: absolute; bottom: 16px; left: 16px; right: 16px; z-index: 20;
+    background: var(--color-surface-alt); border: 1px solid var(--color-border);
+    border-radius: var(--radius-md); padding: 12px 16px; font-size: var(--text-sm);
+    display: flex; align-items: center; justify-content: space-between;
+    opacity: 0; transform: translateY(8px); transition: all 0.25s ease; pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .toast button { background: none; border: none; color: var(--color-primary); font-weight: 700; cursor: pointer; font-size: var(--text-sm); }
+
+  /* confirm dialog */
+  .confirm {
+    position: absolute; inset: 0; z-index: 30; display: none;
+    align-items: center; justify-content: center; background: rgba(0,0,0,0.55);
+  }
+  .confirm.open { display: flex; }
+  .confirm .box {
+    background: var(--color-surface); border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg); padding: var(--space-6); width: 300px;
+  }
+  .confirm .box h3 { font-size: var(--text-lg); margin-bottom: 8px; }
+  .confirm .box p { font-size: var(--text-sm); color: var(--color-text-muted); margin-bottom: 16px; }
+  .confirm .acts { display: flex; gap: var(--space-2); justify-content: flex-end; }
+  .confirm .acts button {
+    padding: 8px 14px; border-radius: var(--radius-md); font-size: var(--text-sm);
+    cursor: pointer; border: 1px solid var(--color-border); background: transparent; color: var(--color-text);
+  }
+  .confirm .acts .go { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+
+  #sketch-tools {
+    position: fixed; bottom: 12px; right: 12px; z-index: 9999;
+    font-family: system-ui; font-size: 12px; background: rgba(0,0,0,0.75);
+    color: #fff; padding: 8px 12px; border-radius: 8px; opacity: 0.4;
+    transition: opacity 0.2s; display: flex; gap: 8px; align-items: center;
+  }
+  #sketch-tools:hover { opacity: 1; }
+  #sketch-tools select { background: #222; color: #fff; border: 1px solid #444; border-radius: 4px; padding: 2px 4px; }
+</style>
+</head>
+<body>
+
+<div id="variant-nav">
+  <button class="variant-tab active" onclick="showVariant('a', event)">A: Detail Screen</button>
+  <button class="variant-tab" onclick="showVariant('b', event)">B: Bottom Sheet</button>
+  <button class="variant-tab" onclick="showVariant('c', event)">C: Straight to Edit</button>
+</div>
+
+<!-- Variants injected by JS: each is a phone with list + its own detail/edit pattern -->
+<div id="variant-a" class="variant"></div>
+<div id="variant-b" class="variant" style="display:none"></div>
+<div id="variant-c" class="variant" style="display:none"></div>
+
+<div id="sketch-tools">
+  <span>theme</span>
+  <select onchange="document.querySelector('link[href*=themes]').href='../themes/'+this.value+'.css'">
+    <option value="default">default</option>
+  </select>
+</div>
+
+<script>
+const GROUPS = ['Chest','Back','Shoulders','Biceps','Triceps','Quads','Hamstrings','Glutes','Core','Other'];
+const EQUIP = ['Barbell','Dumbbell','Machine','Cable','Bodyweight','Kettlebell','Band','Other'];
+const ICON = { Chest:'🫁', Back:'🔙', Shoulders:'🙆', Biceps:'💪', Triceps:'🦾', Quads:'🦵', Hamstrings:'🐐', Glutes:'🍑', Core:'🧱', Other:'🎯' };
+
+// Per-variant independent state so comparisons start equal.
+function freshData() {
+  return [
+    { id: 1, name: 'Bench Press', group: 'Chest', equip: 'Barbell', notes: '', custom: false, archived: false },
+    { id: 2, name: 'Seated Cable Rows', group: 'Back', equip: 'Cable', notes: 'Pause 1s at chest', custom: false, archived: false },
+    { id: 3, name: 'Chest Supported Machine Row', group: 'Back', equip: 'Machine', notes: '', custom: false, archived: false },
+    { id: 4, name: 'Lat Pulldown', group: 'Back', equip: 'Cable', notes: '', custom: false, archived: false },
+    { id: 5, name: 'My Custom Lunge', group: 'Glutes', equip: 'Dumbbell', notes: 'Deficit, slow eccentric', custom: true, archived: false },
+    { id: 6, name: 'Face Pull', group: 'Shoulders', equip: 'Cable', notes: '', custom: false, archived: true },
+  ];
+}
+const S = { a: { data: freshData(), showArch: false }, b: { data: freshData(), showArch: false }, c: { data: freshData(), showArch: false } };
+
+const norm = s => s.toLowerCase().trim().replace(/\s+/g, ' ').replace(/s$/, '');
+function dupeOf(v, name, id) {
+  return S[v].data.find(e => e.id !== id && norm(e.name) === norm(name));
+}
+
+/* ---------- shared render ---------- */
+function listHTML(v) {
+  const st = S[v];
+  const vis = st.data.filter(e => st.showArch || !e.archived);
+  return `
+    <div class="appbar"><h1>Exercises</h1></div>
+    ${vis.map(e => `
+      <div class="row" id="${v}-row-${e.id}" onclick="openItem('${v}',${e.id})">
+        <div class="ic">${ICON[e.group]}</div>
+        <div><div class="nm">${e.name}</div><div class="meta">${e.group} · ${e.equip}</div></div>
+        ${e.archived ? '<span class="badge arch">ARCHIVED</span>' : e.custom ? '<span class="badge">CUSTOM</span>' : ''}
+      </div>`).join('')}
+    <div class="showarch" onclick="S['${v}'].showArch=!S['${v}'].showArch;renderList('${v}')">
+      ${st.showArch ? 'Hide' : 'Show'} archived (${st.data.filter(e => e.archived).length})
+    </div>`;
+}
+function renderList(v, flashId) {
+  document.getElementById(v + '-list').innerHTML = listHTML(v);
+  if (flashId) {
+    const r = document.getElementById(`${v}-row-${flashId}`);
+    if (r) { r.classList.add('flash'); setTimeout(() => r.classList.remove('flash'), 1400); }
+  }
+}
+function formHTML(v, e) {
+  return `
+    <div class="field"><label>Name</label>
+      <input id="${v}-f-name" value="${e.name}" oninput="checkDupe('${v}',${e.id})"></div>
+    <div class="dupewarn" id="${v}-dupe"></div>
+    <div class="field"><label>Muscle group</label>
+      <div class="pillrow">${GROUPS.map(g => `<div class="pill ${g === e.group ? 'on' : ''}" data-g="${g}" onclick="pickPill(this)">${g}</div>`).join('')}</div></div>
+    <div class="field"><label>Equipment</label>
+      <div class="pillrow">${EQUIP.map(q => `<div class="pill ${q === e.equip ? 'on' : ''}" data-q="${q}" onclick="pickPill(this)">${q}</div>`).join('')}</div></div>
+    <div class="field"><label>Notes (optional)</label>
+      <textarea id="${v}-f-notes" rows="2">${e.notes}</textarea></div>`;
+}
+function pickPill(el) {
+  [...el.parentElement.children].forEach(p => p.classList.remove('on'));
+  el.classList.add('on');
+}
+function checkDupe(v, id) {
+  const name = document.getElementById(`${v}-f-name`).value;
+  const d = name.trim() ? dupeOf(v, name, id) : null;
+  const w = document.getElementById(`${v}-dupe`);
+  if (d) { w.textContent = `⚠ Similar exercise already exists: “${d.name}”. Saving is still allowed.`; w.classList.add('show'); }
+  else w.classList.remove('show');
+}
+function readForm(v, e) {
+  e.name = document.getElementById(`${v}-f-name`).value.trim() || e.name;
+  e.notes = document.getElementById(`${v}-f-notes`).value;
+  const g = document.querySelector(`#variant-${v} .pill.on[data-g]`); if (g) e.group = g.dataset.g;
+  const q = document.querySelector(`#variant-${v} .pill.on[data-q]`); if (q) e.equip = q.dataset.q;
+}
+function toast(v, msg, undo) {
+  const t = document.getElementById(v + '-toast');
+  t.innerHTML = `<span>${msg}</span>` + (undo ? `<button onclick="${undo}">Undo</button>` : '');
+  t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2600);
+}
+function saveBtnFlow(btn, done) {
+  const orig = btn.textContent;
+  btn.textContent = 'Saving…'; btn.disabled = true;
+  setTimeout(() => { btn.textContent = orig; btn.disabled = false; done(); }, 350);
+}
+function askConfirm(v, name, onYes) {
+  const c = document.getElementById(v + '-confirm');
+  c.querySelector('p').textContent = `“${name}” will be hidden from the library. You can unarchive it any time — nothing is deleted.`;
+  c.classList.add('open');
+  c.querySelector('.go').onclick = () => { c.classList.remove('open'); onYes(); };
+  c.querySelector('.no').onclick = () => c.classList.remove('open');
+}
+
+/* ---------- phone scaffold per variant ---------- */
+function phoneHTML(v, extra) {
+  return `<div class="phone">
+    <div class="screen"><div id="${v}-list"></div>${extra}</div>
+    <div class="toast" id="${v}-toast"></div>
+    <div class="confirm" id="${v}-confirm"><div class="box"><h3>Archive exercise?</h3><p></p>
+      <div class="acts"><button class="no">Cancel</button><button class="go">Archive</button></div></div></div>
+  </div>`;
+}
+
+/* ---------- Variant A: detail screen with edit mode ---------- */
+document.getElementById('variant-a').innerHTML = phoneHTML('a', `
+  <div class="push" id="a-push"></div>`);
+function openItem(v, id) {
+  if (v === 'a') return aDetail(id);
+  if (v === 'b') return bSheet(id);
+  if (v === 'c') return cEdit(id);
+}
+function aDetail(id) {
+  const e = S.a.data.find(x => x.id === id);
+  const p = document.getElementById('a-push');
+  p.innerHTML = `
+    <div class="appbar"><button class="back" onclick="document.getElementById('a-push').classList.remove('open')">‹ Exercises</button></div>
+    <div class="dhero"><div class="big">${e.name} ${e.custom ? '<span class="badge">CUSTOM</span>' : ''}</div>
+      <div class="sub">${e.group} · ${e.equip}${e.archived ? ' · ARCHIVED' : ''}</div></div>
+    <div class="card"><div class="lbl">Notes</div><div class="val">${e.notes || '<span style="color:var(--color-text-muted)">None</span>'}</div></div>
+    <button class="btn primary" onclick="aEdit(${id})">Edit</button>
+    ${e.archived
+      ? `<button class="btn ghost" onclick="aUnarchive(${id})">Unarchive</button>`
+      : `<button class="btn danger" onclick="askConfirm('a','${e.name.replace(/'/g,"\\'")}',()=>aArchive(${id}))">Archive</button>`}
+  `;
+  p.classList.add('open');
+}
+function aEdit(id) {
+  const e = S.a.data.find(x => x.id === id);
+  const p = document.getElementById('a-push');
+  p.innerHTML = `
+    <div class="appbar"><button class="back" onclick="aDetail(${id})">Cancel</button><h1 style="font-size:var(--text-lg)">Edit exercise</h1></div>
+    ${formHTML('a', e)}
+    <button class="btn primary" onclick="saveBtnFlow(this,()=>{readForm('a',${JSON.stringify(id)}!==null?S.a.data.find(x=>x.id===${id}):null&&null,0)})" style="display:none"></button>
+    <button class="btn primary" onclick="saveBtnFlow(this,()=>{const e=S.a.data.find(x=>x.id===${id});readForm('a',e);document.getElementById('a-push').classList.remove('open');renderList('a',${id});toast('a','Saved — “'+e.name+'” updated everywhere');})">Save</button>
+  `;
+}
+function aArchive(id) {
+  const e = S.a.data.find(x => x.id === id);
+  e.archived = true;
+  document.getElementById('a-push').classList.remove('open');
+  renderList('a');
+  toast('a', `“${e.name}” archived`, `S.a.data.find(x=>x.id===${id}).archived=false;renderList('a',${id});this.closest('.toast').classList.remove('show')`);
+}
+function aUnarchive(id) {
+  const e = S.a.data.find(x => x.id === id);
+  e.archived = false;
+  document.getElementById('a-push').classList.remove('open');
+  renderList('a', id);
+  toast('a', `“${e.name}” unarchived`);
+}
+renderList('a');
+
+/* ---------- Variant B: bottom sheet ---------- */
+document.getElementById('variant-b').innerHTML = phoneHTML('b', `
+  <div class="scrim" id="b-scrim" onclick="bClose()"></div>
+  <div class="sheet" id="b-sheet"></div>`);
+function bSheet(id) {
+  const e = S.b.data.find(x => x.id === id);
+  const sh = document.getElementById('b-sheet');
+  sh.innerHTML = `
+    <div class="grab"></div>
+    <div class="dhero" style="padding-top:4px"><div class="big" style="font-size:var(--text-xl)">${e.name} ${e.custom ? '<span class="badge">CUSTOM</span>' : ''}</div>
+      <div class="sub">${e.group} · ${e.equip}${e.archived ? ' · ARCHIVED' : ''}${e.notes ? ' — ' + e.notes : ''}</div></div>
+    <button class="btn primary" onclick="bEdit(${id})">Edit</button>
+    ${e.archived
+      ? `<button class="btn ghost" onclick="bClose();S.b.data.find(x=>x.id===${id}).archived=false;renderList('b',${id});toast('b','Unarchived')">Unarchive</button>`
+      : `<button class="btn danger" onclick="askConfirm('b','${e.name.replace(/'/g,"\\'")}',()=>{bClose();S.b.data.find(x=>x.id===${id}).archived=true;renderList('b');toast('b','“${e.name.replace(/'/g,"\\'")}” archived','S.b.data.find(x=>x.id===${id}).archived=false;renderList(\\'b\\',${id});this.closest(\\'.toast\\').classList.remove(\\'show\\')')})">Archive</button>`}
+  `;
+  document.getElementById('b-scrim').classList.add('open');
+  sh.classList.add('open');
+}
+function bEdit(id) {
+  const e = S.b.data.find(x => x.id === id);
+  const sh = document.getElementById('b-sheet');
+  sh.innerHTML = `
+    <div class="grab"></div>
+    <div class="appbar" style="padding-top:4px"><h1 style="font-size:var(--text-lg)">Edit exercise</h1></div>
+    ${formHTML('b', e)}
+    <button class="btn primary" onclick="saveBtnFlow(this,()=>{const e=S.b.data.find(x=>x.id===${id});readForm('b',e);bClose();renderList('b',${id});toast('b','Saved — “'+e.name+'” updated everywhere');})">Save</button>
+    <button class="btn ghost" onclick="bSheet(${id})">Cancel</button>
+  `;
+}
+function bClose() {
+  document.getElementById('b-scrim').classList.remove('open');
+  document.getElementById('b-sheet').classList.remove('open');
+}
+renderList('b');
+
+/* ---------- Variant C: straight to edit form ---------- */
+document.getElementById('variant-c').innerHTML = phoneHTML('c', `
+  <div class="push" id="c-push"></div>`);
+function cEdit(id) {
+  const e = S.c.data.find(x => x.id === id);
+  const p = document.getElementById('c-push');
+  p.innerHTML = `
+    <div class="appbar"><button class="back" onclick="document.getElementById('c-push').classList.remove('open')">Cancel</button>
+      <h1 style="font-size:var(--text-lg)">${e.name}</h1>${e.custom ? '<span class="badge">CUSTOM</span>' : ''}</div>
+    ${formHTML('c', e)}
+    <button class="btn primary" onclick="saveBtnFlow(this,()=>{const e=S.c.data.find(x=>x.id===${id});readForm('c',e);document.getElementById('c-push').classList.remove('open');renderList('c',${id});toast('c','Saved — “'+e.name+'” updated everywhere');})">Save</button>
+    ${e.archived
+      ? `<button class="btn ghost" onclick="document.getElementById('c-push').classList.remove('open');S.c.data.find(x=>x.id===${id}).archived=false;renderList('c',${id});toast('c','Unarchived')">Unarchive</button>`
+      : `<button class="btn danger" onclick="askConfirm('c','${e.name.replace(/'/g,"\\'")}',()=>{document.getElementById('c-push').classList.remove('open');S.c.data.find(x=>x.id===${id}).archived=true;renderList('c');toast('c','“${e.name.replace(/'/g,"\\'")}” archived','S.c.data.find(x=>x.id===${id}).archived=false;renderList(\\'c\\',${id});this.closest(\\'.toast\\').classList.remove(\\'show\\')')})">Archive</button>`}
+  `;
+  p.classList.add('open');
+}
+renderList('c');
+
+/* ---------- variant switching ---------- */
+function showVariant(id, ev) {
+  document.querySelectorAll('.variant').forEach(x => x.style.display = 'none');
+  document.querySelectorAll('.variant-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('variant-' + id).style.display = 'block';
+  ev.target.classList.add('active');
+}
+</script>
+</body>
+</html>
