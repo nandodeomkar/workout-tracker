@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 
 import { ExerciseRow } from '../../../components/ExerciseRow';
 import { FilterChipRow } from '../../../components/FilterChipRow';
@@ -22,21 +22,25 @@ export default function ExercisesScreen() {
   // "Show archived" reveal toggle (D-11) — default OFF, archived hidden.
   const [showArchived, setShowArchived] = useState(false);
 
-  // Load once per showArchived toggle (RESEARCH.md Anti-Pattern: no
-  // per-keystroke SQL — this reloads only when the reveal toggle flips,
-  // never on search/chip changes, which stay purely in-memory below).
-  useEffect(() => {
-    let cancelled = false;
-    const load = showArchived ? loadAllExercises(db) : loadActiveExercises(db);
-    load.then((rows) => {
-      if (!cancelled) {
-        setAllExercises(rows);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [showArchived]);
+  // Reload on focus AND on showArchived flip (GAP-3). useFocusEffect re-runs
+  // every time the tab regains focus — so an edit/create/archive made on a
+  // pushed screen is reflected the moment we return here, not on next reload.
+  // Still not the per-keystroke SQL anti-pattern (RESEARCH.md): search/chip
+  // changes stay purely in-memory below and never touch the DB.
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      const load = showArchived ? loadAllExercises(db) : loadActiveExercises(db);
+      load.then((rows) => {
+        if (!cancelled) {
+          setAllExercises(rows);
+        }
+      });
+      return () => {
+        cancelled = true;
+      };
+    }, [showArchived]),
+  );
 
   const filter: ExerciseFilter = useMemo(
     () => ({ search, muscleGroups, equipment }),
