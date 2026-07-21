@@ -73,8 +73,30 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. User can add, reorder, replace, and remove exercises during an active workout, then finish or discard it and see a summary (duration, volume, PRs hit)
   5. User can enter weights in kg or lb, view workout history as a list and a calendar, and edit any past workout's sets, reps, weights, or exercises
 
-**Plans**: TBD
+**Plans**: 7 plans
 **UI hint**: yes
+
+**Wave 1**
+
+- [ ] 02-01-PLAN.md — Pure calculators: kg/lb converter, Epley 1RM, working-set volume, PR detection (vitest)
+- [ ] 02-02-PLAN.md — Rest-override migration (additive `exercises.rest_seconds`) + crash-safe workout/set data core + settings helper
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 02-03-PLAN.md — Workout mutations (reorder/replace/remove, discard cascade, finish) + history/prior-bests queries
+- [ ] 02-04-PLAN.md — Active-workout logging screen: Zustand store, set steppers + custom keypad, start-empty/resume (the core loop)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 02-05-PLAN.md — Settings rows (units + default rest) + drag-reorder/replace/remove UI + [SUS] package legitimacy gate
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 02-06-PLAN.md — Rest timer (auto-start, drift-free countdown, screen-off notification) + per-exercise override pill + finish/summary + discard
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 02-07-PLAN.md — History (list + month calendar + detail) + edit-past-workout reuse + start-from-history
 
 ### Phase 3: Templates, Folders & Calculators
 
@@ -174,7 +196,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Scaffold & Data Foundation | 6/6 | Complete   | 2026-07-21 |
-| 2. Core Logging (Active Workout) | 0/TBD | Not started | - |
+| 2. Core Logging (Active Workout) | 0/7 | Not started | - |
 | 3. Templates, Folders & Calculators | 0/TBD | Not started | - |
 | 4. Stats & Charts | 0/TBD | Not started | - |
 | 5. Body Measurements | 0/TBD | Not started | - |
