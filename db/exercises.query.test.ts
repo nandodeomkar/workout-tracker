@@ -20,6 +20,7 @@ function makeRow(overrides: Partial<Exercise> & Pick<Exercise, 'id' | 'name'>): 
     notes: null,
     seedId: null,
     archived: false,
+    restSeconds: null,
     ...overrides,
   };
 }

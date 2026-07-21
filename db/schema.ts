@@ -24,6 +24,9 @@ export const exercises = sqliteTable(
     // Phase-1 additions (D-04/D-10/D-11):
     seedId: text("seed_id").unique(),
     archived: int({ mode: "boolean" }).notNull().default(false),
+    // Phase-2 addition (D-08): nullable per-exercise rest override.
+    // null means "use settings.default_rest_seconds" (Pattern 5 fallback).
+    restSeconds: int("rest_seconds"),
   },
   (table) => [
     // FNDN-02 migration 0002 (Plan 03): additive search/filter indexes

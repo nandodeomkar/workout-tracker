@@ -1,20 +1,25 @@
 // FNDN-02: proves a simulated app upgrade (an additive schema migration)
 // runs against an already-populated database without crashing or losing
-// data. Populates a database at migration 0001, then applies the next
-// migration in the journal (0002) and asserts every previously-inserted
-// row survives unchanged, and that the new search/filter indexes exist.
+// data. Populates a database at an older migration point, then applies the
+// next migration in the journal and asserts every previously-inserted row
+// survives unchanged, and that the new columns/indexes exist.
 //
 // This is the canonical migration-safety harness — later phases extend
 // this pattern for their own N -> N+1 upgrades.
+//
+// Deliberately uses RAW sqlite statements (not the Drizzle query builder)
+// to populate/read the "before" snapshot: db/schema.ts always describes the
+// CURRENT (latest) full schema, so a Drizzle insert/select against a table
+// that hasn't yet received a later migration's columns fails — Drizzle's
+// insert always references every schema-declared column (writing NULL for
+// omitted ones), which does not exist pre-migration. Raw SQL sidesteps that
+// mismatch and keeps this harness valid at every point in migration history.
 
 import Database from 'better-sqlite3';
-import { drizzle } from 'drizzle-orm/better-sqlite3';
-import { eq } from 'drizzle-orm';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { exercises, settings } from './schema';
 import { applyMigrationsUpTo } from './test/fixture';
 
 const DRIZZLE_DIR = path.resolve(__dirname, '../drizzle');
@@ -54,37 +59,51 @@ const EXPECTED_INDEXES = [
 ];
 
 const SEED_EXERCISES = [
-  { seedId: 'upgrade-test-bench-press', name: 'Bench Press', muscleGroup: 'Chest', equipment: 'Barbell' },
-  { seedId: 'upgrade-test-squat', name: 'Squat', muscleGroup: 'Legs', equipment: 'Barbell' },
-  { seedId: 'upgrade-test-pull-up', name: 'Pull Up', muscleGroup: 'Back', equipment: 'Bodyweight' },
+  { seed_id: 'upgrade-test-bench-press', name: 'Bench Press', muscle_group: 'Chest', equipment: 'Barbell' },
+  { seed_id: 'upgrade-test-squat', name: 'Squat', muscle_group: 'Legs', equipment: 'Barbell' },
+  { seed_id: 'upgrade-test-pull-up', name: 'Pull Up', muscle_group: 'Back', equipment: 'Bodyweight' },
 ];
 
-describe('FNDN-02: migration 0001 -> next migration preserves data (simulated app upgrade)', () => {
-  it('applies the next migration on top of a populated 0001 database without losing rows or the settings row', () => {
-    // 1. Open a fresh in-memory DB and apply ONLY migration 0001.
+function insertSeedExercises(sqlite: Database.Database): void {
+  const stmt = sqlite.prepare(
+    'INSERT INTO exercises (seed_id, name, muscle_group, equipment) VALUES (?, ?, ?, ?)',
+  );
+  for (const ex of SEED_EXERCISES) {
+    stmt.run(ex.seed_id, ex.name, ex.muscle_group, ex.equipment);
+  }
+}
+
+function selectAllExercises(sqlite: Database.Database): Record<string, unknown>[] {
+  return sqlite.prepare('SELECT * FROM exercises ORDER BY id').all() as Record<string, unknown>[];
+}
+
+describe('FNDN-02: migration 0000 -> 0001 preserves data (simulated app upgrade)', () => {
+  it('applies migration 0001 on top of a populated 0000 database without losing rows or the settings row', () => {
+    // 1. Open a fresh in-memory DB and apply ONLY migration 0000.
     const sqlite = new Database(':memory:');
     applyMigrationsUpTo(sqlite, 1);
-    const db = drizzle(sqlite, { schema: { exercises, settings } });
 
-    // 2. Populate with a known, deterministic dataset through the query builder.
-    for (const ex of SEED_EXERCISES) {
-      db.insert(exercises).values(ex).run();
-    }
-    db.insert(settings).values({ key: 'seed_version', value: '2' }).run();
+    // 2. Populate with a known, deterministic dataset via raw SQL (schema.ts
+    //    describes the current full schema, which is ahead of this migration
+    //    point — see file-header comment).
+    insertSeedExercises(sqlite);
+    sqlite.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').run('seed_version', '2');
 
-    const beforeExercises = db.select().from(exercises).all();
-    const beforeSettings = db.select().from(settings).where(eq(settings.key, 'seed_version')).all();
+    const beforeExercises = selectAllExercises(sqlite);
+    const beforeSettings = sqlite
+      .prepare('SELECT * FROM settings WHERE key = ?')
+      .all('seed_version') as Record<string, unknown>[];
     expect(beforeExercises.length).toBe(SEED_EXERCISES.length);
     expect(beforeSettings[0]?.value).toBe('2');
 
-    // 3. Apply the next migration in the journal (simulated app upgrade to 0002).
+    // 3. Apply the next migration in the journal (simulated app upgrade to 0001).
     const journal = readJournal();
     expect(journal.entries.length).toBeGreaterThanOrEqual(2);
     const nextEntry = journal.entries[1]!;
     applyMigrationEntry(sqlite, nextEntry);
 
     // 4. Assert every inserted exercise row is still present, unchanged.
-    const afterExercises = db.select().from(exercises).all();
+    const afterExercises = selectAllExercises(sqlite);
     expect(afterExercises.length).toBe(beforeExercises.length);
     for (const before of beforeExercises) {
       const after = afterExercises.find((e) => e.id === before.id);
@@ -92,7 +111,9 @@ describe('FNDN-02: migration 0001 -> next migration preserves data (simulated ap
     }
 
     // 5. Assert the settings row is unchanged (zero data loss on upgrade).
-    const afterSettings = db.select().from(settings).where(eq(settings.key, 'seed_version')).all();
+    const afterSettings = sqlite
+      .prepare('SELECT * FROM settings WHERE key = ?')
+      .all('seed_version') as Record<string, unknown>[];
     expect(afterSettings).toEqual(beforeSettings);
 
     // 6. Assert the additive search/filter indexes exist after the upgrade.
@@ -103,6 +124,43 @@ describe('FNDN-02: migration 0001 -> next migration preserves data (simulated ap
     for (const expected of EXPECTED_INDEXES) {
       expect(indexNames).toContain(expected);
     }
+
+    sqlite.close();
+  });
+});
+
+describe('D-08: migration 0001 -> 0002 (rest_seconds) preserves data (simulated app upgrade)', () => {
+  it('applies migration 0002 on top of a populated 0001 database without losing rows, defaulting rest_seconds to null', () => {
+    // 1. Open a fresh in-memory DB and apply only migrations 0000+0001.
+    const sqlite = new Database(':memory:');
+    applyMigrationsUpTo(sqlite, 2);
+
+    // 2. Populate with a known, deterministic dataset via raw SQL (rest_seconds
+    //    does not exist on the physical table yet at this migration point).
+    insertSeedExercises(sqlite);
+
+    const beforeExercises = selectAllExercises(sqlite);
+    expect(beforeExercises.length).toBe(SEED_EXERCISES.length);
+    expect(Object.keys(beforeExercises[0]!)).not.toContain('rest_seconds');
+
+    // 3. Apply the idx-2 migration in the journal (simulated app upgrade to 0002).
+    const journal = readJournal();
+    expect(journal.entries.length).toBeGreaterThanOrEqual(3);
+    const nextEntry = journal.entries[2]!;
+    applyMigrationEntry(sqlite, nextEntry);
+
+    // 4. Assert every inserted exercise row survives unchanged, with rest_seconds
+    //    defaulting to null (additive, non-destructive).
+    const afterExercises = selectAllExercises(sqlite);
+    expect(afterExercises.length).toBe(beforeExercises.length);
+    for (const before of beforeExercises) {
+      const after = afterExercises.find((e) => e.id === before.id);
+      expect(after).toEqual({ ...before, rest_seconds: null });
+    }
+
+    // 5. Assert the new column exists on the live table.
+    const columns = sqlite.prepare('PRAGMA table_info(exercises)').all() as { name: string }[];
+    expect(columns.map((c) => c.name)).toContain('rest_seconds');
 
     sqlite.close();
   });
