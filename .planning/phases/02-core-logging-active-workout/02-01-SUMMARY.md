@@ -109,3 +109,7 @@ None - no external service configuration required.
 ---
 *Phase: 02-core-logging-active-workout*
 *Completed: 2026-07-21*
+
+## Self-Check: PASSED
+
+All 8 created files and the SUMMARY.md itself verified present on disk. All 4 task/summary commits (`9ea143d`, `989674a`, `cde2e82`, `0a0dbb9`) verified present in git log.
