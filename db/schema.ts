@@ -10,55 +10,55 @@
 // Phase-1 exercises-table additions required by D-04/D-10/D-11: seed_id,
 // is_custom, archived.
 
-import { int, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { int, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
-export const exercises = sqliteTable('exercises', {
+export const exercises = sqliteTable("exercises", {
   id: int().primaryKey({ autoIncrement: true }),
   name: text().notNull(),
-  muscleGroup: text('muscle_group').notNull(),
+  muscleGroup: text("muscle_group").notNull(),
   equipment: text().notNull(),
-  isCustom: int('is_custom', { mode: 'boolean' }).notNull().default(false),
+  isCustom: int("is_custom", { mode: "boolean" }).notNull().default(false),
   notes: text(),
   // Phase-1 additions (D-04/D-10/D-11):
-  seedId: text('seed_id').unique(),
-  archived: int({ mode: 'boolean' }).notNull().default(false),
+  seedId: text("seed_id").unique(),
+  archived: int({ mode: "boolean" }).notNull().default(false),
 });
 
-export const workouts = sqliteTable('workouts', {
+export const workouts = sqliteTable("workouts", {
   id: int().primaryKey({ autoIncrement: true }),
   name: text(),
-  startedAt: text('started_at').notNull(),
-  finishedAt: text('finished_at'),
+  startedAt: text("started_at").notNull(),
+  finishedAt: text("finished_at"),
   notes: text(),
-  templateId: int('template_id').references(() => templates.id),
+  templateId: int("template_id").references(() => templates.id),
 });
 
-export const workoutExercises = sqliteTable('workout_exercises', {
+export const workoutExercises = sqliteTable("workout_exercises", {
   id: int().primaryKey({ autoIncrement: true }),
-  workoutId: int('workout_id')
+  workoutId: int("workout_id")
     .notNull()
     .references(() => workouts.id),
-  exerciseId: int('exercise_id')
+  exerciseId: int("exercise_id")
     .notNull()
     .references(() => exercises.id),
   position: int().notNull(),
   notes: text(),
 });
 
-export const sets = sqliteTable('sets', {
+export const sets = sqliteTable("sets", {
   id: int().primaryKey({ autoIncrement: true }),
-  workoutExerciseId: int('workout_exercise_id')
+  workoutExerciseId: int("workout_exercise_id")
     .notNull()
     .references(() => workoutExercises.id),
-  setNumber: int('set_number').notNull(),
-  weightKg: real('weight_kg').notNull(),
+  setNumber: int("set_number").notNull(),
+  weightKg: real("weight_kg").notNull(),
   reps: int().notNull(),
-  type: text().$type<'normal' | 'warmup' | 'dropset' | 'failure'>().notNull().default('normal'),
+  type: text().$type<"normal" | "warmup" | "dropset" | "failure">().notNull().default("normal"),
   rpe: real(),
-  completedAt: text('completed_at').notNull(),
+  completedAt: text("completed_at").notNull(),
 });
 
-export const templates = sqliteTable('templates', {
+export const templates = sqliteTable("templates", {
   id: int().primaryKey({ autoIncrement: true }),
   name: text().notNull(),
   folder: text(),
@@ -66,67 +66,67 @@ export const templates = sqliteTable('templates', {
   notes: text(),
 });
 
-export const templateExercises = sqliteTable('template_exercises', {
+export const templateExercises = sqliteTable("template_exercises", {
   id: int().primaryKey({ autoIncrement: true }),
-  templateId: int('template_id')
+  templateId: int("template_id")
     .notNull()
     .references(() => templates.id),
-  exerciseId: int('exercise_id')
+  exerciseId: int("exercise_id")
     .notNull()
     .references(() => exercises.id),
   position: int().notNull(),
-  targetSets: int('target_sets').notNull(),
-  targetReps: int('target_reps').notNull(),
-  targetWeightKg: real('target_weight_kg'),
+  targetSets: int("target_sets").notNull(),
+  targetReps: int("target_reps").notNull(),
+  targetWeightKg: real("target_weight_kg"),
   // JSON: {type:"linear", increment_kg:2.5} or {type:"percent_tm", scheme:[...]}
   progression: text(),
 });
 
-export const programs = sqliteTable('programs', {
+export const programs = sqliteTable("programs", {
   id: int().primaryKey({ autoIncrement: true }),
   name: text().notNull(),
   notes: text(),
 });
 
-export const programDays = sqliteTable('program_days', {
+export const programDays = sqliteTable("program_days", {
   id: int().primaryKey({ autoIncrement: true }),
-  programId: int('program_id')
+  programId: int("program_id")
     .notNull()
     .references(() => programs.id),
   position: int().notNull(),
-  templateId: int('template_id')
+  templateId: int("template_id")
     .notNull()
     .references(() => templates.id),
 });
 
-export const programState = sqliteTable('program_state', {
-  programId: int('program_id')
+export const programState = sqliteTable("program_state", {
+  programId: int("program_id")
     .primaryKey()
     .references(() => programs.id),
-  currentDayPosition: int('current_day_position').notNull(),
+  currentDayPosition: int("current_day_position").notNull(),
 });
 
-export const trainingMaxes = sqliteTable('training_maxes', {
-  exerciseId: int('exercise_id')
+export const trainingMaxes = sqliteTable("training_maxes", {
+  exerciseId: int("exercise_id")
     .primaryKey()
     .references(() => exercises.id),
-  maxKg: real('max_kg').notNull(),
-  updatedAt: text('updated_at').notNull(),
+  maxKg: real("max_kg").notNull(),
+  updatedAt: text("updated_at").notNull(),
 });
 
-export const bodyMeasurements = sqliteTable('body_measurements', {
+export const bodyMeasurements = sqliteTable("body_measurements", {
   id: int().primaryKey({ autoIncrement: true }),
   metric: text().notNull(),
   value: real().notNull(),
-  measuredAt: text('measured_at').notNull(),
+  measuredAt: text("measured_at").notNull(),
 });
 
-export const settings = sqliteTable('settings', {
+export const settings = sqliteTable("settings", {
   key: text().primaryKey(),
   value: text().notNull(),
 });
 
-export const backupMeta = sqliteTable('backup_meta', {
+export const backupMeta = sqliteTable("backup_meta", {
   key: text().primaryKey(),
   value: text().notNull(),
 });
