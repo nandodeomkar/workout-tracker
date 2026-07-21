@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import { EQUIPMENT, MUSCLE_GROUPS } from '../constants/taxonomy';
-import { curate, type RawExercise } from './curate-exercises';
+import {
+  SUPPLEMENTAL_EXERCISES,
+  curate,
+  mergeSupplements,
+  type CuratedExercise,
+  type RawExercise,
+} from './curate-exercises';
 
 // Inline fixture shaped like free-exercise-db records — deliberately does
 // NOT depend on the full ~873-row dataset (Pitfall 3 / D-01 / D-02).
@@ -97,5 +103,51 @@ describe('curate', () => {
     expect(report.input).toBe(FIXTURE.length);
     expect(report.output).toBe(rows.length);
     expect(report.excluded).toBe(FIXTURE.length - rows.length);
+  });
+});
+
+describe('mergeSupplements (GAP-1)', () => {
+  it('appends every supplemental staple to an empty base', () => {
+    const { rows, added } = mergeSupplements([], SUPPLEMENTAL_EXERCISES);
+    expect(added).toBe(SUPPLEMENTAL_EXERCISES.length);
+    expect(rows).toHaveLength(SUPPLEMENTAL_EXERCISES.length);
+  });
+
+  it('every supplemental row carries a valid taxonomy and a non-empty seedId', () => {
+    for (const row of SUPPLEMENTAL_EXERCISES) {
+      expect(MUSCLE_GROUPS).toContain(row.muscleGroup);
+      expect(EQUIPMENT).toContain(row.equipment);
+      expect(row.seedId.length).toBeGreaterThan(0);
+    }
+    const ids = SUPPLEMENTAL_EXERCISES.map((r) => r.seedId);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('skips a supplement whose name already exists in the base (normalized)', () => {
+    const base: CuratedExercise[] = [
+      { seedId: 'x-pec-deck', name: 'pec  DECK', muscleGroup: 'Chest', equipment: 'Machine', notes: null },
+    ];
+    const { rows, added } = mergeSupplements(base, [
+      { seedId: 'supp-pec-deck', name: 'Pec Deck', muscleGroup: 'Chest', equipment: 'Machine', notes: null },
+    ]);
+    expect(added).toBe(0);
+    expect(rows).toHaveLength(1);
+  });
+
+  it('skips a supplement whose seedId already exists in the base', () => {
+    const base: CuratedExercise[] = [
+      { seedId: 'supp-pec-deck', name: 'Something Else', muscleGroup: 'Chest', equipment: 'Machine', notes: null },
+    ];
+    const { added } = mergeSupplements(base, [
+      { seedId: 'supp-pec-deck', name: 'Pec Deck', muscleGroup: 'Chest', equipment: 'Machine', notes: null },
+    ]);
+    expect(added).toBe(0);
+  });
+
+  it('is idempotent — merging twice adds the supplements only once', () => {
+    const first = mergeSupplements([], SUPPLEMENTAL_EXERCISES);
+    const second = mergeSupplements(first.rows, SUPPLEMENTAL_EXERCISES);
+    expect(second.added).toBe(0);
+    expect(second.rows).toHaveLength(SUPPLEMENTAL_EXERCISES.length);
   });
 });

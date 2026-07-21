@@ -15,6 +15,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { EQUIPMENT, MUSCLE_GROUPS, type EquipmentType, type MuscleGroup } from '../constants/taxonomy';
+import { normalizeExerciseName } from '../lib/exerciseName';
 
 const SOURCE_URL = 'https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/dist/exercises.json';
 const OUTPUT_PATH = path.resolve(__dirname, '../db/seed/exercises.seed.json');
@@ -42,6 +43,66 @@ export interface CurationReport {
   excluded: number;
   muscleGroupFallbacks: number;
   equipmentFallbacks: number;
+  supplemental: number;
+}
+
+// GAP-1: common gym machine/cable/free-weight staples that lifters expect
+// but that free-exercise-db does not contain at all (verified 2026-07-21 —
+// these are absent from source, not excluded by the curation rules, so
+// relaxing exclusions would not recover them). Hand-authored with the fixed
+// taxonomy and a stable `supp-` seedId prefix so they carry a durable
+// identity across re-seeds (D-04). Merged in after the rule-based curation;
+// any entry whose name already exists in the curated set is skipped.
+export const SUPPLEMENTAL_EXERCISES: CuratedExercise[] = [
+  { seedId: 'supp-chest-supported-machine-row', name: 'Chest Supported Machine Row', muscleGroup: 'Back', equipment: 'Machine', notes: null },
+  { seedId: 'supp-pec-deck', name: 'Pec Deck', muscleGroup: 'Chest', equipment: 'Machine', notes: null },
+  { seedId: 'supp-machine-chest-press', name: 'Machine Chest Press', muscleGroup: 'Chest', equipment: 'Machine', notes: null },
+  { seedId: 'supp-incline-machine-chest-press', name: 'Incline Machine Chest Press', muscleGroup: 'Chest', equipment: 'Machine', notes: null },
+  { seedId: 'supp-machine-shoulder-press', name: 'Machine Shoulder Press', muscleGroup: 'Shoulders', equipment: 'Machine', notes: null },
+  { seedId: 'supp-reverse-pec-deck', name: 'Reverse Pec Deck', muscleGroup: 'Shoulders', equipment: 'Machine', notes: null },
+  { seedId: 'supp-assisted-pull-up', name: 'Assisted Pull-Up', muscleGroup: 'Back', equipment: 'Machine', notes: null },
+  { seedId: 'supp-smith-machine-row', name: 'Smith Machine Row', muscleGroup: 'Back', equipment: 'Machine', notes: null },
+  { seedId: 'supp-straight-arm-cable-pulldown', name: 'Straight-Arm Cable Pulldown', muscleGroup: 'Back', equipment: 'Cable', notes: null },
+  { seedId: 'supp-cable-pullover', name: 'Cable Pullover', muscleGroup: 'Back', equipment: 'Cable', notes: null },
+  { seedId: 'supp-cable-lateral-raise', name: 'Cable Lateral Raise', muscleGroup: 'Shoulders', equipment: 'Cable', notes: null },
+  { seedId: 'supp-cable-rear-delt-fly', name: 'Cable Rear Delt Fly', muscleGroup: 'Shoulders', equipment: 'Cable', notes: null },
+  { seedId: 'supp-cable-rope-triceps-pushdown', name: 'Cable Rope Triceps Pushdown', muscleGroup: 'Triceps', equipment: 'Cable', notes: null },
+  { seedId: 'supp-cable-rope-hammer-curl', name: 'Cable Rope Hammer Curl', muscleGroup: 'Biceps', equipment: 'Cable', notes: null },
+  { seedId: 'supp-barbell-hip-thrust', name: 'Barbell Hip Thrust', muscleGroup: 'Glutes', equipment: 'Barbell', notes: null },
+  { seedId: 'supp-machine-hip-thrust', name: 'Machine Hip Thrust', muscleGroup: 'Glutes', equipment: 'Machine', notes: null },
+  { seedId: 'supp-bulgarian-split-squat', name: 'Bulgarian Split Squat', muscleGroup: 'Quads', equipment: 'Dumbbell', notes: null },
+  { seedId: 'supp-close-grip-bench-press', name: 'Close-Grip Bench Press', muscleGroup: 'Triceps', equipment: 'Barbell', notes: null },
+  { seedId: 'supp-stiff-leg-deadlift', name: 'Stiff-Leg Deadlift', muscleGroup: 'Hamstrings', equipment: 'Barbell', notes: null },
+  { seedId: 'supp-pendlay-row', name: 'Pendlay Row', muscleGroup: 'Back', equipment: 'Barbell', notes: null },
+];
+
+/**
+ * Appends supplemental staples to a curated set, skipping any whose name
+ * (after duplicate-detection normalization) or seedId already exists in the
+ * base set. Pure and offline — no network, no side effects — so it is safe
+ * to run over the committed seed to add only the new rows with a minimal diff.
+ */
+export function mergeSupplements(
+  base: CuratedExercise[],
+  supplements: CuratedExercise[] = SUPPLEMENTAL_EXERCISES,
+): { rows: CuratedExercise[]; added: number } {
+  const seenNames = new Set(base.map((r) => normalizeExerciseName(r.name)));
+  const seenIds = new Set(base.map((r) => r.seedId));
+  const rows = [...base];
+  let added = 0;
+
+  for (const supp of supplements) {
+    const normName = normalizeExerciseName(supp.name);
+    if (seenNames.has(normName) || seenIds.has(supp.seedId)) {
+      continue;
+    }
+    seenNames.add(normName);
+    seenIds.add(supp.seedId);
+    rows.push(supp);
+    added++;
+  }
+
+  return { rows, added };
 }
 
 // Explicit, reviewable free-exercise-db `primaryMuscles[0]` -> fixed
@@ -185,6 +246,7 @@ export function curate(records: RawExercise[]): { rows: CuratedExercise[]; repor
       excluded,
       muscleGroupFallbacks,
       equipmentFallbacks,
+      supplemental: 0,
     },
   };
 }
@@ -196,19 +258,24 @@ async function main(): Promise<void> {
   }
   const records = (await response.json()) as RawExercise[];
 
-  const { rows, report } = curate(records);
+  const { rows: curated, report } = curate(records);
+  const { rows, added } = mergeSupplements(curated);
+  report.output = rows.length;
+  report.supplemental = added;
 
   writeFileSync(OUTPUT_PATH, `${JSON.stringify(rows, null, 2)}\n`, 'utf-8');
 
   console.log('Curation report:');
   console.log(`  Input records:            ${report.input}`);
+  console.log(`  Curated (rule-based):      ${curated.length}`);
+  console.log(`  Supplemental added:        ${report.supplemental}`);
   console.log(`  Output rows:               ${report.output}`);
   console.log(`  Excluded:                  ${report.excluded}`);
   console.log(`  Muscle-group fallbacks:    ${report.muscleGroupFallbacks}`);
   console.log(`  Equipment fallbacks:       ${report.equipmentFallbacks}`);
   console.log(`Wrote ${report.output} rows to ${OUTPUT_PATH}`);
 
-  if (report.output < 400 || report.output > 500) {
+  if (report.output < 400 || report.output > 520) {
     console.warn(
       `WARNING: output row count (${report.output}) is outside the D-03 target range of 400-500 — review exclusion rules.`,
     );

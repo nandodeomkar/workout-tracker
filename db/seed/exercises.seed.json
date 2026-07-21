@@ -3484,5 +3484,138 @@
     "muscleGroup": "Biceps",
     "equipment": "Dumbbell",
     "notes": null
+  },
+  {
+    "seedId": "supp-chest-supported-machine-row",
+    "name": "Chest Supported Machine Row",
+    "muscleGroup": "Back",
+    "equipment": "Machine",
+    "notes": null
+  },
+  {
+    "seedId": "supp-pec-deck",
+    "name": "Pec Deck",
+    "muscleGroup": "Chest",
+    "equipment": "Machine",
+    "notes": null
+  },
+  {
+    "seedId": "supp-machine-chest-press",
+    "name": "Machine Chest Press",
+    "muscleGroup": "Chest",
+    "equipment": "Machine",
+    "notes": null
+  },
+  {
+    "seedId": "supp-incline-machine-chest-press",
+    "name": "Incline Machine Chest Press",
+    "muscleGroup": "Chest",
+    "equipment": "Machine",
+    "notes": null
+  },
+  {
+    "seedId": "supp-machine-shoulder-press",
+    "name": "Machine Shoulder Press",
+    "muscleGroup": "Shoulders",
+    "equipment": "Machine",
+    "notes": null
+  },
+  {
+    "seedId": "supp-reverse-pec-deck",
+    "name": "Reverse Pec Deck",
+    "muscleGroup": "Shoulders",
+    "equipment": "Machine",
+    "notes": null
+  },
+  {
+    "seedId": "supp-assisted-pull-up",
+    "name": "Assisted Pull-Up",
+    "muscleGroup": "Back",
+    "equipment": "Machine",
+    "notes": null
+  },
+  {
+    "seedId": "supp-smith-machine-row",
+    "name": "Smith Machine Row",
+    "muscleGroup": "Back",
+    "equipment": "Machine",
+    "notes": null
+  },
+  {
+    "seedId": "supp-straight-arm-cable-pulldown",
+    "name": "Straight-Arm Cable Pulldown",
+    "muscleGroup": "Back",
+    "equipment": "Cable",
+    "notes": null
+  },
+  {
+    "seedId": "supp-cable-pullover",
+    "name": "Cable Pullover",
+    "muscleGroup": "Back",
+    "equipment": "Cable",
+    "notes": null
+  },
+  {
+    "seedId": "supp-cable-lateral-raise",
+    "name": "Cable Lateral Raise",
+    "muscleGroup": "Shoulders",
+    "equipment": "Cable",
+    "notes": null
+  },
+  {
+    "seedId": "supp-cable-rope-triceps-pushdown",
+    "name": "Cable Rope Triceps Pushdown",
+    "muscleGroup": "Triceps",
+    "equipment": "Cable",
+    "notes": null
+  },
+  {
+    "seedId": "supp-cable-rope-hammer-curl",
+    "name": "Cable Rope Hammer Curl",
+    "muscleGroup": "Biceps",
+    "equipment": "Cable",
+    "notes": null
+  },
+  {
+    "seedId": "supp-barbell-hip-thrust",
+    "name": "Barbell Hip Thrust",
+    "muscleGroup": "Glutes",
+    "equipment": "Barbell",
+    "notes": null
+  },
+  {
+    "seedId": "supp-machine-hip-thrust",
+    "name": "Machine Hip Thrust",
+    "muscleGroup": "Glutes",
+    "equipment": "Machine",
+    "notes": null
+  },
+  {
+    "seedId": "supp-bulgarian-split-squat",
+    "name": "Bulgarian Split Squat",
+    "muscleGroup": "Quads",
+    "equipment": "Dumbbell",
+    "notes": null
+  },
+  {
+    "seedId": "supp-close-grip-bench-press",
+    "name": "Close-Grip Bench Press",
+    "muscleGroup": "Triceps",
+    "equipment": "Barbell",
+    "notes": null
+  },
+  {
+    "seedId": "supp-stiff-leg-deadlift",
+    "name": "Stiff-Leg Deadlift",
+    "muscleGroup": "Hamstrings",
+    "equipment": "Barbell",
+    "notes": null
+  },
+  {
+    "seedId": "supp-pendlay-row",
+    "name": "Pendlay Row",
+    "muscleGroup": "Back",
+    "equipment": "Barbell",
+    "notes": null
   }
 ]
