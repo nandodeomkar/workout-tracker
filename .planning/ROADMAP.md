@@ -13,7 +13,7 @@ The journey runs from a durable offline data foundation, through the fast crash-
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Scaffold & Data Foundation** - Offline-first SQLite foundation with safe migrations and a searchable exercise library
+- [x] **Phase 1: Scaffold & Data Foundation** - Offline-first SQLite foundation with safe migrations and a searchable exercise library (completed 2026-07-21)
 - [ ] **Phase 2: Core Logging (Active Workout)** - Fast, crash-safe set logging with rest timer and workout history
 - [ ] **Phase 3: Templates, Folders & Calculators** - Reusable workout templates plus plate/1RM/warm-up calculators
 - [ ] **Phase 4: Stats & Charts** - Per-exercise progress charts, weekly volume, and a live-computed PR feed
@@ -57,7 +57,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 01-06-PLAN.md — On-device offline foundation verification checkpoint (FNDN-01)
+- [x] 01-06-PLAN.md — On-device offline foundation verification checkpoint (FNDN-01)
 
 ### Phase 2: Core Logging (Active Workout)
 
@@ -173,7 +173,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Scaffold & Data Foundation | 5/6 | In Progress|  |
+| 1. Scaffold & Data Foundation | 6/6 | Complete   | 2026-07-21 |
 | 2. Core Logging (Active Workout) | 0/TBD | Not started | - |
 | 3. Templates, Folders & Calculators | 0/TBD | Not started | - |
 | 4. Stats & Charts | 0/TBD | Not started | - |
