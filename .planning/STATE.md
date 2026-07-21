@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-07-21T11:38:54.388Z"
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-07-21T12:34:48.176Z"
 last_activity: 2026-07-21 -- Phase 01 execution started
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 6
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-07-19)
 ## Current Position
 
 Phase: 01 (scaffold-data-foundation) — EXECUTING
-Plan: 2 of 6
+Plan: 3 of 6
 Status: Ready to execute
 Last activity: 2026-07-21 -- Phase 01 execution started
 
@@ -53,6 +53,7 @@ Progress: [░░░░░░░░░░] 0%
 
 *Updated after each plan completion*
 | Phase 01-scaffold-data-foundation P01 | 25min | 3 tasks | 37 files |
+| Phase 01-scaffold-data-foundation P02 | 15min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,7 @@ Recent decisions affecting current work:
 - Roadmap: Backup (Phase 7) sequenced after Programs (Phase 6) so it covers the full data model before the safety-net work begins
 - [Phase ?]: Kept drizzle-kit's standard 0000-indexed migration filename instead of renaming to 0001, to preserve safe forward migration-numbering for later phases (Plan 03 FNDN-02 test)
 - [Phase ?]: Removed the expo-router tabs template's default boilerplate in favor of the project's own theme.ts and 5-tab shell
+- [Phase 01-scaffold-data-foundation]: Curated 873-row free-exercise-db down to 498 rows via auditable category/equipment/level exclusion rules, landing inside the D-03 400-500 target
 
 ### Pending Todos
 
@@ -86,6 +88,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-21T11:38:21.337Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-07-21T12:34:48.163Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None

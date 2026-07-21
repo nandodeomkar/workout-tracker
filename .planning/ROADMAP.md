@@ -44,7 +44,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-02-PLAN.md — Exercise curation pipeline + real ~400–500-row seed JSON (idempotent, no-clobber)
+- [x] 01-02-PLAN.md — Exercise curation pipeline + real ~400–500-row seed JSON (idempotent, no-clobber)
 - [ ] 01-03-PLAN.md — Migration safety (FNDN-02): additive migration 0002 + populate→upgrade→data-intact test
 
 **Wave 3** *(blocked on Wave 2 completion)*
@@ -173,7 +173,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Scaffold & Data Foundation | 1/6 | In Progress|  |
+| 1. Scaffold & Data Foundation | 2/6 | In Progress|  |
 | 2. Core Logging (Active Workout) | 0/TBD | Not started | - |
 | 3. Templates, Folders & Calculators | 0/TBD | Not started | - |
 | 4. Stats & Charts | 0/TBD | Not started | - |
