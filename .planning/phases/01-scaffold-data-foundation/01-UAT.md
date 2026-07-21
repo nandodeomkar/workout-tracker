@@ -11,7 +11,23 @@ updated: 2026-07-21T14:20:00Z
 number: complete
 name: On-device offline foundation smoke test
 expected: All 8 checkpoint steps pass on a real Android device in airplane mode
-awaiting: device re-UAT (GAP-1..4 fixed in code; re-run tests 2,3,4,6,7 on a real device)
+awaiting: interactive device re-UAT of tests 2,3,4,6,7 (tap-driven flows)
+
+## Device Verification (2026-07-21, gap-closure session)
+
+Built + installed the debug dev client on a real device (5dqwzpdqemsc6xpb / "25080RABDI"), BUILD SUCCESSFUL, launched in airplane mode.
+
+Confirmed on-device (visual + offline + no-crash):
+- Offline cold launch to the 5-tab shell in airplane mode; app process stable, no red box / JS exception in logcat.
+- Reworked Exercises library renders per sketch 001-C: "Exercises" title + blue "+", search bar, single-select emoji muscle pills (All active), "Show archived", sticky #/A section headers, iconified rows (muscle glyph + name + "group · equipment" + chevron). Supplemental staples present (e.g. Ab Crunch Machine at "A").
+- Detail screen renders the new in-screen header (‹ Exercises back + muscle glyph + name), muscle/equipment pill selectors, Save changes + red Archive.
+- Two defects the run surfaced were fixed and re-verified on-device: (a) exercises/[id] and exercises/new no longer leak as phantom tab-bar entries (added exercises/_layout.tsx); (b) headers now clear the system status bar (useSafeAreaInsets). Commit 5856968.
+
+NOT verifiable this session (device blocks adb INJECT_EVENTS, so no tap-driven UI): the interactive assertions still need a human pass —
+- test 3: type "Seated cable row" and see the GAP-2 near-duplicate warning fire
+- test 4: rename a seeded exercise, return to the list, confirm the name is fresh (GAP-3)
+- test 5/detail: tap Archive → confirm dialog → toast
+- test 6: force-kill + relaunch persistence (offline)
 
 ## Tests
 
