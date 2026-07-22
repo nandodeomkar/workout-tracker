@@ -53,9 +53,9 @@
 
 ### Utilities
 
-- [ ] **UTIL-01**: User can open a plate calculator inline from the active workout
-- [ ] **UTIL-02**: User can use a 1RM calculator
-- [ ] **UTIL-03**: User gets warm-up set suggestions for a working weight
+- [x] **UTIL-01**: User can open a plate calculator inline from the active workout
+- [x] **UTIL-02**: User can use a 1RM calculator
+- [x] **UTIL-03**: User gets warm-up set suggestions for a working weight
 
 ### Backup & Export
 
@@ -108,9 +108,9 @@ Which phases cover which requirements. Filled by roadmap creation.
 | TMPL-01 | Phase 3 | Pending |
 | TMPL-02 | Phase 3 | Pending |
 | TMPL-03 | Phase 3 | Pending |
-| UTIL-01 | Phase 3 | Pending |
-| UTIL-02 | Phase 3 | Pending |
-| UTIL-03 | Phase 3 | Pending |
+| UTIL-01 | Phase 3 | Complete |
+| UTIL-02 | Phase 3 | Complete |
+| UTIL-03 | Phase 3 | Complete |
 | STAT-01 | Phase 4 | Pending |
 | STAT-02 | Phase 4 | Pending |
 | STAT-03 | Phase 4 | Pending |

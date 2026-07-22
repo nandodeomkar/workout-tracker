@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-stopped_at: Phase 3 context gathered
-last_updated: "2026-07-22T11:11:53.312Z"
-last_activity: 2026-07-22 -- Phase 02 device UAT verified
+status: executing
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-07-22T12:18:26.860Z"
+last_activity: 2026-07-22 -- Phase 03 execution started
 progress:
   total_phases: 8
   completed_phases: 2
-  total_plans: 13
-  completed_plans: 13
+  total_plans: 19
+  completed_plans: 14
   percent: 25
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-19)
 
 **Core value:** Logging a strength workout in the gym must be fast, offline, and never lose data — free, with no clutter or upsell.
-**Current focus:** Phase 02 — core-logging-active-workout
+**Current focus:** Phase 03 — templates-folders-calculators
 
 ## Current Position
 
-Phase: 02 (core-logging-active-workout) — VERIFIED
-Plan: 7 of 7
-Status: Device UAT complete — 6/6 pass. 2 fixes en route (SetRow ✓ overflow blocker, rest-notif sound). Ready for Phase 03.
-Last activity: 2026-07-22 -- Phase 02 device UAT verified
+Phase: 03 (templates-folders-calculators) — EXECUTING
+Plan: 2 of 6
+Status: Ready to execute
+Last activity: 2026-07-22 -- Phase 03 execution started
 
 Progress: [██░░░░░░░░] 25% (2/8 phases)
 
@@ -64,6 +64,7 @@ Progress: [██░░░░░░░░] 25% (2/8 phases)
 | Phase 02-core-logging-active-workout P05 | 20min | 3 tasks | 6 files |
 | Phase 02-core-logging-active-workout P06 | 35min | 3 tasks | 9 files |
 | Phase 02-core-logging-active-workout P07 | 18min | 3 tasks | 8 files |
+| Phase 03-templates-folders-calculators P01 | 8min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -100,6 +101,10 @@ Recent decisions affecting current work:
 - [Phase 02-core-logging-active-workout]: Extracted lib/duration.ts#formatDurationMs as a shared pure formatter instead of a third inline duplicate of the Finish/summary screen's local duration logic
 - [Phase 02-core-logging-active-workout]: Calendar day bucketing (History tab) computed in UTC to exactly match loadWorkoutsInMonth's Date.UTC month-boundary query
 - [Phase 02-core-logging-active-workout]: Added a minimal placeholder history/[workoutId].tsx ahead of its full implementation so expo-router typed-routes could type-check Task 2's router.push calls before Task 3 landed
+- [Phase 03-templates-folders-calculators]: Plate sets are native per display unit (PLATE_SET_KG / PLATE_SET_LB) - never derived by converting one unit's set through the other — Pitfall 1: a 20kg bar and 45lb bar are independently manufactured standards, not unit-conversions of each other
+- [Phase 03-templates-folders-calculators]: Plate-solver rounding uses its own plate set's smallest denomination, not lib/weightUnits.ts's 0.5kg/1lb display rounding — Pitfall 2: display rounding granularity does not match actual plate-loadable granularity
+- [Phase 03-templates-folders-calculators]: Warm-up ladder values locked as [ASSUMED A1]: Bar x8, 40% x5, 60% x3, 80% x2 — CONTEXT.md D-09 discretion; generic strength-training convention
+- [Phase 03-templates-folders-calculators]: percentOf1RM does not import estimate1RM - consumes a caller-supplied 1RM, keeping Epley the single formula source — Avoids reimplementing/duplicating the shared 1RM formula
 
 ### Pending Todos
 
@@ -120,6 +125,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-22T09:52:58.344Z
-Stopped at: Phase 3 context gathered
-Resume file: .planning/phases/03-templates-folders-calculators/03-CONTEXT.md
+Last session: 2026-07-22T12:18:26.846Z
+Stopped at: Completed 03-01-PLAN.md
+Resume file: None

@@ -118,7 +118,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 1** *(tested foundations — pure lib + data layer, parallel)*
 
-- [ ] 03-01-PLAN.md — Calculator math lib: plate solver, warm-up ladder, %-of-1RM table (vitest, UTIL-01/02/03)
+- [x] 03-01-PLAN.md — Calculator math lib: plate solver, warm-up ladder, %-of-1RM table (vitest, UTIL-01/02/03)
 - [ ] 03-02-PLAN.md — Template pure logic: start-from-template pre-fill merge + save-as-template capture (vitest, TMPL-02/03)
 - [ ] 03-03-PLAN.md — Template data layer db/templates.ts: CRUD + detach-delete + folder grouping + start-from-template copy (TMPL-01/02)
 
@@ -214,7 +214,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 |-------|----------------|--------|-----------|
 | 1. Scaffold & Data Foundation | 6/6 | Complete   | 2026-07-21 |
 | 2. Core Logging (Active Workout) | 7/7 | Complete   | 2026-07-22 |
-| 3. Templates, Folders & Calculators | 0/6 | Planned | - |
+| 3. Templates, Folders & Calculators | 1/6 | In Progress|  |
 | 4. Stats & Charts | 0/TBD | Not started | - |
 | 5. Body Measurements | 0/TBD | Not started | - |
 | 6. Programs & Progression | 0/TBD | Not started | - |
