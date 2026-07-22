@@ -112,3 +112,14 @@ None - no external service configuration required.
 ---
 *Phase: 02-core-logging-active-workout*
 *Completed: 2026-07-22*
+
+## Self-Check: PASSED
+
+- FOUND: db/workouts.ts
+- FOUND: db/workouts.crud.test.ts
+- FOUND: db/workouts.query.test.ts
+- FOUND: .planning/phases/02-core-logging-active-workout/02-03-SUMMARY.md
+- FOUND commit: 615cb86 (Task 1)
+- FOUND commit: 16105ef (Task 2)
+- FOUND commit: 98197c1 (Task 3)
+- FOUND commit: 177a85e (docs: summary)
