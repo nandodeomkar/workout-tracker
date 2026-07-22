@@ -160,7 +160,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1)*
 
-- [ ] 04-02-PLAN.md — Per-exercise progress chart slice: buildChartSeries + loadExerciseChartSets + chart screen w/ metric toggle + range chips + View-progress entry (STAT-01)
+- [x] 04-02-PLAN.md — Per-exercise progress chart slice: buildChartSeries + loadExerciseChartSets + chart screen w/ metric toggle + range chips + View-progress entry (STAT-01)
 
 **Wave 3** *(blocked on Wave 2)*
 
@@ -243,7 +243,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Scaffold & Data Foundation | 6/6 | Complete   | 2026-07-21 |
 | 2. Core Logging (Active Workout) | 7/7 | Complete   | 2026-07-22 |
 | 3. Templates, Folders & Calculators | 8/8 | Complete   | 2026-07-22 |
-| 4. Stats & Charts | 1/6 | In Progress|  |
+| 4. Stats & Charts | 2/6 | In Progress|  |
 | 5. Body Measurements | 0/TBD | Not started | - |
 | 6. Programs & Progression | 0/TBD | Not started | - |
 | 7. Backup & Export | 0/TBD | Not started | - |

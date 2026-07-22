@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Phase 04 UI-SPEC approved
-last_updated: "2026-07-22T17:03:32.123Z"
+last_updated: "2026-07-22T17:37:25.172Z"
 last_activity: 2026-07-22 -- Phase 04 execution started
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 27
-  completed_plans: 21
+  completed_plans: 23
   percent: 38
 ---
 
@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-07-19)
 ## Current Position
 
 Phase: 04 (stats-charts) — EXECUTING
-Plan: 1 of 6
-Status: Executing Phase 04
+Plan: 2 of 6
+Status: Ready to execute
 Last activity: 2026-07-22 -- Phase 04 execution started
 
 Progress: [██░░░░░░░░] 25% (2/8 phases)
@@ -72,6 +72,7 @@ Progress: [██░░░░░░░░] 25% (2/8 phases)
 | Phase 03-templates-folders-calculators P06 | 12min | 3 tasks | 3 files |
 | Phase 03-templates-folders-calculators P07 | 4min | 1 tasks | 2 files |
 | Phase 03-templates-folders-calculators P08 | 8min | 2 tasks | 3 files |
+| Phase 04-stats-charts P02 | 10min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -127,6 +128,8 @@ Recent decisions affecting current work:
 - [Phase ?]: TemplateRow edit icon is a nested Pressable placed before the trailing chevron -- RN responder behavior prevents its press from bubbling to the row's start-workout onPress, so no extra guard logic was needed to preserve single-tap-to-start
 - [Phase 03-templates-folders-calculators]: deleteSet never renumbers sibling set_number values (matches removeWorkoutExercise precedent); volume/PR are computed live from remaining rows
 - [Phase 03-templates-folders-calculators]: Per-set un-log reuses the existing checkmark control (tap it again to un-log) rather than adding a new SetRow affordance, per the UAT-chosen interaction
+- [Phase 04-stats-charts]: buildChartSeries recomputed via useMemo(metric) over a single fetched ChartSet[] rather than re-querying on toggle tap, keeping useFocusEffect live-recompute scoped to exerciseId/focus — Matches D-11 (never cached) + RESEARCH.md Open Question 2 (fetch all-time once, filter client-side)
+- [Phase 04-stats-charts]: MetricToggle built as its own dedicated single-select component rather than reusing FilterChipRow — FilterChipRow is multi-select; UI-SPEC calls for radio-group semantics for the metric toggle and range chips
 
 ### Pending Todos
 
@@ -147,6 +150,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-22T16:18:51.350Z
+Last session: 2026-07-22T17:36:37.438Z
 Stopped at: Phase 04 UI-SPEC approved
 Resume file: .planning/phases/04-stats-charts/04-UI-SPEC.md
