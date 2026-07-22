@@ -34,6 +34,13 @@ export const theme = {
       fontSize: 13,
       fontWeight: '400' as const,
     },
+    // Rest-timer countdown digits only (UI-SPEC "1. Active workout screen" —
+    // Rest timer). The largest type on screen; nothing else uses this token.
+    display: {
+      fontSize: 32,
+      fontWeight: '700' as const,
+      lineHeight: 35,
+    },
   },
   radius: {
     sm: 6,
