@@ -12,7 +12,7 @@
 // — SQLite already has the final, authoritative state.
 
 import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, ScrollView, StyleSheet, Text, ToastAndroid, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
@@ -20,14 +20,35 @@ import { db } from '../../db/client';
 import { loadAllExercises } from '../../db/exercises';
 import { getSetting } from '../../db/settings';
 import type { Workout } from '../../db/schema';
-import { loadPriorBests, loadWorkoutDetail } from '../../db/workouts';
+import { addTemplateExercise, createTemplate, loadTemplatesGroupedByFolder } from '../../db/templates';
+import { loadPriorBests, loadWorkoutDetail, type WorkoutDetail } from '../../db/workouts';
 import { detectPRs } from '../../lib/prDetection';
+import { buildTemplateExercisesFromWorkout } from '../../lib/templateCapture';
 import { workingSetVolume } from '../../lib/volume';
 import { kgToDisplay } from '../../lib/weightUnits';
 import { useActiveWorkout } from '../../store/activeWorkout';
 import { theme } from '../../theme';
 
 type PRHitWithName = ReturnType<typeof detectPRs>[number] & { exerciseName: string };
+
+// Android-first transient feedback — copied verbatim from
+// exercises/[id].tsx (RESEARCH.md "Android-first transient feedback").
+function notify(message: string): void {
+  if (Platform.OS === 'android') {
+    ToastAndroid.show(message, ToastAndroid.SHORT);
+  }
+}
+
+function workoutLabel(workout: Workout): string {
+  if (workout.name && workout.name.trim().length > 0) {
+    return workout.name;
+  }
+  return new Date(workout.startedAt).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
 
 function formatDuration(startedAt: string, finishedAt: string): string {
   const elapsedMs = Math.max(0, new Date(finishedAt).getTime() - new Date(startedAt).getTime());
@@ -52,9 +73,11 @@ export default function WorkoutSummaryScreen() {
 
   const [loading, setLoading] = useState(true);
   const [workout, setWorkout] = useState<Workout | null>(null);
+  const [workoutDetail, setWorkoutDetail] = useState<WorkoutDetail | null>(null);
   const [unit, setUnit] = useState<'kg' | 'lb'>('kg');
   const [volumeKg, setVolumeKg] = useState(0);
   const [prHits, setPrHits] = useState<PRHitWithName[]>([]);
+  const [savingTemplate, setSavingTemplate] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -91,6 +114,7 @@ export default function WorkoutSummaryScreen() {
       }
 
       setWorkout(detail.workout);
+      setWorkoutDetail(detail);
       setUnit(unitSetting === 'lb' ? 'lb' : 'kg');
       setVolumeKg(workingSetVolume(allSets));
       setPrHits(
@@ -118,6 +142,47 @@ export default function WorkoutSummaryScreen() {
   function handleDone() {
     clearActiveWorkout();
     router.replace('/');
+  }
+
+  // Save-as-template (TMPL-03/D-02/D-03): maps the just-finished workout's
+  // exercises into the pure capture shape, aggregates working-set counts +
+  // typical (last non-warmup) reps via lib/templateCapture.ts, then creates
+  // an Uncategorized template (folder null) with those rows. targetWeightKg
+  // is always null — weights come from last-performance pre-fill the next
+  // time the template is started (see lib/templatePrefill.ts).
+  async function handleSaveAsTemplate() {
+    if (!workout || !workoutDetail || savingTemplate) {
+      return;
+    }
+    setSavingTemplate(true);
+    try {
+      const captureInput = workoutDetail.exercises.map(({ workoutExercise, sets: setRows }) => ({
+        exerciseId: workoutExercise.exerciseId,
+        sets: setRows.map((setRow) => ({ reps: setRow.reps, type: setRow.type })),
+      }));
+      const captured = buildTemplateExercisesFromWorkout(captureInput);
+
+      const groups = await loadTemplatesGroupedByFolder(db);
+      const uncategorizedGroup = groups.find((group) => group.folder === null);
+      const position = uncategorizedGroup?.templates.length ?? 0;
+
+      const created = await createTemplate(db, { name: workoutLabel(workout), folder: null, position });
+      for (const exercise of captured) {
+        await addTemplateExercise(db, {
+          templateId: created.id,
+          exerciseId: exercise.exerciseId,
+          position: exercise.position,
+          targetSets: exercise.targetSets,
+          targetReps: exercise.targetReps,
+          targetWeightKg: null,
+        });
+      }
+      notify('Saved as template');
+    } catch {
+      notify("Couldn't save as template. Check your device storage and try again.");
+    } finally {
+      setSavingTemplate(false);
+    }
   }
 
   if (loading || !workout) {
@@ -165,6 +230,15 @@ export default function WorkoutSummaryScreen() {
           </View>
         ) : null}
       </ScrollView>
+
+      <Pressable
+        onPress={() => void handleSaveAsTemplate()}
+        accessibilityRole="button"
+        disabled={savingTemplate}
+        style={[styles.saveTemplateButton, { opacity: savingTemplate ? 0.6 : 1 }]}
+      >
+        <Text style={styles.saveTemplateButtonText}>Save as template</Text>
+      </Pressable>
 
       <Pressable
         onPress={handleDone}
@@ -244,6 +318,22 @@ const styles = StyleSheet.create({
     ...theme.typography.body,
     color: theme.colors.text,
     flex: 1,
+  },
+  saveTemplateButton: {
+    marginHorizontal: theme.spacing.lg,
+    marginTop: theme.spacing.sm,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.md,
+    paddingVertical: theme.spacing.md,
+    alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  saveTemplateButtonText: {
+    ...theme.typography.body,
+    color: theme.colors.accent,
+    fontWeight: '700',
   },
   doneButton: {
     marginHorizontal: theme.spacing.lg,
