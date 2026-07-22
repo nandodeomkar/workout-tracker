@@ -149,8 +149,31 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. User sees a PR feed reflecting bests computed live from logged sets, never from a stored/cached value
   4. Charts stay responsive when loaded against a large synthetic dataset representing years of history
 
-**Plans**: TBD
+**Plans**: 6 plans (5 waves)
 **UI hint**: yes
+
+Plans:
+
+**Wave 1**
+
+- [ ] 04-01-PLAN.md — Charting deps install ([SUS] skia gate) + native dev-client rebuild (STAT-01/02 enabler)
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 04-02-PLAN.md — Per-exercise progress chart slice: buildChartSeries + loadExerciseChartSets + chart screen w/ metric toggle + range chips + View-progress entry (STAT-01)
+
+**Wave 3** *(blocked on Wave 2)*
+
+- [ ] 04-03-PLAN.md — Weekly volume by muscle group: weeklyVolume lib + palette + query + Stats dashboard shell + stacked bar + exercise picker (STAT-02)
+
+**Wave 4** *(blocked on Wave 3)*
+
+- [ ] 04-04-PLAN.md — Live PR feed: computeAllTimeRecords + loadAllHistorySets + Section A feed + See-all full history (STAT-03)
+
+**Wave 5** *(blocked on Wave 4; two parallel plans)*
+
+- [ ] 04-05-PLAN.md — Per-exercise record board (curated rep-max + best e1RM, live) on the exercise screen (STAT-03)
+- [ ] 04-06-PLAN.md — STAT-04 performance validation: synthetic ~15,600-set history + timed query paths + on-device responsiveness check (STAT-04)
 
 ### Phase 5: Body Measurements
 
@@ -220,7 +243,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Scaffold & Data Foundation | 6/6 | Complete   | 2026-07-21 |
 | 2. Core Logging (Active Workout) | 7/7 | Complete   | 2026-07-22 |
 | 3. Templates, Folders & Calculators | 8/8 | Complete   | 2026-07-22 |
-| 4. Stats & Charts | 0/TBD | Not started | - |
+| 4. Stats & Charts | 0/6 | Planned | - |
 | 5. Body Measurements | 0/TBD | Not started | - |
 | 6. Programs & Progression | 0/TBD | Not started | - |
 | 7. Backup & Export | 0/TBD | Not started | - |
