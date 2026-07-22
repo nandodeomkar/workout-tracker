@@ -257,3 +257,93 @@ export async function loadWorkoutDetail(db: AnyDrizzleDb, workoutId: number): Pr
 
   return { workout, exercises: exerciseDetails };
 }
+
+/**
+ * Reorders the exercise cards within a workout by writing each
+ * `workout_exercises.position` to its index in `orderedWorkoutExerciseIds`
+ * (LOG-04/D-16 reorder). Every id must already belong to `workoutId` —
+ * throws otherwise, so a stale/foreign id can never write a position onto
+ * the wrong workout. Runs as a single transaction so a partial reorder is
+ * never observable.
+ *
+ * Note: both the better-sqlite3 and expo-sqlite Drizzle drivers execute
+ * synchronously under the hood (`resultKind: "sync"`), so the transaction
+ * callback here is intentionally a plain (non-async) function using `.run()`
+ * — an `async` callback would return before its awaited queries actually
+ * ran, causing the wrapper to commit before the writes happened.
+ */
+export async function reorderWorkoutExercises(
+  db: AnyDrizzleDb,
+  workoutId: number,
+  orderedWorkoutExerciseIds: number[],
+): Promise<void> {
+  const existing = await db
+    .select({ id: workoutExercises.id })
+    .from(workoutExercises)
+    .where(eq(workoutExercises.workoutId, workoutId));
+  const existingIds = new Set(existing.map((row) => row.id));
+
+  for (const id of orderedWorkoutExerciseIds) {
+    if (!existingIds.has(id)) {
+      throw new Error(`workout_exercise ${id} does not belong to workout ${workoutId}`);
+    }
+  }
+
+  db.transaction((tx) => {
+    orderedWorkoutExerciseIds.forEach((id, index) => {
+      tx.update(workoutExercises)
+        .set({ position: index })
+        .where(and(eq(workoutExercises.id, id), eq(workoutExercises.workoutId, workoutId)))
+        .run();
+    });
+  });
+}
+
+/**
+ * Swaps the exercise on an existing workout_exercises card (LOG-04/D-16
+ * replace). FLAG-1/Pitfall 3 safe semantics: a naive `UPDATE exercise_id`
+ * would retroactively reattribute already-completed sets on this card to
+ * the new exercise, corrupting both exercises' PR/volume history. So this
+ * THROWS once the card already has ≥1 logged set — the caller must
+ * remove+re-add instead (or confirm the deletion first). Only a card with
+ * zero sets can be swapped in place.
+ */
+export async function replaceWorkoutExercise(
+  db: AnyDrizzleDb,
+  workoutExerciseId: number,
+  newExerciseId: number,
+): Promise<WorkoutExercise> {
+  const existingSets = await db
+    .select({ id: sets.id })
+    .from(sets)
+    .where(eq(sets.workoutExerciseId, workoutExerciseId));
+
+  if (existingSets.length > 0) {
+    throw new Error(
+      'Cannot replace an exercise that already has logged sets — remove it and add the new one instead',
+    );
+  }
+
+  const [updated] = await db
+    .update(workoutExercises)
+    .set({ exerciseId: newExerciseId })
+    .where(eq(workoutExercises.id, workoutExerciseId))
+    .returning();
+
+  return updated;
+}
+
+/**
+ * Removes a single exercise card from a workout — a hard delete of that
+ * slot's sets, then the workout_exercises row itself (child-before-parent,
+ * D-16 remove). This is intentional data loss the UI confirms only when
+ * sets already exist on the card (UI-SPEC "Remove {exercise}?"). Runs as a
+ * single transaction (see `reorderWorkoutExercises` doc comment for why the
+ * callback is synchronous).
+ */
+export async function removeWorkoutExercise(db: AnyDrizzleDb, workoutExerciseId: number): Promise<void> {
+  db.transaction((tx) => {
+    tx.delete(sets).where(eq(sets.workoutExerciseId, workoutExerciseId)).run();
+    tx.delete(workoutExercises).where(eq(workoutExercises.id, workoutExerciseId)).run();
+  });
+}
