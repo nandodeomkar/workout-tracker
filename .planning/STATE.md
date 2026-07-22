@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-03-PLAN.md
-last_updated: "2026-07-22T12:34:14.116Z"
+stopped_at: Completed 03-04-PLAN.md
+last_updated: "2026-07-22T12:52:04.846Z"
 last_activity: 2026-07-22 -- Phase 03 execution started
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 19
-  completed_plans: 16
+  completed_plans: 17
   percent: 25
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-07-19)
 ## Current Position
 
 Phase: 03 (templates-folders-calculators) — EXECUTING
-Plan: 4 of 6
+Plan: 5 of 6
 Status: Ready to execute
 Last activity: 2026-07-22 -- Phase 03 execution started
 
@@ -67,6 +67,7 @@ Progress: [██░░░░░░░░] 25% (2/8 phases)
 | Phase 03-templates-folders-calculators P01 | 8min | 3 tasks | 6 files |
 | Phase 03-templates-folders-calculators P02 | 2min | 2 tasks | 4 files |
 | Phase 03 P03 | 8min | 2 tasks | 3 files |
+| Phase 03-templates-folders-calculators P04 | 15min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -111,6 +112,8 @@ Recent decisions affecting current work:
 - [Phase ?]: buildTemplateExercisesFromWorkout includes an all-warmup exercise as targetSets 0 / targetReps 0 rather than skipping it, preserving exercise-slot structure in the captured template
 - [Phase 03-templates-folders-calculators]: deleteTemplate detaches workouts.template_id to null before deleting template_exercises/templates, in one synchronous transaction (Pitfall 3) — SQLite in this project does not enforce FK constraints at write time; a naive delete would leave workouts pointing at a nonexistent template row
 - [Phase 03-templates-folders-calculators]: loadFolderNames sorts case-insensitively in JS (localeCompare) rather than a SQL COLLATE NOCASE clause — Keeps the query identical across both Drizzle drivers (better-sqlite3 for tests, on-device driver) this module supports
+- [Phase 03-templates-folders-calculators]: bar_weight_kg / bar_weight_lb stored and stepped as two fully independent settings keys, never converted between each other (Pitfall 1)
+- [Phase 03-templates-folders-calculators]: Standalone tools screens skip a redundant second appbar since the calculator sheets already render their own full-screen picker-overlay header with a Close control mapped to router.back()
 
 ### Pending Todos
 
@@ -131,6 +134,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-22T12:34:14.097Z
-Stopped at: Completed 03-03-PLAN.md
+Last session: 2026-07-22T12:52:04.833Z
+Stopped at: Completed 03-04-PLAN.md
 Resume file: None
