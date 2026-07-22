@@ -41,12 +41,16 @@ import { ExerciseRow } from '../../components/ExerciseRow';
 import { FilterChipRow } from '../../components/FilterChipRow';
 import { MuscleGroupPills } from '../../components/MuscleGroupPills';
 import { NumericKeypad } from '../../components/NumericKeypad';
+import { OneRMCalculatorSheet } from '../../components/OneRMCalculatorSheet';
+import { PlateCalculatorSheet } from '../../components/PlateCalculatorSheet';
 import { RestTimerBar } from '../../components/RestTimerBar';
+import { WarmupSuggestionSheet } from '../../components/WarmupSuggestionSheet';
 import { EQUIPMENT, type EquipmentType, type MuscleGroup } from '../../constants/taxonomy';
 import { db } from '../../db/client';
 import { loadActiveExercises, loadAllExercises } from '../../db/exercises';
 import { getSetting } from '../../db/settings';
 import type { Exercise, Workout } from '../../db/schema';
+import { loadTemplateDetail } from '../../db/templates';
 import {
   addWorkoutExercise,
   discardWorkout,
@@ -67,11 +71,14 @@ import {
   requestRestPermission,
   scheduleRestNotification,
 } from '../../lib/restTimer';
+import { buildTemplatePrefillRows, type TemplateTarget } from '../../lib/templatePrefill';
 import { displayToKg, kgToDisplay } from '../../lib/weightUnits';
 import { useActiveWorkout } from '../../store/activeWorkout';
 import { theme } from '../../theme';
 
 const DEFAULT_REST_SECONDS_FALLBACK = 90;
+const DEFAULT_BAR_WEIGHT_KG = 20;
+const DEFAULT_BAR_WEIGHT_LB = 45;
 
 // Android-first transient feedback — copied verbatim from
 // exercises/[id].tsx (RESEARCH.md "Android-first transient feedback").
@@ -145,10 +152,22 @@ export default function ActiveWorkoutScreen() {
   const [defaultRestSeconds, setDefaultRestSeconds] = useState(DEFAULT_REST_SECONDS_FALLBACK);
   const [restTotalSeconds, setRestTotalSeconds] = useState(DEFAULT_REST_SECONDS_FALLBACK);
   const [notificationsDenied, setNotificationsDenied] = useState(false);
+  const [barWeightKg, setBarWeightKg] = useState(DEFAULT_BAR_WEIGHT_KG);
+  const [barWeightLb, setBarWeightLb] = useState(DEFAULT_BAR_WEIGHT_LB);
   const [editingTarget, setEditingTarget] = useState<{
     weId: number;
     rowKey: string;
     field: 'weight' | 'reps';
+  } | null>(null);
+
+  // Which inline calculator sheet is open, and for which card's "current"
+  // (last) row — used to prefill the sheet from that row's weight/reps
+  // (UTIL-01/02/03 inline, D-07/D-10/D-11). Sheets are mounted once at
+  // screen level (below), never per-card.
+  const [openSheet, setOpenSheet] = useState<{
+    kind: 'plate' | 'onerm' | 'warmup';
+    weId: number;
+    rowKey: string;
   } | null>(null);
 
   // Add-exercise picker (reuses the Phase-1 ExerciseRow/MuscleGroupPills/
@@ -172,12 +191,15 @@ export default function ActiveWorkoutScreen() {
 
   const loadAll = useCallback(async () => {
     setLoading(true);
-    const [detail, exercisesList, unitSetting, defaultRestSetting] = await Promise.all([
-      loadWorkoutDetail(db, workoutId),
-      loadAllExercises(db),
-      getSetting(db, 'units'),
-      getSetting(db, 'default_rest_seconds'),
-    ]);
+    const [detail, exercisesList, unitSetting, defaultRestSetting, barWeightKgSetting, barWeightLbSetting] =
+      await Promise.all([
+        loadWorkoutDetail(db, workoutId),
+        loadAllExercises(db),
+        getSetting(db, 'units'),
+        getSetting(db, 'default_rest_seconds'),
+        getSetting(db, 'bar_weight_kg'),
+        getSetting(db, 'bar_weight_lb'),
+      ]);
 
     if (!detail) {
       setWorkout(null);
@@ -189,6 +211,10 @@ export default function ActiveWorkoutScreen() {
     setUnit(unitSetting === 'lb' ? 'lb' : 'kg');
     const parsedDefaultRest = Number(defaultRestSetting ?? DEFAULT_REST_SECONDS_FALLBACK);
     setDefaultRestSeconds(Number.isFinite(parsedDefaultRest) ? parsedDefaultRest : DEFAULT_REST_SECONDS_FALLBACK);
+    const parsedBarKg = Number(barWeightKgSetting ?? DEFAULT_BAR_WEIGHT_KG);
+    setBarWeightKg(Number.isFinite(parsedBarKg) && parsedBarKg >= 0 ? parsedBarKg : DEFAULT_BAR_WEIGHT_KG);
+    const parsedBarLb = Number(barWeightLbSetting ?? DEFAULT_BAR_WEIGHT_LB);
+    setBarWeightLb(Number.isFinite(parsedBarLb) && parsedBarLb >= 0 ? parsedBarLb : DEFAULT_BAR_WEIGHT_LB);
 
     const exerciseMap = new Map(exercisesList.map((exercise) => [exercise.id, exercise]));
     const entries: ExerciseEntry[] = [];
@@ -502,6 +528,56 @@ export default function ActiveWorkoutScreen() {
     setRowsByWE({ ...rowsByWE, [weId]: [...rows, newRow] });
   }
 
+  // Opens the matching inline calculator sheet for a card, prefilled from
+  // that card's "current" (last) row (UTIL-01/02/03 inline, D-07/D-10/D-11).
+  function handleOpenSheet(kind: 'plate' | 'onerm' | 'warmup', weId: number) {
+    const rows = rowsByWE[weId] ?? [];
+    const currentRow = rows[rows.length - 1];
+    if (!currentRow) {
+      return;
+    }
+    setOpenSheet({ kind, weId, rowKey: currentRow.key });
+  }
+
+  function closeSheet() {
+    setOpenSheet(null);
+  }
+
+  // Warm-up one-tap insert (UTIL-03/D-10): persists exactly the same
+  // crash-safe write insertSet already provides, tagged type: 'warmup', then
+  // appends the new row locally — mirrors the insertSet-then-setRowsByWE
+  // idiom in handleLogSet. Deliberately never starts the rest timer (a
+  // warm-up accept is not a working-set checkmark).
+  async function handleAcceptWarmup(weId: number, step: { weight: number; reps: number }) {
+    const rows = rowsByWE[weId] ?? [];
+    const setNumber = rows.length + 1;
+    const weightKg = displayToKg(step.weight, unit);
+    try {
+      const created = await insertSet(db, {
+        workoutExerciseId: weId,
+        setNumber,
+        weightKg,
+        reps: step.reps,
+        type: 'warmup',
+      });
+      setRowsByWE((prev) => {
+        const currentRows = prev[weId] ?? [];
+        const newRow: Row = {
+          key: `s-${created.id}`,
+          setId: created.id,
+          setNumber,
+          weightKg,
+          reps: step.reps,
+          isWarmup: true,
+          isCompleted: true,
+        };
+        return { ...prev, [weId]: [...currentRows, newRow] };
+      });
+    } catch {
+      notify("Couldn't save that warm-up set. Check your device storage and try again.");
+    }
+  }
+
   useEffect(() => {
     if (!pickerOpen) {
       return;
@@ -740,6 +816,11 @@ export default function ActiveWorkoutScreen() {
     );
   }
 
+  const barWeightDisplay = unit === 'kg' ? barWeightKg : barWeightLb;
+  const openSheetRow = openSheet
+    ? (rowsByWE[openSheet.weId] ?? []).find((row) => row.key === openSheet.rowKey)
+    : undefined;
+
   function toViewModel(row: Row): SetRowViewModel {
     return {
       key: row.key,
@@ -863,6 +944,9 @@ export default function ActiveWorkoutScreen() {
                   onToggleWarmup={(rowKey) => handleToggleWarmup(entry.weId, rowKey)}
                   onDragEnd={(translationY) => void handleReorderDragEnd(entry.weId, translationY)}
                   onOverflowPress={() => handleOverflowPress(entry.weId, entry.name)}
+                  onOpenPlateCalculator={() => handleOpenSheet('plate', entry.weId)}
+                  onOpenOneRM={() => handleOpenSheet('onerm', entry.weId)}
+                  onOpenWarmup={() => handleOpenSheet('warmup', entry.weId)}
                 />
               </View>
             ))}
@@ -892,6 +976,35 @@ export default function ActiveWorkoutScreen() {
         allowDecimal={editingTarget?.field === 'weight'}
         onDone={handleKeypadDone}
         onCancel={() => setEditingTarget(null)}
+      />
+
+      <PlateCalculatorSheet
+        visible={openSheet?.kind === 'plate'}
+        initialWeightDisplay={openSheetRow ? kgToDisplay(openSheetRow.weightKg, unit) : undefined}
+        unit={unit}
+        barWeightDisplay={barWeightDisplay}
+        onClose={closeSheet}
+      />
+
+      <OneRMCalculatorSheet
+        visible={openSheet?.kind === 'onerm'}
+        initialWeightDisplay={openSheetRow ? kgToDisplay(openSheetRow.weightKg, unit) : undefined}
+        initialReps={openSheetRow?.reps}
+        unit={unit}
+        onClose={closeSheet}
+      />
+
+      <WarmupSuggestionSheet
+        visible={openSheet?.kind === 'warmup'}
+        workingWeightDisplay={openSheetRow ? kgToDisplay(openSheetRow.weightKg, unit) : 0}
+        unit={unit}
+        barWeightDisplay={barWeightDisplay}
+        onAccept={(step) => {
+          if (openSheet) {
+            void handleAcceptWarmup(openSheet.weId, step);
+          }
+        }}
+        onClose={closeSheet}
       />
 
       {pickerOpen ? (

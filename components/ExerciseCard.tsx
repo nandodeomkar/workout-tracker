@@ -51,6 +51,12 @@ interface ExerciseCardProps {
   onDragEnd: (translationY: number) => void;
   /** Opens the Replace/Remove action menu (parent owns the menu itself). */
   onOverflowPress: () => void;
+  /** Opens the plate calculator, prefilled from this card's current set (UTIL-01/D-07). */
+  onOpenPlateCalculator?: () => void;
+  /** Opens the 1RM calculator, prefilled from this card's current set (UTIL-02/D-11). */
+  onOpenOneRM?: () => void;
+  /** Opens the warm-up ladder suggestions for this card (UTIL-03/D-10). */
+  onOpenWarmup?: () => void;
 }
 
 const LONG_PRESS_ACTIVATION_MS = 350;
@@ -72,6 +78,9 @@ export function ExerciseCard({
   onToggleWarmup,
   onDragEnd,
   onOverflowPress,
+  onOpenPlateCalculator,
+  onOpenOneRM,
+  onOpenWarmup,
 }: ExerciseCardProps) {
   const translateY = useSharedValue(0);
   const isDragging = useSharedValue(false);
@@ -124,6 +133,36 @@ export function ExerciseCard({
         <Text style={styles.name} numberOfLines={1}>
           {exerciseName}
         </Text>
+        {onOpenPlateCalculator ? (
+          <Pressable
+            onPress={onOpenPlateCalculator}
+            accessibilityRole="button"
+            accessibilityLabel="Plate calculator"
+            style={styles.affordanceButton}
+          >
+            <Text style={styles.affordanceButtonText}>⚖</Text>
+          </Pressable>
+        ) : null}
+        {onOpenOneRM ? (
+          <Pressable
+            onPress={onOpenOneRM}
+            accessibilityRole="button"
+            accessibilityLabel="1RM calculator"
+            style={styles.affordanceButton}
+          >
+            <Text style={styles.affordanceButtonText}>1RM</Text>
+          </Pressable>
+        ) : null}
+        {onOpenWarmup ? (
+          <Pressable
+            onPress={onOpenWarmup}
+            accessibilityRole="button"
+            accessibilityLabel="Warm-up suggestions"
+            style={styles.affordanceButton}
+          >
+            <Text style={styles.affordanceButtonText}>🔥</Text>
+          </Pressable>
+        ) : null}
         <Pressable
           onPress={() => setRestStepperOpen((open) => !open)}
           accessibilityRole="button"
@@ -223,6 +262,16 @@ const styles = StyleSheet.create({
     ...theme.typography.title,
     color: theme.colors.text,
     flex: 1,
+  },
+  affordanceButton: {
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  affordanceButtonText: {
+    ...theme.typography.body,
+    color: theme.colors.textMuted,
   },
   restPill: {
     minHeight: 32,
