@@ -117,3 +117,7 @@ None - no external service configuration required. Both newly-installed packages
 ---
 *Phase: 02-core-logging-active-workout*
 *Completed: 2026-07-22*
+
+## Self-Check: PASSED
+
+All created/modified files confirmed present on disk (`app/(tabs)/settings.tsx`, `components/ExerciseCard.tsx`, `app/active-workout/[workoutId].tsx`, `app/_layout.tsx`, this SUMMARY.md) and all task/summary commit hashes (`8cad033`, `8d91cc2`, `845f5d2`, `98ad54c`) confirmed present in `git log`.
