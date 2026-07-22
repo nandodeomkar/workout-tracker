@@ -19,7 +19,12 @@
 
 import * as Notifications from 'expo-notifications';
 
-const REST_TIMER_CHANNEL_ID = 'rest-timer';
+// Bumped from 'rest-timer' → 'rest-timer-v2': the original channel was created
+// with `sound: 'default'`, which expo-notifications interprets as a *custom*
+// sound file named "default" (→ "Custom sound 'default' not found" error).
+// Android notification channels are immutable after creation, so correcting the
+// sound config requires a fresh channel id, not just editing the old one.
+const REST_TIMER_CHANNEL_ID = 'rest-timer-v2';
 
 /**
  * Idempotently creates the Android notification channel used for rest-timer
@@ -27,11 +32,14 @@ const REST_TIMER_CHANNEL_ID = 'rest-timer';
  * to call multiple times; `setNotificationChannelAsync` upserts by id.
  */
 export async function ensureNotificationChannel(): Promise<void> {
+  // `sound` intentionally omitted → the channel uses the OS default
+  // notification sound. Passing the string 'default' would make
+  // expo-notifications search for a bundled custom sound file named "default"
+  // and throw; `null` would make the channel silent.
   await Notifications.setNotificationChannelAsync(REST_TIMER_CHANNEL_ID, {
     name: 'Rest timer',
     importance: Notifications.AndroidImportance.HIGH,
     vibrationPattern: [0, 250, 250, 250],
-    sound: 'default',
   });
 }
 
