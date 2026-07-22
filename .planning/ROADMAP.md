@@ -14,7 +14,7 @@ The journey runs from a durable offline data foundation, through the fast crash-
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Scaffold & Data Foundation** - Offline-first SQLite foundation with safe migrations and a searchable exercise library (6 plans + gap closure GAP-1..4; device UAT all 7 tests pass 2026-07-21, see 01-UAT.md)
-- [ ] **Phase 2: Core Logging (Active Workout)** - Fast, crash-safe set logging with rest timer and workout history
+- [x] **Phase 2: Core Logging (Active Workout)** - Fast, crash-safe set logging with rest timer and workout history (completed 2026-07-22)
 - [ ] **Phase 3: Templates, Folders & Calculators** - Reusable workout templates plus plate/1RM/warm-up calculators
 - [ ] **Phase 4: Stats & Charts** - Per-exercise progress charts, weekly volume, and a live-computed PR feed
 - [ ] **Phase 5: Body Measurements** - Body measurement logging and trend graphs
@@ -96,7 +96,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 02-07-PLAN.md — History (list + month calendar + detail) + edit-past-workout reuse + start-from-history
+- [x] 02-07-PLAN.md — History (list + month calendar + detail) + edit-past-workout reuse + start-from-history
 
 ### Phase 3: Templates, Folders & Calculators
 
@@ -196,7 +196,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Scaffold & Data Foundation | 6/6 | Complete   | 2026-07-21 |
-| 2. Core Logging (Active Workout) | 6/7 | In Progress|  |
+| 2. Core Logging (Active Workout) | 7/7 | Complete   | 2026-07-22 |
 | 3. Templates, Folders & Calculators | 0/TBD | Not started | - |
 | 4. Stats & Charts | 0/TBD | Not started | - |
 | 5. Body Measurements | 0/TBD | Not started | - |

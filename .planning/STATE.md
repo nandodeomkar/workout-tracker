@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 02-06-PLAN.md
-last_updated: "2026-07-22T04:12:49.334Z"
+status: verifying
+stopped_at: Completed 02-07-PLAN.md
+last_updated: "2026-07-22T04:31:51.576Z"
 last_activity: 2026-07-21 -- Phase 02 execution started
 progress:
   total_phases: 8
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 13
-  completed_plans: 12
-  percent: 13
+  completed_plans: 13
+  percent: 25
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-07-19)
 
 Phase: 02 (core-logging-active-workout) — EXECUTING
 Plan: 7 of 7
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-21 -- Phase 02 execution started
 
 Progress: [█░░░░░░░░░] 13% (1/8 phases)
@@ -63,6 +63,7 @@ Progress: [█░░░░░░░░░] 13% (1/8 phases)
 | Phase 02-core-logging-active-workout P04 | 28min | 3 tasks | 9 files |
 | Phase 02-core-logging-active-workout P05 | 20min | 3 tasks | 6 files |
 | Phase 02-core-logging-active-workout P06 | 35min | 3 tasks | 9 files |
+| Phase 02-core-logging-active-workout P07 | 18min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -96,6 +97,9 @@ Recent decisions affecting current work:
 - [Phase 02-core-logging-active-workout]: setExerciseRestOverride validates rest seconds (non-negative integer, capped at 1800s) before the parameterized update — T-02-15 tampering mitigation for untrusted numeric input reaching a DB write
 - [Phase 02-core-logging-active-workout]: Notification scheduling errors caught and surfaced only as notificationsDenied state, never thrown — Keeps LOG-03 non-blocking end-to-end -- logging must never be gated by notification failures
 - [Phase 02-core-logging-active-workout]: Rest notification is cancelled on active-workout screen unmount via a cleanup effect reading the store directly — Prevents a stale alert firing after Discard/Finish end a session (T-02-16)
+- [Phase 02-core-logging-active-workout]: Extracted lib/duration.ts#formatDurationMs as a shared pure formatter instead of a third inline duplicate of the Finish/summary screen's local duration logic
+- [Phase 02-core-logging-active-workout]: Calendar day bucketing (History tab) computed in UTC to exactly match loadWorkoutsInMonth's Date.UTC month-boundary query
+- [Phase 02-core-logging-active-workout]: Added a minimal placeholder history/[workoutId].tsx ahead of its full implementation so expo-router typed-routes could type-check Task 2's router.push calls before Task 3 landed
 
 ### Pending Todos
 
@@ -116,6 +120,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-22T04:12:49.318Z
-Stopped at: Completed 02-06-PLAN.md
+Last session: 2026-07-22T04:31:51.552Z
+Stopped at: Completed 02-07-PLAN.md
 Resume file: None
