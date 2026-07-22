@@ -453,17 +453,19 @@ This is a design sketch, not a locked implementation — the planner should veri
 
 **Note on the two pinned charting packages:** their names, versions, and rationale come from `CLAUDE.md` (this project's own approved, already-registry-verified tech stack document — not from this session's WebSearch/training data), so they are treated as `[CITED: CLAUDE.md]`/`[VERIFIED: npm registry]` rather than `[ASSUMED]` throughout this document; the peer-dependency and native-rebuild facts around them were independently re-verified in this session via direct `npm view` calls and one official Expo docs fetch.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Exact `ExerciseRecordBoard` assembly and StrengthLog-style rep range to track**
    - What we know: StrengthLog-style rep-max boards typically show a record only for rep counts the user has actually logged (D-08 says "best weight at each rep count 1RM, 3RM, 5RM…"), not a synthetic 1-30 grid.
    - What's unclear: Whether to show every distinct rep count logged (could be noisy — e.g., 1, 2, 3, 4, 5, 6, 7, 8...) or curate to a canonical subset (1/3/5/8/10/12, StrengthLog's actual convention).
    - Recommendation: Planner/executor discretion per CONTEXT.md's "Claude's Discretion" — recommend curating to a small canonical rep-count list (e.g., 1/3/5/8/10/12) for the record board display, since that's closer to the StrengthLog reference feel cited in CONTEXT.md's Specific Ideas, while still computing (and could store internally) records at every distinct rep count logged for the PR-event feed.
+   - **RESOLVED:** Adopted the curated canonical rep-max list `[1,3,5,8,10,12]` for the record-board display — the per-exercise record board renders only these rep counts, omitting any never logged (Plan 04-05). The underlying all-history scan (Plan 04-04, `computeAllTimeRecords`) still detects a PR event at *every* distinct rep count logged, so the recent PR feed is not narrowed by this display curation. Curation is a presentation choice at the board layer only.
 
 2. **Range chips (3M/1Y/All, D-06) — filtered client-side after full fetch, or a bounded query?**
    - What we know: Default window is all-time; chips filter to 3M/1Y. D-07's per-workout aggregation already bounds the series to one point per session (small N even at "All").
    - What's unclear: Whether it's simpler to fetch all-time once and filter client-side (cheap given D-07's point-count bound) vs. re-querying per chip tap.
    - Recommendation: Fetch all-time once per exercise-chart open, filter client-side in the pure `buildChartSeries`/date-range step — avoids redundant DB round-trips for a dataset already proven small (see STAT-04). This is the simpler implementation and should be the default unless STAT-04 timing proves otherwise.
+   - **RESOLVED:** Adopted client-side range filtering — the per-exercise chart fetches the all-time series once per open (`db/stats.ts#loadExerciseChartSets` → `buildChartSeries`) and the 3M/1Y/All chips filter the already-fetched points client-side (Plan 04-02). No per-chip DB re-query; STAT-04's timed assertions (Plan 04-06) cover the fetch+reduce path this decision leans on.
 
 ## Environment Availability
 
