@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-05-PLAN.md
-last_updated: "2026-07-22T03:24:37.499Z"
+stopped_at: Completed 02-06-PLAN.md
+last_updated: "2026-07-22T04:12:49.334Z"
 last_activity: 2026-07-21 -- Phase 02 execution started
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 13
-  completed_plans: 11
+  completed_plans: 12
   percent: 13
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-07-19)
 ## Current Position
 
 Phase: 02 (core-logging-active-workout) — EXECUTING
-Plan: 6 of 7
+Plan: 7 of 7
 Status: Ready to execute
 Last activity: 2026-07-21 -- Phase 02 execution started
 
@@ -62,6 +62,7 @@ Progress: [█░░░░░░░░░] 13% (1/8 phases)
 | Phase 02-core-logging-active-workout P03 | 20min | 3 tasks | 3 files |
 | Phase 02-core-logging-active-workout P04 | 28min | 3 tasks | 9 files |
 | Phase 02-core-logging-active-workout P05 | 20min | 3 tasks | 6 files |
+| Phase 02-core-logging-active-workout P06 | 35min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,9 @@ Recent decisions affecting current work:
 - [Phase ?]: GestureHandlerRootView added to app/_layout.tsx (not declared in the plan's files_modified) — required once app-wide for any gesture-handler use; without it the drag gesture silently fails to receive touch events
 - [Phase ?]: Replace-with-logged-sets flow performs remove+add at the same array index (position), a new workout_exercises row — never a silent exercise_id UPDATE that would reattribute already-logged sets (FLAG-1)
 - [Phase ?]: Drag-reorder computes target index once, on gesture release, from each card's last-measured onLayout position — not a live cross-card reflow during the drag — a scoped simplification within planner/executor discretion (D-16)
+- [Phase 02-core-logging-active-workout]: setExerciseRestOverride validates rest seconds (non-negative integer, capped at 1800s) before the parameterized update — T-02-15 tampering mitigation for untrusted numeric input reaching a DB write
+- [Phase 02-core-logging-active-workout]: Notification scheduling errors caught and surfaced only as notificationsDenied state, never thrown — Keeps LOG-03 non-blocking end-to-end -- logging must never be gated by notification failures
+- [Phase 02-core-logging-active-workout]: Rest notification is cancelled on active-workout screen unmount via a cleanup effect reading the store directly — Prevents a stale alert firing after Discard/Finish end a session (T-02-16)
 
 ### Pending Todos
 
@@ -112,6 +116,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-22T03:24:37.487Z
-Stopped at: Completed 02-05-PLAN.md
+Last session: 2026-07-22T04:12:49.318Z
+Stopped at: Completed 02-06-PLAN.md
 Resume file: None

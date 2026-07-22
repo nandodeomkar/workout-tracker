@@ -16,7 +16,7 @@
 
 - [x] **LOG-01**: User can start a workout (empty or from template) and log sets with reps and weight in ≤2 taps per set, pre-filled from last performance
 - [x] **LOG-02**: Every completed set is persisted immediately; an in-progress workout survives app kill, crash, or phone restart
-- [ ] **LOG-03**: User gets a rest timer with auto-start on set completion and a notification that fires reliably with screen off
+- [x] **LOG-03**: User gets a rest timer with auto-start on set completion and a notification that fires reliably with screen off
 - [x] **LOG-04**: User can add, reorder, replace, and remove exercises during an active workout
 - [x] **LOG-05**: User can finish or discard a workout and see a summary (duration, volume, PRs hit)
 - [x] **LOG-06**: User can enter weights in kg or lb; values stored canonically in kg
@@ -99,7 +99,7 @@ Which phases cover which requirements. Filled by roadmap creation.
 | EXER-02 | Phase 1 | Complete |
 | LOG-01 | Phase 2 | Complete |
 | LOG-02 | Phase 2 | Complete |
-| LOG-03 | Phase 2 | Pending |
+| LOG-03 | Phase 2 | Complete |
 | LOG-04 | Phase 2 | Complete |
 | LOG-05 | Phase 2 | Complete |
 | LOG-06 | Phase 2 | Complete |
