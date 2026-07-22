@@ -134,3 +134,7 @@ None - no external service configuration required.
 ---
 *Phase: 03-templates-folders-calculators*
 *Completed: 2026-07-22*
+
+## Self-Check: PASSED
+
+All created files verified present on disk; all task commit hashes (18cce23, 0b2690a, ad7ad52) and the summary commit (c77a2e3) verified present in git log.
