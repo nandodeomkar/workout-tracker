@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 
 import { db } from '../../db/client';
 import { getSetting, setSetting } from '../../db/settings';
@@ -28,6 +28,7 @@ const MAX_BAR_WEIGHT = 500;
 type Unit = 'kg' | 'lb';
 
 export default function SettingsScreen() {
+  const router = useRouter();
   const [units, setUnits] = useState<Unit>('kg');
   const [defaultRestSeconds, setDefaultRestSeconds] = useState<number>(DEFAULT_REST_SECONDS);
   const [barWeightKg, setBarWeightKg] = useState<number>(DEFAULT_BAR_WEIGHT_KG);
@@ -158,6 +159,24 @@ export default function SettingsScreen() {
         </View>
       </View>
 
+      <View style={styles.section}>
+        <Text style={styles.label}>Tools</Text>
+        <Pressable
+          onPress={() => router.push('/tools/plate-calculator')}
+          accessibilityRole="button"
+          style={styles.toolRow}
+        >
+          <Text style={styles.toolRowText}>Plate calculator</Text>
+        </Pressable>
+        <Pressable
+          onPress={() => router.push('/tools/one-rm-calculator')}
+          accessibilityRole="button"
+          style={styles.toolRow}
+        >
+          <Text style={styles.toolRowText}>1RM calculator</Text>
+        </Pressable>
+      </View>
+
       <Text style={styles.caption}>More settings coming soon</Text>
     </View>
   );
@@ -256,5 +275,19 @@ const styles = StyleSheet.create({
     ...theme.typography.caption,
     color: theme.colors.textMuted,
     marginTop: theme.spacing.md,
+  },
+  toolRow: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.radius.md,
+    backgroundColor: theme.colors.surfaceAlt,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border,
+  },
+  toolRowText: {
+    ...theme.typography.body,
+    color: theme.colors.text,
   },
 });

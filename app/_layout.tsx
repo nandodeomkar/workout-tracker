@@ -59,6 +59,10 @@ export default function RootLayout() {
         {/* Sibling to (tabs), not nested inside it — this is the "full-screen
             over tabs" mechanism for the active-workout session (D-15). */}
         <Stack.Screen name="active-workout" />
+        {/* Standalone Tools group (Plate/1RM calculators, UTIL-01/UTIL-02) —
+            another sibling, reached via router.push from More, never a
+            bottom tab (Open Question 1). */}
+        <Stack.Screen name="tools" />
       </Stack>
     </GestureHandlerRootView>
   );
