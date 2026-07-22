@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-02-PLAN.md
-last_updated: "2026-07-21T19:50:33.334Z"
+stopped_at: Completed 02-03-PLAN.md
+last_updated: "2026-07-22T02:45:42.556Z"
 last_activity: 2026-07-21 -- Phase 02 execution started
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 13
-  completed_plans: 8
+  completed_plans: 9
   percent: 13
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-07-19)
 ## Current Position
 
 Phase: 02 (core-logging-active-workout) — EXECUTING
-Plan: 3 of 7
+Plan: 4 of 7
 Status: Ready to execute
 Last activity: 2026-07-21 -- Phase 02 execution started
 
@@ -59,6 +59,7 @@ Progress: [█░░░░░░░░░] 13% (1/8 phases)
 | Phase 01-scaffold-data-foundation P05 | 15min | 3 tasks | 5 files |
 | Phase 02-core-logging-active-workout P01 | 4min | 3 tasks | 8 files |
 | Phase 02-core-logging-active-workout P02 | 10min | 3 tasks | 9 files |
+| Phase 02-core-logging-active-workout P03 | 20min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -81,6 +82,8 @@ Recent decisions affecting current work:
 - [Phase ?]: detectPRs computes session-best-weight and session-best-e1RM per exercise as independent reductions, since the heaviest set and best-e1RM set are not always the same set
 - [Phase 02-core-logging-active-workout]: Rewrote migration-upgrade tests to use raw sqlite statements instead of Drizzle, since schema.ts always describes the current schema head and Drizzle's insert references every declared column
 - [Phase 02-core-logging-active-workout]: loadLastPerformance filters workouts.finishedAt IS NOT NULL so an in-progress workout's own empty row never wins the pre-fill query
+- [Phase ?]: [Phase 02-core-logging-active-workout]: db.transaction() callbacks must be plain synchronous functions using .run() (not async/await) because both drizzle-orm/better-sqlite3 and drizzle-orm/expo-sqlite construct BaseSQLiteDatabase with resultKind: sync
+- [Phase ?]: [Phase 02-core-logging-active-workout]: replaceWorkoutExercise throws (does not silently reattribute) once the card has any logged sets, per RESEARCH.md FLAG-1/Pitfall 3 resolved Open Question #1 option (a)
 
 ### Pending Todos
 
@@ -101,6 +104,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-21T19:50:33.322Z
-Stopped at: Completed 02-02-PLAN.md
+Last session: 2026-07-22T02:45:42.542Z
+Stopped at: Completed 02-03-PLAN.md
 Resume file: None

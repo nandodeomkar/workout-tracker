@@ -17,14 +17,14 @@
 - [x] **LOG-01**: User can start a workout (empty or from template) and log sets with reps and weight in ≤2 taps per set, pre-filled from last performance
 - [x] **LOG-02**: Every completed set is persisted immediately; an in-progress workout survives app kill, crash, or phone restart
 - [ ] **LOG-03**: User gets a rest timer with auto-start on set completion and a notification that fires reliably with screen off
-- [ ] **LOG-04**: User can add, reorder, replace, and remove exercises during an active workout
+- [x] **LOG-04**: User can add, reorder, replace, and remove exercises during an active workout
 - [x] **LOG-05**: User can finish or discard a workout and see a summary (duration, volume, PRs hit)
 - [x] **LOG-06**: User can enter weights in kg or lb; values stored canonically in kg
 
 ### History
 
-- [ ] **HIST-01**: User can view workout history as a list and calendar
-- [ ] **HIST-02**: User can view and edit any past workout (sets, reps, weights, exercises)
+- [x] **HIST-01**: User can view workout history as a list and calendar
+- [x] **HIST-02**: User can view and edit any past workout (sets, reps, weights, exercises)
 
 ### Templates
 
@@ -100,11 +100,11 @@ Which phases cover which requirements. Filled by roadmap creation.
 | LOG-01 | Phase 2 | Complete |
 | LOG-02 | Phase 2 | Complete |
 | LOG-03 | Phase 2 | Pending |
-| LOG-04 | Phase 2 | Pending |
+| LOG-04 | Phase 2 | Complete |
 | LOG-05 | Phase 2 | Complete |
 | LOG-06 | Phase 2 | Complete |
-| HIST-01 | Phase 2 | Pending |
-| HIST-02 | Phase 2 | Pending |
+| HIST-01 | Phase 2 | Complete |
+| HIST-02 | Phase 2 | Complete |
 | TMPL-01 | Phase 3 | Pending |
 | TMPL-02 | Phase 3 | Pending |
 | TMPL-03 | Phase 3 | Pending |
