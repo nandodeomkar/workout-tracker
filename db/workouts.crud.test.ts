@@ -16,6 +16,7 @@ import * as schema from './schema';
 import { exercises, sets, workoutExercises, workouts } from './schema';
 import {
   addWorkoutExercise,
+  deleteSet,
   discardWorkout,
   findResumableWorkout,
   finishWorkout,
@@ -308,6 +309,58 @@ describe('discardWorkout', () => {
     expect(otherDetail?.workout.id).toBe(other.id);
     expect(otherDetail?.exercises).toHaveLength(1);
     expect(otherDetail?.exercises[0].sets).toHaveLength(1);
+  });
+});
+
+describe('deleteSet', () => {
+  let db: ReturnType<typeof createTestDb>['db'];
+
+  beforeEach(() => {
+    ({ db } = createTestDb());
+  });
+
+  it('deletes exactly the targeted set and leaves siblings intact', async () => {
+    const exercise = await seedExercise(db);
+    const workout = await startWorkout(db);
+    const workoutExercise = await addWorkoutExercise(db, workout.id, exercise.id, 0);
+    const first = await insertSet(db, { workoutExerciseId: workoutExercise.id, setNumber: 1, weightKg: 60, reps: 5 });
+    const second = await insertSet(db, { workoutExerciseId: workoutExercise.id, setNumber: 2, weightKg: 65, reps: 5 });
+
+    await deleteSet(db, first.id);
+
+    const detail = await loadWorkoutDetail(db, workout.id);
+    expect(detail?.exercises).toHaveLength(1);
+    expect(detail?.exercises[0].sets).toHaveLength(1);
+    expect(detail?.exercises[0].sets[0].id).toBe(second.id);
+  });
+
+  it('is crash-safe: a fresh Drizzle instance re-reads the delete', async () => {
+    const { sqlite, db: writeDb } = createTestDb();
+    const exercise = await seedExercise(writeDb);
+    const workout = await startWorkout(writeDb);
+    const workoutExercise = await addWorkoutExercise(writeDb, workout.id, exercise.id, 0);
+    const first = await insertSet(writeDb, {
+      workoutExerciseId: workoutExercise.id,
+      setNumber: 1,
+      weightKg: 60,
+      reps: 5,
+    });
+    const second = await insertSet(writeDb, {
+      workoutExerciseId: workoutExercise.id,
+      setNumber: 2,
+      weightKg: 65,
+      reps: 5,
+    });
+
+    await deleteSet(writeDb, first.id);
+
+    // Simulate a crash + cold restart: open a SECOND, independent Drizzle
+    // instance on the same underlying sqlite connection and re-select.
+    const freshDb = drizzle(sqlite, { schema });
+    const rows = await freshDb.select().from(schema.sets);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0].id).toBe(second.id);
   });
 });
 

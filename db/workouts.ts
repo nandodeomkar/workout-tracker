@@ -222,6 +222,21 @@ export async function updateSet(db: AnyDrizzleDb, setId: number, patch: UpdateSe
 }
 
 /**
+ * Un-logs a single set (Gap 3/D-01 un-deferred): deletes exactly the one
+ * targeted `sets` row by id. Unlike `removeWorkoutExercise` (which removes
+ * the whole card), this never touches the parent `workout_exercises` row or
+ * any sibling sets, and it never renumbers the siblings that remain — this
+ * module never renumbers on removal (see `removeWorkoutExercise`), and
+ * downstream volume/PR are computed live from the remaining rows, so a
+ * non-contiguous `set_number` is already tolerated end-to-end. `setId` is an
+ * internal integer primary key (not user free-text), so no validation beyond
+ * the parameterized delete itself is needed (T-02-03).
+ */
+export async function deleteSet(db: AnyDrizzleDb, setId: number): Promise<void> {
+  await db.delete(sets).where(eq(sets.id, setId));
+}
+
+/**
  * Finds the most recent FINISHED performance of `exerciseId` (across all
  * history) and returns its sets, ordered by set number (LOG-01/D-06
  * pre-fill). An in-progress workout's own rows for this exercise are never
