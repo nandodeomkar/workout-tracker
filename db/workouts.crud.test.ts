@@ -13,9 +13,12 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { createTestDb } from './test/fixture';
 import * as schema from './schema';
-import { exercises, sets } from './schema';
+import { exercises, sets, workoutExercises, workouts } from './schema';
 import {
   addWorkoutExercise,
+  discardWorkout,
+  findResumableWorkout,
+  finishWorkout,
   insertSet,
   loadWorkoutDetail,
   removeWorkoutExercise,
@@ -260,6 +263,71 @@ describe('removeWorkoutExercise', () => {
 
     const orphanSets = await db.select().from(sets).where(eq(sets.workoutExerciseId, workoutExercise.id));
     expect(orphanSets).toHaveLength(0);
+  });
+});
+
+describe('discardWorkout', () => {
+  let db: ReturnType<typeof createTestDb>['db'];
+
+  beforeEach(() => {
+    ({ db } = createTestDb());
+  });
+
+  it('hard-deletes all sets, workout_exercises, and the workout row (LOG-05/D-11/Pitfall 2)', async () => {
+    const exercise = await seedExercise(db);
+    const workout = await startWorkout(db);
+    const we1 = await addWorkoutExercise(db, workout.id, exercise.id, 0);
+    const we2 = await addWorkoutExercise(db, workout.id, exercise.id, 1);
+    await insertSet(db, { workoutExerciseId: we1.id, setNumber: 1, weightKg: 60, reps: 5 });
+    await insertSet(db, { workoutExerciseId: we2.id, setNumber: 1, weightKg: 40, reps: 8 });
+
+    await discardWorkout(db, workout.id);
+
+    const remainingSets = await db.select().from(sets);
+    const remainingWorkoutExercises = await db.select().from(workoutExercises);
+    const remainingWorkout = await db.select().from(workouts).where(eq(workouts.id, workout.id));
+
+    expect(remainingSets).toHaveLength(0);
+    expect(remainingWorkoutExercises).toHaveLength(0);
+    expect(remainingWorkout).toHaveLength(0);
+  });
+
+  it('does not affect an unrelated workout (no over-broad delete)', async () => {
+    const exercise = await seedExercise(db);
+    const target = await startWorkout(db, { name: 'Discard me' });
+    const targetWe = await addWorkoutExercise(db, target.id, exercise.id, 0);
+    await insertSet(db, { workoutExerciseId: targetWe.id, setNumber: 1, weightKg: 60, reps: 5 });
+
+    const other = await startWorkout(db, { name: 'Keep me' });
+    const otherWe = await addWorkoutExercise(db, other.id, exercise.id, 0);
+    await insertSet(db, { workoutExerciseId: otherWe.id, setNumber: 1, weightKg: 100, reps: 3 });
+
+    await discardWorkout(db, target.id);
+
+    const otherDetail = await loadWorkoutDetail(db, other.id);
+    expect(otherDetail?.workout.id).toBe(other.id);
+    expect(otherDetail?.exercises).toHaveLength(1);
+    expect(otherDetail?.exercises[0].sets).toHaveLength(1);
+  });
+});
+
+describe('finishWorkout', () => {
+  let db: ReturnType<typeof createTestDb>['db'];
+
+  beforeEach(() => {
+    ({ db } = createTestDb());
+  });
+
+  it('sets finishedAt and makes the workout non-resumable (LOG-05/D-10)', async () => {
+    const workout = await startWorkout(db);
+    expect(workout.finishedAt).toBeNull();
+
+    const finished = await finishWorkout(db, workout.id);
+    expect(finished.finishedAt).not.toBeNull();
+    expect(typeof finished.finishedAt).toBe('string');
+
+    const resumable = await findResumableWorkout(db);
+    expect(resumable).toBeUndefined();
   });
 });
 

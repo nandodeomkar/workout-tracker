@@ -10,7 +10,7 @@
 // predicate below is built via Drizzle's query-builder helpers, never a
 // string concatenated from user input.
 
-import { and, asc, desc, eq, isNotNull, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, isNotNull, isNull } from 'drizzle-orm';
 import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core';
 
 import {
@@ -346,4 +346,44 @@ export async function removeWorkoutExercise(db: AnyDrizzleDb, workoutExerciseId:
     tx.delete(sets).where(eq(sets.workoutExerciseId, workoutExerciseId)).run();
     tx.delete(workoutExercises).where(eq(workoutExercises.id, workoutExerciseId)).run();
   });
+}
+
+/**
+ * Hard-deletes a workout and everything under it — `sets`, then
+ * `workout_exercises`, then the `workouts` row itself, children before
+ * parent (LOG-05/D-11/Pitfall 2). This is NOT a soft-archive/status-flag
+ * (unlike `exercises.setArchived`) — matches the UI-SPEC's "can't be
+ * undone" discard-copy contract exactly. Runs as a single transaction (see
+ * `reorderWorkoutExercises` doc comment for why the callback is
+ * synchronous).
+ */
+export async function discardWorkout(db: AnyDrizzleDb, workoutId: number): Promise<void> {
+  const weRows = await db
+    .select({ id: workoutExercises.id })
+    .from(workoutExercises)
+    .where(eq(workoutExercises.workoutId, workoutId));
+  const weIds = weRows.map((row) => row.id);
+
+  db.transaction((tx) => {
+    if (weIds.length > 0) {
+      tx.delete(sets).where(inArray(sets.workoutExerciseId, weIds)).run();
+    }
+    tx.delete(workoutExercises).where(eq(workoutExercises.workoutId, workoutId)).run();
+    tx.delete(workouts).where(eq(workouts.id, workoutId)).run();
+  });
+}
+
+/**
+ * Ends a workout session by stamping `finished_at` = now (LOG-05/D-10).
+ * Duration (finishedAt − startedAt) is computed at render time from these
+ * two timestamps, not stored.
+ */
+export async function finishWorkout(db: AnyDrizzleDb, workoutId: number): Promise<Workout> {
+  const [updated] = await db
+    .update(workouts)
+    .set({ finishedAt: new Date().toISOString() })
+    .where(eq(workouts.id, workoutId))
+    .returning();
+
+  return updated;
 }
