@@ -20,6 +20,7 @@ import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core';
 
 import { exercises, sets, workoutExercises, workouts } from './schema';
 import type { ChartSet } from '../lib/chartSeries';
+import type { HistoricalSet } from '../lib/records';
 import type { WeeklyVolumeSet } from '../lib/weeklyVolume';
 
 type AnyDrizzleDb = BaseSQLiteDatabase<'async' | 'sync', any, any>;
@@ -111,4 +112,30 @@ export async function loadExercisesWithSets(db: AnyDrizzleDb): Promise<TrainedEx
   }
 
   return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/**
+ * Fetches EVERY set (incl. warmups — lib/records.ts#computeAllTimeRecords
+ * filters, not this query) across ALL exercises from FINISHED workouts,
+ * ordered ascending by workout start date with a stable secondary order by
+ * set id (STAT-03/D-11 — computeAllTimeRecords requires pre-sorted
+ * chronological input). One query, no per-exercise loop, so this does not
+ * become an N+1 scan at all-history scale (RESEARCH.md STAT-04 note on
+ * loadPriorBests' N+1 shape not scaling here). Returns `[]` on an empty DB.
+ */
+export async function loadAllHistorySets(db: AnyDrizzleDb): Promise<HistoricalSet[]> {
+  return db
+    .select({
+      exerciseId: workoutExercises.exerciseId,
+      workoutId: workoutExercises.workoutId,
+      startedAt: workouts.startedAt,
+      weightKg: sets.weightKg,
+      reps: sets.reps,
+      type: sets.type,
+    })
+    .from(sets)
+    .innerJoin(workoutExercises, eq(sets.workoutExerciseId, workoutExercises.id))
+    .innerJoin(workouts, eq(workoutExercises.workoutId, workouts.id))
+    .where(isNotNull(workouts.finishedAt))
+    .orderBy(asc(workouts.startedAt), asc(sets.id));
 }
