@@ -169,6 +169,16 @@ export default function ExerciseDetailScreen() {
         </Text>
       </View>
 
+      <Pressable
+        onPress={() =>
+          router.push({ pathname: '/stats/[exerciseId]', params: { exerciseId: String(exerciseId) } })
+        }
+        accessibilityRole="button"
+        style={styles.viewProgressButton}
+      >
+        <Text style={styles.viewProgressText}>View progress</Text>
+      </Pressable>
+
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         {exercise.archived ? (
           <View style={styles.archivedBanner}>
@@ -299,6 +309,16 @@ const styles = StyleSheet.create({
     ...theme.typography.title,
     color: theme.colors.text,
     flexShrink: 1,
+  },
+  viewProgressButton: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.sm,
+    paddingBottom: theme.spacing.xs,
+  },
+  viewProgressText: {
+    ...theme.typography.caption,
+    color: theme.colors.accent,
+    fontWeight: '700',
   },
   container: {
     padding: theme.spacing.lg,
