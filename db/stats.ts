@@ -15,11 +15,12 @@
 // lib/chartSeries.ts#buildChartSeries reduce them in JS, calling the shared
 // estimate1RM/workingSetVolume formulas.
 
-import { and, asc, eq, isNotNull } from 'drizzle-orm';
+import { and, asc, eq, gte, isNotNull } from 'drizzle-orm';
 import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core';
 
-import { sets, workoutExercises, workouts } from './schema';
+import { exercises, sets, workoutExercises, workouts } from './schema';
 import type { ChartSet } from '../lib/chartSeries';
+import type { WeeklyVolumeSet } from '../lib/weeklyVolume';
 
 type AnyDrizzleDb = BaseSQLiteDatabase<'async' | 'sync', any, any>;
 
@@ -45,4 +46,69 @@ export async function loadExerciseChartSets(db: AnyDrizzleDb, exerciseId: number
     .innerJoin(workouts, eq(workoutExercises.workoutId, workouts.id))
     .where(and(eq(workoutExercises.exerciseId, exerciseId), isNotNull(workouts.finishedAt)))
     .orderBy(asc(workouts.startedAt));
+}
+
+/**
+ * Fetches non-warmup-eligible sets (warmup rows ARE included — filtering is
+ * lib/weeklyVolume.ts#buildWeeklyVolume's job, not this query's) from
+ * FINISHED workouts started on/after `sinceIso`, each row joined to its
+ * exercise's `muscle_group` (STAT-02/D-13). `sinceIso` is a JS-computed
+ * bound parameter via Drizzle's `gte`, never string-interpolated (T-04-02).
+ * Ordered ascending by workout start date. Returns `[]` on an empty DB or
+ * when nothing falls in the window.
+ */
+export async function loadWeeklyVolumeSets(db: AnyDrizzleDb, sinceIso: string): Promise<WeeklyVolumeSet[]> {
+  return db
+    .select({
+      startedAt: workouts.startedAt,
+      weightKg: sets.weightKg,
+      reps: sets.reps,
+      type: sets.type,
+      muscleGroup: exercises.muscleGroup,
+    })
+    .from(sets)
+    .innerJoin(workoutExercises, eq(sets.workoutExerciseId, workoutExercises.id))
+    .innerJoin(workouts, eq(workoutExercises.workoutId, workouts.id))
+    .innerJoin(exercises, eq(workoutExercises.exerciseId, exercises.id))
+    .where(and(isNotNull(workouts.finishedAt), gte(workouts.startedAt, sinceIso)))
+    .orderBy(asc(workouts.startedAt));
+}
+
+export interface TrainedExercise {
+  id: number;
+  name: string;
+  muscleGroup: string;
+}
+
+/**
+ * Distinct exercises with at least one set logged in a FINISHED workout
+ * (feeds the Section C exercise picker, D-03a — never-trained exercises must
+ * not appear). Dedup happens in JS (an exercise trained across many
+ * workouts/sets would otherwise repeat once per matching row); sort is
+ * case-insensitive by name via JS `localeCompare`, mirroring
+ * `db/templates.ts#loadFolderNames`'s precedent so this query stays
+ * identical across both Drizzle drivers this module supports. Returns `[]`
+ * on an empty DB.
+ */
+export async function loadExercisesWithSets(db: AnyDrizzleDb): Promise<TrainedExercise[]> {
+  const rows = await db
+    .select({
+      id: exercises.id,
+      name: exercises.name,
+      muscleGroup: exercises.muscleGroup,
+    })
+    .from(sets)
+    .innerJoin(workoutExercises, eq(sets.workoutExerciseId, workoutExercises.id))
+    .innerJoin(workouts, eq(workoutExercises.workoutId, workouts.id))
+    .innerJoin(exercises, eq(workoutExercises.exerciseId, exercises.id))
+    .where(isNotNull(workouts.finishedAt));
+
+  const byId = new Map<number, TrainedExercise>();
+  for (const row of rows) {
+    if (!byId.has(row.id)) {
+      byId.set(row.id, row);
+    }
+  }
+
+  return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
 }
