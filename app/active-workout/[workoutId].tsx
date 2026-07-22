@@ -34,7 +34,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { ExerciseCard, type SetRowViewModel } from '../../components/ExerciseCard';
 import { ExerciseRow } from '../../components/ExerciseRow';
@@ -49,6 +49,8 @@ import { getSetting } from '../../db/settings';
 import type { Exercise, Workout } from '../../db/schema';
 import {
   addWorkoutExercise,
+  discardWorkout,
+  finishWorkout,
   insertSet,
   loadLastPerformance,
   loadWorkoutDetail,
@@ -126,11 +128,13 @@ export default function ActiveWorkoutScreen() {
   const { workoutId: workoutIdParam } = useLocalSearchParams<{ workoutId: string }>();
   const workoutId = Number(workoutIdParam);
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const mode = useActiveWorkout((state) => state.mode);
   const restEndsAt = useActiveWorkout((state) => state.restEndsAt);
   const restNotificationId = useActiveWorkout((state) => state.restNotificationId);
   const setRestEndsAt = useActiveWorkout((state) => state.setRestEndsAt);
   const setRestNotificationId = useActiveWorkout((state) => state.setRestNotificationId);
+  const clearActiveWorkout = useActiveWorkout((state) => state.clearActiveWorkout);
 
   const [loading, setLoading] = useState(true);
   const [workout, setWorkout] = useState<Workout | null>(null);
@@ -747,11 +751,49 @@ export default function ActiveWorkoutScreen() {
     };
   }
 
-  // Discard/Finish are rendered now (UI-SPEC app-bar anatomy) but their
-  // confirm dialogs, cascade delete, and summary computation are Plan 06 —
-  // intentionally inert here.
-  const handleDiscardPress = () => {};
-  const handleFinishPress = () => {};
+  // Discard (LOG-05/D-11/Pitfall 2): hard-deletes the session after the
+  // exact "can't be undone" confirm copy, cancels any outstanding rest
+  // notification so no stale alert fires for a discarded session (T-02-16),
+  // clears the ephemeral session store, and returns to the Workout tab.
+  async function doDiscardWorkout() {
+    try {
+      await cancelRestNotification(restNotificationId);
+    } catch {
+      // Non-blocking — discard proceeds regardless of notification cleanup.
+    }
+    try {
+      await discardWorkout(db, workoutId);
+    } catch {
+      notify("Couldn't discard workout. Check your device storage and try again.");
+      return;
+    }
+    clearActiveWorkout();
+    router.replace('/');
+  }
+
+  function handleDiscardPress() {
+    Alert.alert(
+      'Discard this workout?',
+      "All sets logged in this session will be deleted. This can't be undone.",
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Discard', style: 'destructive', onPress: () => void doDiscardWorkout() },
+      ],
+    );
+  }
+
+  // Finish (LOG-05/D-10): stamps finished_at, then replaces (not pushes) to
+  // the summary screen so system back from the summary cannot re-enter the
+  // now-finished session.
+  async function handleFinishPress() {
+    try {
+      await finishWorkout(db, workoutId);
+    } catch {
+      notify("Couldn't finish workout. Check your device storage and try again.");
+      return;
+    }
+    router.replace({ pathname: '/active-workout/summary', params: { workoutId: String(workoutId) } });
+  }
 
   if (loading) {
     return (
