@@ -51,6 +51,9 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="(tabs)" />
+        {/* Sibling to (tabs), not nested inside it — this is the "full-screen
+            over tabs" mechanism for the active-workout session (D-15). */}
+        <Stack.Screen name="active-workout" />
       </Stack>
     </>
   );
