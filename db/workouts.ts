@@ -10,7 +10,7 @@
 // predicate below is built via Drizzle's query-builder helpers, never a
 // string concatenated from user input.
 
-import { and, asc, desc, eq, inArray, isNotNull, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, lt } from 'drizzle-orm';
 import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core';
 
 import {
@@ -22,6 +22,8 @@ import {
   type Workout,
   type WorkoutExercise,
 } from './schema';
+import { estimate1RM } from '../lib/estimate1RM';
+import { workingSetVolume } from '../lib/volume';
 
 type AnyDrizzleDb = BaseSQLiteDatabase<'async' | 'sync', any, any>;
 
@@ -386,4 +388,131 @@ export async function finishWorkout(db: AnyDrizzleDb, workoutId: number): Promis
     .returning();
 
   return updated;
+}
+
+export interface WorkoutHistoryEntry {
+  workout: Workout;
+  exerciseCount: number;
+  totalVolumeKg: number;
+}
+
+/**
+ * Lists finished workouts newest-first with a per-workout exercise count
+ * and total working-set volume (HIST-01) — feeds the History list and the
+ * "start from history" picker (D-04/D-05). Unfinished workouts are never
+ * included. Volume excludes warmup sets via the shared
+ * `lib/volume.ts#workingSetVolume` (do not reimplement that filter here).
+ */
+export async function loadWorkoutHistory(db: AnyDrizzleDb): Promise<WorkoutHistoryEntry[]> {
+  const finished = await db
+    .select()
+    .from(workouts)
+    .where(isNotNull(workouts.finishedAt))
+    .orderBy(desc(workouts.startedAt));
+
+  const entries: WorkoutHistoryEntry[] = [];
+  for (const workout of finished) {
+    const weRows = await db
+      .select({ id: workoutExercises.id })
+      .from(workoutExercises)
+      .where(eq(workoutExercises.workoutId, workout.id));
+
+    let totalVolumeKg = 0;
+    for (const we of weRows) {
+      const setRows = await db
+        .select({ weightKg: sets.weightKg, reps: sets.reps, type: sets.type })
+        .from(sets)
+        .where(eq(sets.workoutExerciseId, we.id));
+      totalVolumeKg += workingSetVolume(setRows);
+    }
+
+    entries.push({ workout, exerciseCount: weRows.length, totalVolumeKg });
+  }
+
+  return entries;
+}
+
+/**
+ * Finished workouts whose `started_at` falls within the given calendar
+ * month (1-indexed: 1=January) — feeds the History calendar's dot markers
+ * (HIST-01/D-12). Bounds are computed in JS as ISO strings and passed as
+ * bound parameters, never string-interpolated (T-02-08).
+ */
+export async function loadWorkoutsInMonth(db: AnyDrizzleDb, year: number, month: number): Promise<Workout[]> {
+  const start = new Date(Date.UTC(year, month - 1, 1)).toISOString();
+  const end = new Date(Date.UTC(year, month, 1)).toISOString();
+
+  return db
+    .select()
+    .from(workouts)
+    .where(and(isNotNull(workouts.finishedAt), gte(workouts.startedAt, start), lt(workouts.startedAt, end)))
+    .orderBy(asc(workouts.startedAt));
+}
+
+export interface PriorBest {
+  exerciseId: number;
+  bestWeightKg: number | null;
+  bestE1RM: number | null;
+}
+
+/**
+ * For each exercise id, the max non-warmup weight and max Epley-1RM
+ * (`lib/estimate1RM.ts`) across sets in FINISHED workouts started strictly
+ * before `beforeWorkoutId`'s own `started_at` (D-10) — excludes the current
+ * workout and anything later. Returns the exact `{ exerciseId, bestWeightKg,
+ * bestE1RM }` shape `lib/prDetection.ts#detectPRs` consumes; `null` means
+ * the exercise has never been performed in prior history.
+ */
+export async function loadPriorBests(
+  db: AnyDrizzleDb,
+  exerciseIds: number[],
+  beforeWorkoutId: number,
+): Promise<PriorBest[]> {
+  if (exerciseIds.length === 0) {
+    return [];
+  }
+
+  const [target] = await db
+    .select({ startedAt: workouts.startedAt })
+    .from(workouts)
+    .where(eq(workouts.id, beforeWorkoutId));
+
+  if (!target) {
+    return exerciseIds.map((exerciseId) => ({ exerciseId, bestWeightKg: null, bestE1RM: null }));
+  }
+
+  const results: PriorBest[] = [];
+  for (const exerciseId of exerciseIds) {
+    const rows = await db
+      .select({ weightKg: sets.weightKg, reps: sets.reps, type: sets.type })
+      .from(sets)
+      .innerJoin(workoutExercises, eq(sets.workoutExerciseId, workoutExercises.id))
+      .innerJoin(workouts, eq(workoutExercises.workoutId, workouts.id))
+      .where(
+        and(
+          eq(workoutExercises.exerciseId, exerciseId),
+          isNotNull(workouts.finishedAt),
+          lt(workouts.startedAt, target.startedAt),
+        ),
+      );
+
+    let bestWeightKg: number | null = null;
+    let bestE1RM: number | null = null;
+    for (const row of rows) {
+      if (row.type === 'warmup') {
+        continue;
+      }
+      if (bestWeightKg === null || row.weightKg > bestWeightKg) {
+        bestWeightKg = row.weightKg;
+      }
+      const e1rm = estimate1RM(row.weightKg, row.reps);
+      if (bestE1RM === null || e1rm > bestE1RM) {
+        bestE1RM = e1rm;
+      }
+    }
+
+    results.push({ exerciseId, bestWeightKg, bestE1RM });
+  }
+
+  return results;
 }
