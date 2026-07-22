@@ -12,9 +12,11 @@ interface TemplateRowProps {
   label: string;
   exerciseCount: number;
   onPress: () => void;
+  /** Opens this template in the builder to edit and re-save it (TMPL-01, UAT Gap 1). */
+  onEdit?: () => void;
 }
 
-export function TemplateRow({ label, exerciseCount, onPress }: TemplateRowProps) {
+export function TemplateRow({ label, exerciseCount, onPress, onEdit }: TemplateRowProps) {
   const exerciseLabel = `${exerciseCount} ${exerciseCount === 1 ? 'exercise' : 'exercises'}`;
 
   return (
@@ -33,6 +35,16 @@ export function TemplateRow({ label, exerciseCount, onPress }: TemplateRowProps)
           {exerciseLabel}
         </Text>
       </View>
+      {onEdit ? (
+        <Pressable
+          onPress={onEdit}
+          accessibilityRole="button"
+          accessibilityLabel={`Edit ${label}`}
+          style={styles.editButton}
+        >
+          <Text style={styles.editButtonText}>✎</Text>
+        </Pressable>
+      ) : null}
       <Text style={styles.chevron}>›</Text>
     </Pressable>
   );
@@ -69,5 +81,15 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     fontSize: 22,
     marginLeft: theme.spacing.xs,
+  },
+  editButton: {
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editButtonText: {
+    ...theme.typography.body,
+    color: theme.colors.textMuted,
   },
 });

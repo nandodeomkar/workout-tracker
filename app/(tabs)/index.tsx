@@ -369,6 +369,12 @@ export default function WorkoutScreen() {
                           label={template.name}
                           exerciseCount={template.exerciseCount}
                           onPress={() => void handlePickTemplate(template.id)}
+                          onEdit={() =>
+                            router.push({
+                              pathname: '/templates/[templateId]',
+                              params: { templateId: String(template.id) },
+                            })
+                          }
                         />
                       ))
                     : null}
