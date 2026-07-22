@@ -172,7 +172,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4; two parallel plans)*
 
-- [ ] 04-05-PLAN.md — Per-exercise record board (curated rep-max + best e1RM, live) on the exercise screen (STAT-03)
+- [x] 04-05-PLAN.md — Per-exercise record board (curated rep-max + best e1RM, live) on the exercise screen (STAT-03)
 - [ ] 04-06-PLAN.md — STAT-04 performance validation: synthetic ~15,600-set history + timed query paths + on-device responsiveness check (STAT-04)
 
 ### Phase 5: Body Measurements
@@ -243,7 +243,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Scaffold & Data Foundation | 6/6 | Complete   | 2026-07-21 |
 | 2. Core Logging (Active Workout) | 7/7 | Complete   | 2026-07-22 |
 | 3. Templates, Folders & Calculators | 8/8 | Complete   | 2026-07-22 |
-| 4. Stats & Charts | 4/6 | In Progress|  |
+| 4. Stats & Charts | 5/6 | In Progress|  |
 | 5. Body Measurements | 0/TBD | Not started | - |
 | 6. Programs & Progression | 0/TBD | Not started | - |
 | 7. Backup & Export | 0/TBD | Not started | - |

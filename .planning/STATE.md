@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-04-PLAN.md
-last_updated: "2026-07-22T18:11:53.188Z"
-last_activity: 2026-07-22 -- Phase 04 execution started
+stopped_at: Completed 04-05-PLAN.md
+last_updated: "2026-07-22T18:27:19.019Z"
+last_activity: 2026-07-22 -- Completed 04-05-PLAN.md (per-exercise record board)
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 27
-  completed_plans: 25
+  completed_plans: 26
   percent: 38
 ---
 
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-07-19)
 ## Current Position
 
 Phase: 04 (stats-charts) — EXECUTING
-Plan: 2 of 6
+Plan: 6 of 6
 Status: Ready to execute
-Last activity: 2026-07-22 -- Phase 04 execution started
+Last activity: 2026-07-22 -- Completed 04-05-PLAN.md (per-exercise record board)
 
-Progress: [██░░░░░░░░] 25% (2/8 phases)
+Progress: [███░░░░░░░] 38% (3/8 phases)
 
 ## Performance Metrics
 
@@ -75,6 +75,7 @@ Progress: [██░░░░░░░░] 25% (2/8 phases)
 | Phase 04-stats-charts P02 | 10min | 3 tasks | 7 files |
 | Phase 04-stats-charts P03 | 15min | 3 tasks | 7 files |
 | Phase 04-stats-charts P04 | 13min | 3 tasks | 6 files |
+| Phase 04-stats-charts P05 | 5min | 1 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -138,6 +139,7 @@ Recent decisions affecting current work:
 - [Phase ?]: computeAllTimeRecords/computeExerciseRecordBoard track running bests as objects (weightKg/e1rm, workoutId, date), not raw numbers, so PREvent/RecordBoardEntry can be emitted directly from the same scan
 - [Phase ?]: computeExerciseRecordBoard derives exerciseId from its input's first row rather than a separate parameter, matching the RESEARCH.md single-exercise call shape
 - [Phase ?]: Section A's PR-feed card-list styling is duplicated locally in app/(tabs)/stats.tsx and app/stats/records.tsx rather than factored into a shared component, since the plan scoped files_modified to only those two files
+- [Phase 04-stats-charts]: Records view fetches loadAllHistorySets in the same useFocusEffect as the chart's existing loadExerciseChartSets call rather than a second effect or new query, keeping one live-recompute discipline for the whole /stats/[exerciseId] route (D-11/T-04-07)
 
 ### Pending Todos
 
@@ -158,6 +160,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-22T18:11:53.168Z
-Stopped at: Completed 04-04-PLAN.md
+Last session: 2026-07-22T18:27:19.019Z
+Stopped at: Completed 04-05-PLAN.md
 Resume file: None
