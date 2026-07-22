@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 03-05-PLAN.md
-last_updated: "2026-07-22T13:12:34.829Z"
+status: verifying
+stopped_at: Completed 03-06-PLAN.md
+last_updated: "2026-07-22T13:27:55.935Z"
 last_activity: 2026-07-22 -- Completed 03-05-PLAN.md
 progress:
   total_phases: 8
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 19
-  completed_plans: 18
-  percent: 25
+  completed_plans: 19
+  percent: 38
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-07-19)
 
 Phase: 03 (templates-folders-calculators) — EXECUTING
 Plan: 6 of 6
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-22 -- Completed 03-05-PLAN.md
 
 Progress: [██░░░░░░░░] 25% (2/8 phases)
@@ -69,6 +69,7 @@ Progress: [██░░░░░░░░] 25% (2/8 phases)
 | Phase 03 P03 | 8min | 2 tasks | 3 files |
 | Phase 03-templates-folders-calculators P04 | 15min | 3 tasks | 8 files |
 | Phase 03-templates-folders-calculators P05 | 14min | 3 tasks | 8 files |
+| Phase 03-templates-folders-calculators P06 | 12min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -118,6 +119,9 @@ Recent decisions affecting current work:
 - [Phase 03-templates-folders-calculators]: Factored the template builder body into components/TemplateBuilderForm.tsx, shared by app/templates/new.tsx and [templateId].tsx, instead of duplicating it (plan's own explicit instruction)
 - [Phase 03-templates-folders-calculators]: Template creation position is scoped within its folder bucket (Assumptions Log A5) -- counted via loadTemplatesGroupedByFolder before insert
 - [Phase 03-templates-folders-calculators]: Per-template exercise counts on Workout home resolved client-side via one loadTemplateDetail call per template rather than extending db/templates.ts, keeping Task 3 inside its declared single-file scope
+- [Phase ?]: [Phase 03-templates-folders-calculators]: A card's current-row for inline-calculator prefill is its last row (rows[rows.length-1]) -- the set about to be logged
+- [Phase ?]: [Phase 03-templates-folders-calculators]: Warm-up sheet stays open after each Accept (not auto-closed) so multiple ladder rungs can be inserted in one session; user closes manually
+- [Phase ?]: [Phase 03-templates-folders-calculators]: Save-as-template always creates an Uncategorized (folder null) template, position computed the same way as the template builder's new-template path
 
 ### Pending Todos
 
@@ -138,6 +142,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-22T13:12:34.813Z
-Stopped at: Completed 03-05-PLAN.md
+Last session: 2026-07-22T13:27:55.921Z
+Stopped at: Completed 03-06-PLAN.md
 Resume file: None
