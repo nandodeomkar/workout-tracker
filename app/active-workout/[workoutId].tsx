@@ -53,6 +53,7 @@ import type { Exercise, Workout } from '../../db/schema';
 import { loadTemplateDetail } from '../../db/templates';
 import {
   addWorkoutExercise,
+  deleteSet,
   discardWorkout,
   finishWorkout,
   insertSet,
@@ -519,12 +520,34 @@ export default function ActiveWorkoutScreen() {
     }
 
     if (row.setId != null) {
-      // Existing DB row — checkmark re-confirms/updates it, never inserts
-      // (Pitfall 1/D-13). In logging mode this is the "already completed,
-      // tapping ✓ again is a no-op for now" case (D-01); in editing mode it
-      // explicitly re-persists via updateSet.
+      // Existing DB row — in editing mode, the checkmark re-confirms/updates
+      // it via updateSet, never inserts (Pitfall 1/D-13).
       if (mode === 'editing') {
         await persistRow(row);
+        return;
+      }
+
+      // Logging mode: tapping ✓ again on an already-logged set un-logs it
+      // (Gap 3/D-01 un-deferred) — delete that one sets row via deleteSet,
+      // then revert THIS row in place to pending so re-tapping ✓ re-logs the
+      // same values. Never deletes the workout_exercise, never renumbers
+      // other rows, and never starts/stops the rest timer (un-log is not a
+      // working-set checkmark).
+      try {
+        await deleteSet(db, row.setId);
+        setRowsByWE((prev) => {
+          const currentRows = prev[weId] ?? [];
+          return {
+            ...prev,
+            [weId]: currentRows.map((r) =>
+              r.key === rowKey
+                ? { ...r, key: `p-${weId}-${Date.now()}`, setId: null, isCompleted: false }
+                : r,
+            ),
+          };
+        });
+      } catch {
+        notify("Couldn't remove that set. Check your device storage and try again.");
       }
       return;
     }
@@ -548,8 +571,11 @@ export default function ActiveWorkoutScreen() {
       });
 
       // Auto-start the rest timer (D-07/D-09) — logging mode only; editing a
-      // past workout is not a live session (mode gate).
-      if (mode === 'logging') {
+      // past workout is not a live session (mode gate). Also skipped for a
+      // warm-up set (Gap 2) — mirrors handleAcceptWarmup's deliberate
+      // no-timer intent (D-07/D-09) so a manually-toggled warm-up set logged
+      // via the checkmark also skips the timer.
+      if (mode === 'logging' && !row.isWarmup) {
         const entry = exerciseEntries.find((e) => e.weId === weId);
         const seconds = entry?.restSecondsOverride ?? defaultRestSeconds;
         void startRestTimer(seconds);
