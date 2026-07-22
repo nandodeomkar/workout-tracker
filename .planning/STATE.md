@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 02-03-PLAN.md
-last_updated: "2026-07-22T02:45:42.556Z"
+stopped_at: Completed 02-04-PLAN.md
+last_updated: "2026-07-22T03:03:44.902Z"
 last_activity: 2026-07-21 -- Phase 02 execution started
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 13
-  completed_plans: 9
+  completed_plans: 10
   percent: 13
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-07-19)
 ## Current Position
 
 Phase: 02 (core-logging-active-workout) — EXECUTING
-Plan: 4 of 7
+Plan: 5 of 7
 Status: Ready to execute
 Last activity: 2026-07-21 -- Phase 02 execution started
 
@@ -60,6 +60,7 @@ Progress: [█░░░░░░░░░] 13% (1/8 phases)
 | Phase 02-core-logging-active-workout P01 | 4min | 3 tasks | 8 files |
 | Phase 02-core-logging-active-workout P02 | 10min | 3 tasks | 9 files |
 | Phase 02-core-logging-active-workout P03 | 20min | 3 tasks | 3 files |
+| Phase 02-core-logging-active-workout P04 | 28min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,9 @@ Recent decisions affecting current work:
 - [Phase 02-core-logging-active-workout]: loadLastPerformance filters workouts.finishedAt IS NOT NULL so an in-progress workout's own empty row never wins the pre-fill query
 - [Phase ?]: [Phase 02-core-logging-active-workout]: db.transaction() callbacks must be plain synchronous functions using .run() (not async/await) because both drizzle-orm/better-sqlite3 and drizzle-orm/expo-sqlite construct BaseSQLiteDatabase with resultKind: sync
 - [Phase ?]: [Phase 02-core-logging-active-workout]: replaceWorkoutExercise throws (does not silently reattribute) once the card has any logged sets, per RESEARCH.md FLAG-1/Pitfall 3 resolved Open Question #1 option (a)
+- [Phase ?]: [Phase 02-core-logging-active-workout]: Zustand session store holds only ephemeral state (activeWorkoutId, mode, restEndsAt, restNotificationId), no persist middleware — SQLite stays sole source of truth (D-15)
+- [Phase ?]: [Phase 02-core-logging-active-workout]: Checkmark handler branches on whether a row already has a DB setId (update) rather than purely on session mode, letting editing-mode re-confirm existing rows via updateSet while a new +Add set row in either mode still inserts
+- [Phase ?]: [Phase 02-core-logging-active-workout]: Add-exercise picker is an in-screen overlay reusing ExerciseRow/MuscleGroupPills/FilterChipRow directly, not a new pushed route
 
 ### Pending Todos
 
@@ -104,6 +108,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-22T02:45:42.542Z
-Stopped at: Completed 02-03-PLAN.md
+Last session: 2026-07-22T03:03:44.887Z
+Stopped at: Completed 02-04-PLAN.md
 Resume file: None
