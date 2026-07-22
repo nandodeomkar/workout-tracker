@@ -1,48 +1,45 @@
 ---
 phase: 03-templates-folders-calculators
-reviewed: 2026-07-22T13:34:19Z
+reviewed: 2026-07-22T14:10:00Z
 depth: standard
-files_reviewed: 18
+scope: gap-closure (plans 03-07, 03-08; diff base 2433604)
+files_reviewed: 5
 files_reviewed_list:
-  - app/(tabs)/index.tsx
-  - app/_layout.tsx
-  - app/active-workout/[workoutId].tsx
-  - app/active-workout/summary.tsx
-  - app/templates/[templateId].tsx
-  - app/templates/_layout.tsx
-  - app/templates/new.tsx
-  - components/ExerciseCard.tsx
-  - components/FolderSectionHeader.tsx
-  - components/TemplateBuilderForm.tsx
   - components/TemplateRow.tsx
-  - lib/percentOf1RM.test.ts
-  - lib/percentOf1RM.ts
-  - lib/plateSolver.test.ts
-  - lib/plateSolver.ts
-  - lib/warmupLadder.test.ts
-  - lib/warmupLadder.ts
+  - app/(tabs)/index.tsx
+  - db/workouts.ts
+  - db/workouts.crud.test.ts
+  - app/active-workout/[workoutId].tsx
 findings:
   critical: 0
-  warning: 7
-  info: 5
-  total: 12
+  warning: 2
+  info: 2
+  total: 4
 status: issues_found
 ---
 
-# Phase 03: Code Review Report
+# Phase 03: Code Review Report (Gap Closure 03-07 / 03-08)
 
-**Reviewed:** 2026-07-22T13:34:19Z
+**Reviewed:** 2026-07-22T14:10:00Z
 **Depth:** standard
-**Files Reviewed:** 18
+**Files Reviewed:** 5
 **Status:** issues_found
 
 ## Summary
 
-Reviewed the Templates/Folders/Calculators phase: the three pure calculator libs (`plateSolver`, `warmupLadder`, `percentOf1RM`), the templates data-layer consumers, the shared `TemplateBuilderForm`, the Workout-home template list, and the active-workout / summary screens that were extended for template pre-fill, save-as-template, and the inline calculator sheets.
+This is a **gap-closure review** scoped strictly to the diff since base `2433604`
+(gap plans 03-07 / 03-08, commits da70a70 … b618e49). Pre-existing phase-03 code was
+reviewed previously; only the new changes are in scope here:
 
-**Overall assessment:** The pure-logic libraries are correct, well-tested, and free of the floating-point / off-by-one traps they document. The DB layer (`db/templates.ts`) is parameterized, validated, and transaction-safe — no injection surface. No security defects and no crash/data-loss BLOCKERs were provable.
+- **TemplateRow.tsx** — new optional `onEdit` prop rendering an edit button (UAT Gap 1).
+- **app/(tabs)/index.tsx** — wires `onEdit` to `router.push('/templates/[templateId]')` (route verified to exist).
+- **db/workouts.ts** — new `deleteSet(db, setId)` (Gap 3 / D-01 un-log).
+- **app/active-workout/[workoutId].tsx** — re-tapping ✓ on a logged set now un-logs it (`deleteSet` + revert the row to pending), and logging a warm-up set no longer starts the rest timer (Gap 2).
+- **db/workouts.crud.test.ts** — DB-layer coverage for `deleteSet`.
 
-The narrative findings below concentrate on **latent correctness and robustness gaps in the screen layer**: swallowed/unhandled async errors on the seed and save paths, stale-closure handling of the rest-timer notification id, a couple of missing in-flight guards that allow duplicate rows to be created, and an ambiguous duration format. None block shipping on their own, but WR-01, WR-02, WR-03, and WR-04 each produce user-visible wrong behavior under realistic conditions and should be fixed.
+**Overall assessment:** The DB change is clean. `deleteSet` is parameterized (no injection surface), targets exactly one row by integer PK, and is adequately tested (targeted-delete-leaves-siblings + crash-safe re-read). The warm-up timer-skip (`mode === 'logging' && !row.isWarmup`) is correct and consistent with `handleAcceptWarmup`. The un-log state transition preserves weight/reps for re-logging and uses a functional `setRowsByWE` update, so it is race-safe against itself. No BLOCKER-level defects were found in the gap changes.
+
+The findings below concern an accessibility regression introduced by the new edit button, a re-entrancy hazard the new ✓ toggle makes easier to hit, and two lower-severity robustness issues.
 
 No `<structural_findings>` block was provided, so this report contains only narrative findings.
 
@@ -50,107 +47,61 @@ No `<structural_findings>` block was provided, so this report contains only narr
 
 ## Warnings
 
-### WR-01: Seed failure is silently swallowed and produces an unhandled promise rejection
+### WR-01: Edit button nested inside the row Pressable breaks screen-reader access
 
-**File:** `app/_layout.tsx:27-31`
-**Issue:** `runSeedIfNeeded(db).finally(() => { ... setSeeded(true); })` has no `.catch`. `.finally` re-propagates a rejection, so if the first-launch seed throws the app emits an **unhandled promise rejection**. Worse, the `.finally` callback flips `seeded` to `true` regardless of success/failure, so the app shell renders (line 41) on top of a database that was never seeded — an empty exercise catalog with no error surfaced to the user or logs. The sibling migration path *does* hard-stop on error (`MigrationErrorScreen`); the seed path silently degrades.
-**Fix:**
+**File:** `components/TemplateRow.tsx:22-49`
+**Issue:** The new edit `Pressable` (lines 38-47) is a child of the outer row `Pressable` (line 23), which already declares `accessibilityRole="button"` and an `accessibilityLabel`. Nesting an interactive button inside a button is an accessibility anti-pattern: on Android TalkBack the outer element is announced as a single focusable button ("{label}, N exercises"), and the inner "Edit {label}" button is typically merged/suppressed, so screen-reader users cannot reach the edit action this gap was added to provide. The component otherwise invests in a11y (explicit 44×44 target, role + label), so this regresses against that bar.
+
+Functionally, RN's touch-responder system means the inner press wins and the outer `onPress` does **not** fire, so a sighted tap on Edit will not accidentally start a workout via `handlePickTemplate` — the defect is limited to assistive-tech reachability, not incorrect navigation.
+
+**Fix:** Make the row container a plain `View` and render the tappable body and the edit button as siblings so neither is nested inside the other:
 ```tsx
-runSeedIfNeeded(db)
-  .then(() => { if (!cancelled) setSeeded(true); })
-  .catch((e) => {
-    if (!cancelled) setSeedError(e instanceof Error ? e : new Error(String(e)));
-  });
-```
-Render an error screen (mirroring `MigrationErrorScreen`) when `seedError` is set instead of proceeding into the app with an unseeded DB.
-
-### WR-02: Workout-home start actions have independent in-flight guards, allowing two workouts to be created at once
-
-**File:** `app/(tabs)/index.tsx:227-239, 250-270, 280-292`
-**Issue:** `handleStartEmpty`, `handlePickHistoryWorkout`, and `handlePickTemplate` each guard only their *own* boolean (`starting`, `startingFromHistory`, `startingFromTemplate`). Nothing prevents two of them from running concurrently. Tapping "Start empty workout" and a template row in quick succession creates **two** `workouts` rows; the second `setActiveWorkout` wins and navigates, leaving the first as an orphaned unfinished workout that `findResumableWorkout` will surface as a phantom "Resume workout" on next cold start.
-**Fix:** Use a single shared guard for all start paths, e.g. `const [startingAny, setStartingAny] = useState(false);` checked/set at the top of all three handlers, or disable the other affordances whenever any start is in flight.
-
-### WR-03: "Save as template" can create duplicate templates on repeated taps
-
-**File:** `app/active-workout/summary.tsx:153-186`
-**Issue:** `handleSaveAsTemplate` guards only concurrent execution (`savingTemplate`), and resets `savingTemplate` to `false` in `finally`. After a successful save the button remains enabled and shows no committed state, so a second (or third) tap creates additional identical templates. There is no idempotency latch and no navigation away.
-**Fix:** After a successful save, latch a `saved` state that permanently disables the button (and/or change its label to "Saved"), or navigate away / dismiss. Example:
-```tsx
-const [saved, setSaved] = useState(false);
-// ...after success:
-setSaved(true);
-// button: disabled={savingTemplate || saved}
+<View style={styles.row}>
+  <Pressable onPress={onPress} accessibilityRole="button"
+             accessibilityLabel={`${label}, ${exerciseLabel}`} style={styles.body}>
+    <Text style={styles.icon}>📋</Text>
+    <View style={styles.textColumn}>{/* name + caption */}</View>
+  </Pressable>
+  {onEdit ? (
+    <Pressable onPress={onEdit} accessibilityRole="button"
+               accessibilityLabel={`Edit ${label}`} style={styles.editButton}>
+      <Text style={styles.editButtonText}>✎</Text>
+    </Pressable>
+  ) : null}
+  <Text style={styles.chevron}>›</Text>
+</View>
 ```
 
-### WR-04: Rest-timer notification id is read from a stale render closure — skip/adjust/restart can leave notifications uncancelled
+### WR-02: `handleLogSet` has no re-entrancy guard — the new ✓ toggle makes a double-tap phantom-set race easier to trigger
 
-**File:** `app/active-workout/[workoutId].tsx:369-415` (`startRestTimer`, `handleSkipRest`, `handleAdjustRest`)
-**Issue:** These async handlers call `cancelRestNotification(restNotificationId)` where `restNotificationId` is the value captured in the render closure, not the live store value. Because scheduling is async and a set can be logged (or Skip tapped) before the `setRestNotificationId(...)` from the previous action has committed, the cancel can run against a stale/`null` id and fail to cancel the actually-scheduled OS notification. Result: logging sets in rapid succession can leave orphaned notifications, and "Skip" can fail to stop a buzz that then fires after the user has moved on. The unmount cleanup (line 359) deliberately uses `useActiveWorkout.getState().restNotificationId` to avoid exactly this staleness — the same technique is missing here.
-**Fix:** Read the id from the store at call time in each handler:
+**File:** `app/active-workout/[workoutId].tsx:515-586`
+**Issue:** Gap 3 turns the ✓ checkmark into a toggle (log ⇄ un-log), so repeatedly tapping the same checkmark is now an intended interaction. `handleLogSet` reads `row.setId` from the render closure and is not guarded against concurrent invocation. On a *pending* row, a fast double-tap can fire two `insertSet` calls before the first `setRowsByWE` commits (both observe `setId == null`). Both inserts persist a `sets` row, but the second state update overwrites the first `created.id`, so the UI tracks only one. The first inserted row becomes an **untracked phantom set** that inflates working-set volume / PR detection and can never be un-logged from the UI. (The delete branch is safe: a second `deleteSet` on the same id is a harmless no-op — only the insert branch is exposed.)
+**Fix:** Guard the handler against re-entry per row:
 ```ts
-await cancelRestNotification(useActiveWorkout.getState().restNotificationId);
-```
-
-### WR-05: `formatDuration` produces ambiguous `M:SS` vs `H:MM` output
-
-**File:** `app/active-workout/summary.tsx:53-65`
-**Issue:** Below 60 minutes the function returns `minutes:seconds` (e.g. `5:00`); at/above 60 minutes it returns `hours:minutes` (e.g. `1:05`). A 65-minute workout renders `1:05`, visually indistinguishable from a 1-minute-5-second workout. The unit silently changes meaning at the 60-minute boundary with no `h`/`m` marker.
-**Fix:** Use unambiguous unit suffixes across both branches, e.g. `1h 05m` for ≥60 min and `5m 00s` (or `5:00`) below, so the two ranges can never collide.
-
-### WR-06: `updateRow` and `handleAddSet` use non-functional `setState` over a closure snapshot of `rowsByWE`
-
-**File:** `app/active-workout/[workoutId].tsx:461-464, 562-575`
-**Issue:** Both compute `setRowsByWE({ ...rowsByWE, [weId]: ... })` from the `rowsByWE` captured in the render closure, whereas the async insert paths (`handleLogSet` line 542, `handleAcceptWarmup` line 609) correctly use the functional `setRowsByWE((prev) => ...)`. Mixing the two forms is fragile: if a closure-based update and a resolving async functional update land in the same batch (e.g. add-set tapped while a `✓` insert is mid-flight), the closure form can clobber the concurrently-committed change, dropping a row's `setId` or an appended set.
-**Fix:** Convert both to the functional form:
-```ts
-setRowsByWE((prev) => ({ ...prev, [weId]: (prev[weId] ?? []).map(...) }));
-```
-
-### WR-07: `startWorkoutFromTemplate` writes a `templateId` even when the template no longer exists
-
-**File:** `db/templates.ts:361-372`
-**Issue:** `startWorkout(db, { templateId })` is called before/independently of the `if (detail)` check. If `loadTemplateDetail` returns `undefined` (template deleted between the home-list load and the tap), the workout is still created with `templateId` pointing at a nonexistent template and with zero exercises. Downstream, `active-workout` `loadAll` (`[workoutId].tsx:227`) will `loadTemplateDetail` that dangling id, get `undefined`, and silently fall through — but the workout row now carries a dangling FK-like reference. This is the exact "dangling `workouts.template_id`" hazard the module's own header comment (lines 15-17) warns about for the delete path.
-**Fix:** Only stamp `templateId` when the template was actually found, or bail out early:
-```ts
-const detail = await loadTemplateDetail(db, templateId);
-if (!detail) throw new Error('Template no longer exists');
-const workout = await startWorkout(db, { templateId });
+const inFlight = useRef<Set<string>>(new Set());
+async function handleLogSet(weId: number, rowKey: string) {
+  if (inFlight.current.has(rowKey)) return;
+  inFlight.current.add(rowKey);
+  try { /* existing body */ } finally { inFlight.current.delete(rowKey); }
+}
 ```
 
 ## Info
 
-### IN-01: Active-workout elapsed label has no hours component (`90:00`)
+### IN-01: `Date.now()`-based row key can collide on same-millisecond un-log
 
-**File:** `app/active-workout/[workoutId].tsx:435-444`
-**Issue:** `elapsedLabel` only formats `minutes:seconds`, so a 90-minute session renders `90:00`. This is inconsistent with the summary screen's `H:MM` handling (`summary.tsx:56-60`) for the same underlying duration.
-**Fix:** Add an hours component once `minutes >= 60`, matching the summary formatter (and ideally share one formatter between the two screens).
+**File:** `app/active-workout/[workoutId].tsx:544` (shares the pattern with `handleAddSet` at 592)
+**Issue:** Un-logging rewrites the row key to `p-${weId}-${Date.now()}`. If two rows on the same card are un-logged (or a row is un-logged while a set is added) within the same millisecond, the generated keys collide, producing duplicate React keys and possible mis-reconciliation of row state (a re-render swapping which row shows which weight/reps). Low probability, but the collision surface is new with the un-log path.
+**Fix:** Add a stable discriminator or a monotonic counter ref, e.g. `p-${weId}-${row.setNumber}-${keySeq.current++}`.
 
-### IN-02: `UNCATEGORIZED_KEY` sentinel can collide with a real folder named `__uncategorized__`
+### IN-02: Un-log leaves a dangling keypad/calculator target when it re-keys a row
 
-**File:** `app/(tabs)/index.tsx:49, 186, 355`
-**Issue:** The expanded-state map keys named folders by their raw string and the null bucket by `'__uncategorized__'`. A user-created folder literally named `__uncategorized__` would share the key and toggle collapse/expand together with the Uncategorized bucket. Extreme edge, but the sentinel is user-reachable free text.
-**Fix:** Key the map by a non-string-collidable value (e.g. keep folder keys namespaced like `f:${folder}` and the null bucket as `uncategorized`), so no real folder name can alias the sentinel.
-
-### IN-03: `notify`, `workoutLabel`, and `durationMsFor` are duplicated across screens
-
-**File:** `app/(tabs)/index.tsx:56-72`, `app/active-workout/summary.tsx:36-51`, `app/active-workout/[workoutId].tsx:85-89`
-**Issue:** `notify()` is copied verbatim into at least three files (acknowledged in comments), and `workoutLabel`/date-formatting logic is re-implemented in both `index.tsx` and `summary.tsx`. Divergence risk as formatting rules evolve (see IN-01/WR-05).
-**Fix:** Extract shared `lib/notify.ts` and a `lib/formatWorkout.ts` (label + duration) and import them; the per-file duplication is a deliberate current convention but is accreting drift-prone copies.
-
-### IN-04: Workout-home template counts issue one `loadTemplateDetail` per template on every focus
-
-**File:** `app/(tabs)/index.tsx:166-193`
-**Issue:** For each template in each folder group, a full `loadTemplateDetail` round-trip runs solely to read `exercises.length`, on every screen focus. This is a maintainability/scaling smell (an N+1 access pattern) even setting aside raw performance: the count belongs in the grouped query.
-**Fix:** Extend `loadTemplatesGroupedByFolder` (or add a lightweight count query) to return `exerciseCount` per template so the screen renders directly without per-row detail loads.
-
-### IN-05: Drag-to-reorder can't drop a card below the last position on overshoot
-
-**File:** `app/active-workout/[workoutId].tsx:814-839`
-**Issue:** The target index is chosen by finding the card whose `[y, y+height)` band contains `draggedCenterY`. If the user overshoots below the last card's band, no band matches, `targetIndex` stays `fromIndex`, and the reorder is silently dropped — the intuitive "drag past the bottom to move last" gesture no-ops.
-**Fix:** Clamp: if `draggedCenterY >= lastCard.y + lastCard.height`, set `targetIndex = entries.length - 1`; symmetrically clamp to `0` when above the first band.
+**File:** `app/active-workout/[workoutId].tsx:536-548`
+**Issue:** `editingTarget` and `openSheet` reference a row by `rowKey`. When an un-log rewrites that row's `key`, an open keypad (`editingRow` lookup, 491-493) or calculator sheet (`openSheetRow`, 892-894) for the same row silently resolves to `undefined`, falling back to `initialValue` 0 / `undefined` prefill instead of tracking the row. It degrades gracefully rather than crashing, and requires an unlikely simultaneous interaction, but the target is left dangling rather than cleared.
+**Fix:** When re-keying a row during un-log, clear `editingTarget`/`openSheet` if they point at the affected `rowKey` (or key those targets by a stable id rather than the mutable `key`).
 
 ---
 
-_Reviewed: 2026-07-22T13:34:19Z_
+_Reviewed: 2026-07-22T14:10:00Z_
 _Reviewer: Claude (gsd-code-reviewer)_
-_Depth: standard_
+_Depth: standard (gap-closure scope)_
