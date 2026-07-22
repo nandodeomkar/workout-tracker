@@ -13,9 +13,10 @@
 // 1) and "an already-logged set edited later in the same logging session
 // stays in sync with what's on screen."
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   Platform,
   Pressable,
   ScrollView,
@@ -38,7 +39,16 @@ import { db } from '../../db/client';
 import { loadActiveExercises, loadAllExercises } from '../../db/exercises';
 import { getSetting } from '../../db/settings';
 import type { Exercise, Workout } from '../../db/schema';
-import { addWorkoutExercise, insertSet, loadLastPerformance, loadWorkoutDetail, updateSet } from '../../db/workouts';
+import {
+  addWorkoutExercise,
+  insertSet,
+  loadLastPerformance,
+  loadWorkoutDetail,
+  removeWorkoutExercise,
+  reorderWorkoutExercises,
+  replaceWorkoutExercise,
+  updateSet,
+} from '../../db/workouts';
 import { filterExercises } from '../../lib/exerciseFilter';
 import { displayToKg, kgToDisplay } from '../../lib/weightUnits';
 import { useActiveWorkout } from '../../store/activeWorkout';
@@ -113,11 +123,22 @@ export default function ActiveWorkoutScreen() {
 
   // Add-exercise picker (reuses the Phase-1 ExerciseRow/MuscleGroupPills/
   // FilterChipRow components wholesale, per UI-SPEC "Exercise picker").
+  // Plan 05 (LOG-04) reuses the same overlay for Replace — `pickerMode`
+  // distinguishes the two so a single `handleSelectExercise` can branch.
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerMode, setPickerMode] = useState<'add' | 'replace'>('add');
+  const [replaceTargetWeId, setReplaceTargetWeId] = useState<number | null>(null);
   const [pickerExercises, setPickerExercises] = useState<Exercise[]>([]);
   const [pickerSearch, setPickerSearch] = useState('');
   const [pickerMuscleGroup, setPickerMuscleGroup] = useState<MuscleGroup | null>(null);
   const [pickerEquipment, setPickerEquipment] = useState<EquipmentType[]>([]);
+
+  // Measured on-screen position of each exercise card (LOG-04 drag-reorder,
+  // RESEARCH.md "hand-roll via gesture-handler+reanimated"). Populated by
+  // each card wrapper's `onLayout`; read only on drag-end to translate a
+  // gesture's net vertical movement into a target index — a ref (not state)
+  // because layout updates must never trigger a re-render.
+  const cardLayoutsRef = useRef<Record<number, { y: number; height: number }>>({});
 
   const loadAll = useCallback(async () => {
     setLoading(true);
@@ -355,31 +376,196 @@ export default function ActiveWorkoutScreen() {
     [pickerExercises, pickerSearch, pickerMuscleGroup, pickerEquipment],
   );
 
-  async function handleSelectExercise(exercise: Exercise) {
+  function closePicker() {
+    setPickerOpen(false);
+    setPickerMode('add');
+    setReplaceTargetWeId(null);
+    setPickerSearch('');
+    setPickerMuscleGroup(null);
+    setPickerEquipment([]);
+  }
+
+  async function loadPrefillRows(prefixId: number, exerciseId: number): Promise<Row[]> {
+    const lastPerformance = await loadLastPerformance(db, exerciseId);
+    return lastPerformance.length > 0
+      ? lastPerformance.map((setRow, index) => ({
+          key: `p-${prefixId}-${index}`,
+          setId: null,
+          setNumber: index + 1,
+          weightKg: setRow.weightKg,
+          reps: setRow.reps,
+          isWarmup: setRow.type === 'warmup',
+          isCompleted: false,
+        }))
+      : [emptyRow(prefixId, 1)];
+  }
+
+  async function handleAddExercise(exercise: Exercise) {
     const created = await addWorkoutExercise(db, workoutId, exercise.id, exerciseEntries.length);
-    const lastPerformance = await loadLastPerformance(db, exercise.id);
-    const newRows: Row[] =
-      lastPerformance.length > 0
-        ? lastPerformance.map((setRow, index) => ({
-            key: `p-${created.id}-${index}`,
-            setId: null,
-            setNumber: index + 1,
-            weightKg: setRow.weightKg,
-            reps: setRow.reps,
-            isWarmup: setRow.type === 'warmup',
-            isCompleted: false,
-          }))
-        : [emptyRow(created.id, 1)];
+    const newRows = await loadPrefillRows(created.id, exercise.id);
 
     setExerciseEntries((prev) => [
       ...prev,
       { weId: created.id, exerciseId: exercise.id, name: exercise.name, muscleGroup: exercise.muscleGroup },
     ]);
     setRowsByWE((prev) => ({ ...prev, [created.id]: newRows }));
-    setPickerOpen(false);
-    setPickerSearch('');
-    setPickerMuscleGroup(null);
-    setPickerEquipment([]);
+    closePicker();
+  }
+
+  // Remove the exercise slot and add the picked one back at the same
+  // position (LOG-04/FLAG-1) — a *new* workout_exercises row, never a
+  // silent `exercise_id` reattribution of the already-logged sets.
+  async function handleRemoveAndAddReplacement(weId: number, exercise: Exercise) {
+    const position = exerciseEntries.findIndex((entry) => entry.weId === weId);
+    await removeWorkoutExercise(db, weId);
+    const created = await addWorkoutExercise(db, workoutId, exercise.id, position === -1 ? exerciseEntries.length : position);
+    const newRows = await loadPrefillRows(created.id, exercise.id);
+
+    setExerciseEntries((prev) => {
+      const next = prev.filter((entry) => entry.weId !== weId);
+      const insertAt = position === -1 ? next.length : position;
+      next.splice(insertAt, 0, {
+        weId: created.id,
+        exerciseId: exercise.id,
+        name: exercise.name,
+        muscleGroup: exercise.muscleGroup,
+      });
+      return next;
+    });
+    setRowsByWE((prev) => {
+      const next = { ...prev };
+      delete next[weId];
+      next[created.id] = newRows;
+      return next;
+    });
+    closePicker();
+  }
+
+  // In-place swap when the card has zero logged sets; the FLAG-1 guard in
+  // `replaceWorkoutExercise` throws once sets exist, in which case we ask
+  // before falling back to remove+re-add (never silently reattribute).
+  async function handleReplaceExercise(weId: number, exercise: Exercise) {
+    try {
+      await replaceWorkoutExercise(db, weId, exercise.id);
+      const newRows = await loadPrefillRows(weId, exercise.id);
+      setExerciseEntries((prev) =>
+        prev.map((entry) =>
+          entry.weId === weId
+            ? { ...entry, exerciseId: exercise.id, name: exercise.name, muscleGroup: exercise.muscleGroup }
+            : entry,
+        ),
+      );
+      setRowsByWE((prev) => ({ ...prev, [weId]: newRows }));
+      closePicker();
+    } catch {
+      Alert.alert(
+        'Exercise has logged sets',
+        'This exercise has logged sets — remove it and add the new one instead?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Remove & add', style: 'destructive', onPress: () => void handleRemoveAndAddReplacement(weId, exercise) },
+        ],
+      );
+    }
+  }
+
+  async function handleSelectExercise(exercise: Exercise) {
+    if (pickerMode === 'replace' && replaceTargetWeId != null) {
+      await handleReplaceExercise(replaceTargetWeId, exercise);
+      return;
+    }
+    await handleAddExercise(exercise);
+  }
+
+  function openReplacePicker(weId: number) {
+    setPickerMode('replace');
+    setReplaceTargetWeId(weId);
+    setPickerOpen(true);
+  }
+
+  // Remove is confirmed only when the card has ≥1 completed set — UI-SPEC's
+  // "confirm only when data is actually at risk" rule; a card with nothing
+  // logged is removed silently.
+  async function doRemoveExercise(weId: number) {
+    try {
+      await removeWorkoutExercise(db, weId);
+      setExerciseEntries((prev) => prev.filter((entry) => entry.weId !== weId));
+      setRowsByWE((prev) => {
+        const next = { ...prev };
+        delete next[weId];
+        return next;
+      });
+    } catch {
+      notify("Couldn't remove that exercise. Check your device storage and try again.");
+    }
+  }
+
+  function handleRemovePress(weId: number, exerciseName: string) {
+    const hasCompletedSets = (rowsByWE[weId] ?? []).some((row) => row.isCompleted);
+    if (!hasCompletedSets) {
+      void doRemoveExercise(weId);
+      return;
+    }
+    Alert.alert(`Remove ${exerciseName}?`, 'Its logged sets in this workout will be deleted.', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Remove', style: 'destructive', onPress: () => void doRemoveExercise(weId) },
+    ]);
+  }
+
+  function handleOverflowPress(weId: number, exerciseName: string) {
+    Alert.alert(exerciseName, undefined, [
+      { text: 'Replace', onPress: () => openReplacePicker(weId) },
+      { text: 'Remove', style: 'destructive', onPress: () => handleRemovePress(weId, exerciseName) },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  }
+
+  // Drag-end (LOG-04/D-16 reorder): translate the released card's net
+  // vertical translation into a target index using each card's last
+  // measured `onLayout` position, splice the local order, then persist via
+  // `reorderWorkoutExercises`. A translation under 8px is treated as a tap
+  // (long-press-without-move), not a reorder attempt.
+  async function handleReorderDragEnd(weId: number, translationY: number) {
+    if (Math.abs(translationY) < 8) {
+      return;
+    }
+    const fromIndex = exerciseEntries.findIndex((entry) => entry.weId === weId);
+    const fromLayout = cardLayoutsRef.current[weId];
+    if (fromIndex === -1 || !fromLayout) {
+      return;
+    }
+
+    const draggedCenterY = fromLayout.y + fromLayout.height / 2 + translationY;
+    let targetIndex = fromIndex;
+    for (let i = 0; i < exerciseEntries.length; i += 1) {
+      const layout = cardLayoutsRef.current[exerciseEntries[i].weId];
+      if (!layout) {
+        continue;
+      }
+      if (draggedCenterY >= layout.y && draggedCenterY < layout.y + layout.height) {
+        targetIndex = i;
+        break;
+      }
+    }
+
+    if (targetIndex === fromIndex) {
+      return;
+    }
+
+    const reordered = [...exerciseEntries];
+    const [moved] = reordered.splice(fromIndex, 1);
+    reordered.splice(targetIndex, 0, moved);
+    setExerciseEntries(reordered);
+
+    try {
+      await reorderWorkoutExercises(
+        db,
+        workoutId,
+        reordered.map((entry) => entry.weId),
+      );
+    } catch {
+      notify("Couldn't save the new order. Check your device storage and try again.");
+    }
   }
 
   function toggleEquipment(value: string) {
@@ -451,21 +637,30 @@ export default function ActiveWorkoutScreen() {
         ) : (
           <>
             {exerciseEntries.map((entry) => (
-              <ExerciseCard
+              <View
                 key={entry.weId}
-                exerciseName={entry.name}
-                muscleGroup={entry.muscleGroup}
-                unit={unit}
-                rows={(rowsByWE[entry.weId] ?? []).map(toViewModel)}
-                onLogSet={(rowKey) => void handleLogSet(entry.weId, rowKey)}
-                onAddSet={() => handleAddSet(entry.weId)}
-                onIncrementWeight={(rowKey) => handleIncrementWeight(entry.weId, rowKey)}
-                onDecrementWeight={(rowKey) => handleDecrementWeight(entry.weId, rowKey)}
-                onIncrementReps={(rowKey) => handleIncrementReps(entry.weId, rowKey)}
-                onDecrementReps={(rowKey) => handleDecrementReps(entry.weId, rowKey)}
-                onEditNumber={(rowKey, field) => handleEditNumber(entry.weId, rowKey, field)}
-                onToggleWarmup={(rowKey) => handleToggleWarmup(entry.weId, rowKey)}
-              />
+                onLayout={(event) => {
+                  const { y, height } = event.nativeEvent.layout;
+                  cardLayoutsRef.current[entry.weId] = { y, height };
+                }}
+              >
+                <ExerciseCard
+                  exerciseName={entry.name}
+                  muscleGroup={entry.muscleGroup}
+                  unit={unit}
+                  rows={(rowsByWE[entry.weId] ?? []).map(toViewModel)}
+                  onLogSet={(rowKey) => void handleLogSet(entry.weId, rowKey)}
+                  onAddSet={() => handleAddSet(entry.weId)}
+                  onIncrementWeight={(rowKey) => handleIncrementWeight(entry.weId, rowKey)}
+                  onDecrementWeight={(rowKey) => handleDecrementWeight(entry.weId, rowKey)}
+                  onIncrementReps={(rowKey) => handleIncrementReps(entry.weId, rowKey)}
+                  onDecrementReps={(rowKey) => handleDecrementReps(entry.weId, rowKey)}
+                  onEditNumber={(rowKey, field) => handleEditNumber(entry.weId, rowKey, field)}
+                  onToggleWarmup={(rowKey) => handleToggleWarmup(entry.weId, rowKey)}
+                  onDragEnd={(translationY) => void handleReorderDragEnd(entry.weId, translationY)}
+                  onOverflowPress={() => handleOverflowPress(entry.weId, entry.name)}
+                />
+              </View>
             ))}
 
             <Pressable onPress={() => setPickerOpen(true)} accessibilityRole="button" style={styles.addExerciseButton}>
@@ -487,14 +682,10 @@ export default function ActiveWorkoutScreen() {
       {pickerOpen ? (
         <View style={styles.pickerOverlay}>
           <View style={[styles.pickerHeader, { paddingTop: insets.top + theme.spacing.sm }]}>
-            <Pressable
-              onPress={() => setPickerOpen(false)}
-              accessibilityRole="button"
-              style={styles.pickerCancelButton}
-            >
+            <Pressable onPress={closePicker} accessibilityRole="button" style={styles.pickerCancelButton}>
               <Text style={styles.pickerCancelText}>‹ Cancel</Text>
             </Pressable>
-            <Text style={styles.pickerTitle}>Add exercise</Text>
+            <Text style={styles.pickerTitle}>{pickerMode === 'replace' ? 'Replace exercise' : 'Add exercise'}</Text>
           </View>
 
           <View style={styles.pickerSearchRow}>

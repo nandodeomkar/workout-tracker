@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { db } from '../db/client';
 import { runSeedIfNeeded } from '../db/seed/runSeed';
@@ -42,7 +43,11 @@ export default function RootLayout() {
   }
 
   return (
-    <>
+    // GestureHandlerRootView must wrap the app once at the root so any
+    // screen (the active-workout drag-reorder gesture, LOG-04) can use
+    // react-native-gesture-handler — per its own setup docs, a nested-only
+    // wrapper would silently fail to receive touch events.
+    <GestureHandlerRootView style={styles.root}>
       <StatusBar style="light" />
       <Stack
         screenOptions={{
@@ -55,7 +60,7 @@ export default function RootLayout() {
             over tabs" mechanism for the active-workout session (D-15). */}
         <Stack.Screen name="active-workout" />
       </Stack>
-    </>
+    </GestureHandlerRootView>
   );
 }
 
@@ -69,6 +74,9 @@ function MigrationErrorScreen({ error }: { error: Error }) {
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     alignItems: 'center',
