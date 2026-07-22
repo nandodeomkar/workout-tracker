@@ -1,8 +1,12 @@
-// STAT-01 query-layer tests (db/stats.ts).
+// STAT-01/STAT-02 query-layer tests (db/stats.ts).
 //
 // Subject under test:
 //   - loadExerciseChartSets: parameterized fetch of one exercise's sets from
 //     finished workouts (T-04-02/T-04-04).
+//   - loadWeeklyVolumeSets: parameterized, date-windowed fetch of finished-
+//     workout sets joined to exercises.muscle_group (T-04-02, STAT-02).
+//   - loadExercisesWithSets: distinct trained exercises feeding the Section C
+//     picker (D-03a).
 
 import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -10,7 +14,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { createTestDb } from './test/fixture';
 import { exercises, workouts } from './schema';
 import { addWorkoutExercise, insertSet, startWorkout } from './workouts';
-import { loadExerciseChartSets } from './stats';
+import { loadExerciseChartSets, loadExercisesWithSets, loadWeeklyVolumeSets } from './stats';
 
 async function seedExercise(db: ReturnType<typeof createTestDb>['db'], name = 'Squat') {
   const [exercise] = await db
@@ -117,5 +121,139 @@ describe('loadExerciseChartSets', () => {
       reps: 5,
       type: 'normal',
     });
+  });
+});
+
+describe('loadWeeklyVolumeSets', () => {
+  let db: ReturnType<typeof createTestDb>['db'];
+
+  beforeEach(() => {
+    ({ db } = createTestDb());
+  });
+
+  it('returns [] on an empty DB', async () => {
+    const rows = await loadWeeklyVolumeSets(db, '2020-01-01T00:00:00.000Z');
+    expect(rows).toEqual([]);
+  });
+
+  it('returns finished-workout sets on/after sinceIso, joined to exercise muscle_group', async () => {
+    const exercise = await seedExercise(db, 'Squat');
+
+    const inWindow = await startWorkout(db, { name: 'In window' });
+    const inWindowWe = await addWorkoutExercise(db, inWindow.id, exercise.id, 0);
+    await insertSet(db, { workoutExerciseId: inWindowWe.id, setNumber: 1, weightKg: 100, reps: 5 });
+    await db
+      .update(workouts)
+      .set({ startedAt: '2026-07-10T10:00:00.000Z', finishedAt: '2026-07-10T11:00:00.000Z' })
+      .where(eq(workouts.id, inWindow.id));
+
+    const beforeWindow = await startWorkout(db, { name: 'Before window' });
+    const beforeWindowWe = await addWorkoutExercise(db, beforeWindow.id, exercise.id, 0);
+    await insertSet(db, { workoutExerciseId: beforeWindowWe.id, setNumber: 1, weightKg: 999, reps: 1 });
+    await db
+      .update(workouts)
+      .set({ startedAt: '2026-06-01T10:00:00.000Z', finishedAt: '2026-06-01T11:00:00.000Z' })
+      .where(eq(workouts.id, beforeWindow.id));
+
+    const rows = await loadWeeklyVolumeSets(db, '2026-07-01T00:00:00.000Z');
+
+    expect(rows).toEqual([
+      {
+        startedAt: '2026-07-10T10:00:00.000Z',
+        weightKg: 100,
+        reps: 5,
+        type: 'normal',
+        muscleGroup: 'Legs',
+      },
+    ]);
+  });
+
+  it('excludes sets from an in-progress (unfinished) workout', async () => {
+    const exercise = await seedExercise(db);
+
+    const inProgress = await startWorkout(db, { name: 'In progress' });
+    const we = await addWorkoutExercise(db, inProgress.id, exercise.id, 0);
+    await insertSet(db, { workoutExerciseId: we.id, setNumber: 1, weightKg: 100, reps: 5 });
+    await db.update(workouts).set({ startedAt: '2026-07-10T10:00:00.000Z' }).where(eq(workouts.id, inProgress.id));
+
+    const rows = await loadWeeklyVolumeSets(db, '2026-01-01T00:00:00.000Z');
+
+    expect(rows).toEqual([]);
+  });
+
+  it('returns warmup rows too (filtering is buildWeeklyVolume responsibility, not SQL)', async () => {
+    const exercise = await seedExercise(db);
+    const workout = await startWorkout(db, { name: 'Session' });
+    const we = await addWorkoutExercise(db, workout.id, exercise.id, 0);
+    await insertSet(db, { workoutExerciseId: we.id, setNumber: 1, weightKg: 20, reps: 10, type: 'warmup' });
+    await insertSet(db, { workoutExerciseId: we.id, setNumber: 2, weightKg: 90, reps: 5 });
+    await db
+      .update(workouts)
+      .set({ startedAt: '2026-07-10T10:00:00.000Z', finishedAt: '2026-07-10T11:00:00.000Z' })
+      .where(eq(workouts.id, workout.id));
+
+    const rows = await loadWeeklyVolumeSets(db, '2026-01-01T00:00:00.000Z');
+
+    expect(rows).toHaveLength(2);
+    expect(rows.some((r) => r.type === 'warmup')).toBe(true);
+  });
+});
+
+describe('loadExercisesWithSets', () => {
+  let db: ReturnType<typeof createTestDb>['db'];
+
+  beforeEach(() => {
+    ({ db } = createTestDb());
+  });
+
+  it('returns [] on an empty DB', async () => {
+    const rows = await loadExercisesWithSets(db);
+    expect(rows).toEqual([]);
+  });
+
+  it('excludes a never-trained exercise', async () => {
+    const trained = await seedExercise(db, 'Squat');
+    await seedExercise(db, 'Never Trained');
+
+    const workout = await startWorkout(db, { name: 'Session' });
+    const we = await addWorkoutExercise(db, workout.id, trained.id, 0);
+    await insertSet(db, { workoutExerciseId: we.id, setNumber: 1, weightKg: 100, reps: 5 });
+    await db.update(workouts).set({ finishedAt: new Date().toISOString() }).where(eq(workouts.id, workout.id));
+
+    const rows = await loadExercisesWithSets(db);
+
+    expect(rows).toEqual([{ id: trained.id, name: 'Squat', muscleGroup: 'Legs' }]);
+  });
+
+  it('excludes an exercise whose only sets belong to an unfinished workout', async () => {
+    const exercise = await seedExercise(db);
+    const workout = await startWorkout(db, { name: 'In progress' });
+    const we = await addWorkoutExercise(db, workout.id, exercise.id, 0);
+    await insertSet(db, { workoutExerciseId: we.id, setNumber: 1, weightKg: 100, reps: 5 });
+
+    const rows = await loadExercisesWithSets(db);
+
+    expect(rows).toEqual([]);
+  });
+
+  it('dedupes an exercise trained across multiple workouts and sorts case-insensitively by name', async () => {
+    const zebra = await seedExercise(db, 'zebra curl');
+    const apple = await seedExercise(db, 'Apple Press');
+
+    for (const [exercise, count] of [[zebra, 2] as const, [apple, 1] as const]) {
+      for (let i = 0; i < count; i++) {
+        const workout = await startWorkout(db, { name: `Session ${i}` });
+        const we = await addWorkoutExercise(db, workout.id, exercise.id, 0);
+        await insertSet(db, { workoutExerciseId: we.id, setNumber: 1, weightKg: 50, reps: 5 });
+        await db.update(workouts).set({ finishedAt: new Date().toISOString() }).where(eq(workouts.id, workout.id));
+      }
+    }
+
+    const rows = await loadExercisesWithSets(db);
+
+    expect(rows).toEqual([
+      { id: apple.id, name: 'Apple Press', muscleGroup: 'Legs' },
+      { id: zebra.id, name: 'zebra curl', muscleGroup: 'Legs' },
+    ]);
   });
 });
