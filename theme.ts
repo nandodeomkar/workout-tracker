@@ -20,6 +20,11 @@ export const theme = {
     md: 12,
     lg: 16,
     xl: 24,
+    // Major section breaks on the Stats overview dashboard (PR feed / weekly
+    // volume / exercise picker, D-01/D-02) — xl (24px) is already used for
+    // screen-edge padding, so a distinct larger token keeps sections reading
+    // as separate rather than as one card's internal padding.
+    '2xl': 32,
   },
   typography: {
     title: {
