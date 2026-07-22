@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-04-PLAN.md
-last_updated: "2026-07-22T12:52:04.846Z"
-last_activity: 2026-07-22 -- Phase 03 execution started
+stopped_at: Completed 03-05-PLAN.md
+last_updated: "2026-07-22T13:12:34.829Z"
+last_activity: 2026-07-22 -- Completed 03-05-PLAN.md
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 19
-  completed_plans: 17
+  completed_plans: 18
   percent: 25
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-07-19)
 ## Current Position
 
 Phase: 03 (templates-folders-calculators) — EXECUTING
-Plan: 5 of 6
+Plan: 6 of 6
 Status: Ready to execute
-Last activity: 2026-07-22 -- Phase 03 execution started
+Last activity: 2026-07-22 -- Completed 03-05-PLAN.md
 
 Progress: [██░░░░░░░░] 25% (2/8 phases)
 
@@ -68,6 +68,7 @@ Progress: [██░░░░░░░░] 25% (2/8 phases)
 | Phase 03-templates-folders-calculators P02 | 2min | 2 tasks | 4 files |
 | Phase 03 P03 | 8min | 2 tasks | 3 files |
 | Phase 03-templates-folders-calculators P04 | 15min | 3 tasks | 8 files |
+| Phase 03-templates-folders-calculators P05 | 14min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -114,6 +115,9 @@ Recent decisions affecting current work:
 - [Phase 03-templates-folders-calculators]: loadFolderNames sorts case-insensitively in JS (localeCompare) rather than a SQL COLLATE NOCASE clause — Keeps the query identical across both Drizzle drivers (better-sqlite3 for tests, on-device driver) this module supports
 - [Phase 03-templates-folders-calculators]: bar_weight_kg / bar_weight_lb stored and stepped as two fully independent settings keys, never converted between each other (Pitfall 1)
 - [Phase 03-templates-folders-calculators]: Standalone tools screens skip a redundant second appbar since the calculator sheets already render their own full-screen picker-overlay header with a Close control mapped to router.back()
+- [Phase 03-templates-folders-calculators]: Factored the template builder body into components/TemplateBuilderForm.tsx, shared by app/templates/new.tsx and [templateId].tsx, instead of duplicating it (plan's own explicit instruction)
+- [Phase 03-templates-folders-calculators]: Template creation position is scoped within its folder bucket (Assumptions Log A5) -- counted via loadTemplatesGroupedByFolder before insert
+- [Phase 03-templates-folders-calculators]: Per-template exercise counts on Workout home resolved client-side via one loadTemplateDetail call per template rather than extending db/templates.ts, keeping Task 3 inside its declared single-file scope
 
 ### Pending Todos
 
@@ -134,6 +138,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-22T12:52:04.833Z
-Stopped at: Completed 03-04-PLAN.md
+Last session: 2026-07-22T13:12:34.813Z
+Stopped at: Completed 03-05-PLAN.md
 Resume file: None
