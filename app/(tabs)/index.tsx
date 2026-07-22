@@ -22,9 +22,16 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 
+import { FolderSectionHeader } from '../../components/FolderSectionHeader';
+import { TemplateRow } from '../../components/TemplateRow';
 import { WorkoutRow } from '../../components/WorkoutRow';
 import { db } from '../../db/client';
 import { getSetting } from '../../db/settings';
+import {
+  loadTemplateDetail,
+  loadTemplatesGroupedByFolder,
+  startWorkoutFromTemplate,
+} from '../../db/templates';
 import {
   addWorkoutExercise,
   findResumableWorkout,
@@ -36,6 +43,15 @@ import {
 import type { Workout } from '../../db/schema';
 import { useActiveWorkout } from '../../store/activeWorkout';
 import { theme } from '../../theme';
+
+// Uncategorized bucket's stable expanded-state key (templates.folder is
+// null for it — Map/Record keys must be strings, D-05).
+const UNCATEGORIZED_KEY = '__uncategorized__';
+
+interface TemplateGroupDisplay {
+  folder: string | null;
+  templates: { id: number; name: string; exerciseCount: number }[];
+}
 
 function workoutLabel(workout: Workout): string {
   if (workout.name && workout.name.trim().length > 0) {
@@ -96,6 +112,14 @@ export default function WorkoutScreen() {
   const [historyEntries, setHistoryEntries] = useState<WorkoutHistoryEntry[]>([]);
   const [startingFromHistory, setStartingFromHistory] = useState(false);
 
+  // Folder-grouped template list (TMPL-01/D-05) — reloads on every focus
+  // (own cancelled-guard, independent of the resume-info load above since it
+  // doesn't depend on activeWorkoutId) so a template just created/edited in
+  // the builder shows up immediately on return.
+  const [templateGroups, setTemplateGroups] = useState<TemplateGroupDisplay[]>([]);
+  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
+  const [startingFromTemplate, setStartingFromTemplate] = useState(false);
+
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
@@ -133,6 +157,46 @@ export default function WorkoutScreen() {
         cancelled = true;
       };
     }, [activeWorkoutId]),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+
+      const loadTemplates = async () => {
+        const groups = await loadTemplatesGroupedByFolder(db);
+        const withCounts: TemplateGroupDisplay[] = await Promise.all(
+          groups.map(async (group) => ({
+            folder: group.folder,
+            templates: await Promise.all(
+              group.templates.map(async (template) => {
+                const detail = await loadTemplateDetail(db, template.id);
+                return { id: template.id, name: template.name, exerciseCount: detail?.exercises.length ?? 0 };
+              }),
+            ),
+          })),
+        );
+        if (cancelled) {
+          return;
+        }
+        setTemplateGroups(withCounts);
+        setExpandedFolders((prev) => {
+          const next = { ...prev };
+          for (const group of withCounts) {
+            const key = group.folder ?? UNCATEGORIZED_KEY;
+            if (!(key in next)) {
+              next[key] = true; // default expanded (D-05)
+            }
+          }
+          return next;
+        });
+      };
+
+      void loadTemplates();
+      return () => {
+        cancelled = true;
+      };
+    }, []),
   );
 
   useEffect(() => {
@@ -205,6 +269,28 @@ export default function WorkoutScreen() {
     }
   };
 
+  function toggleFolder(key: string) {
+    setExpandedFolders((prev) => ({ ...prev, [key]: !prev[key] }));
+  }
+
+  // Starts a workout from a template (TMPL-02/D-05): startWorkoutFromTemplate
+  // writes workouts.template_id and copies template_exercises into
+  // workout_exercises in position order (db/templates.ts, Plan 03) — no
+  // ad-hoc copy loop here (T-03-14).
+  const handlePickTemplate = async (templateId: number) => {
+    if (startingFromTemplate) {
+      return;
+    }
+    setStartingFromTemplate(true);
+    try {
+      const workout = await startWorkoutFromTemplate(db, templateId);
+      setActiveWorkout(workout.id, 'logging');
+      router.push({ pathname: '/active-workout/[workoutId]', params: { workoutId: String(workout.id) } });
+    } finally {
+      setStartingFromTemplate(false);
+    }
+  };
+
   if (checking) {
     return (
       <View style={styles.centered}>
@@ -214,40 +300,84 @@ export default function WorkoutScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Workout</Text>
+    <View style={styles.screen}>
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <Text style={styles.title}>Workout</Text>
 
-      {resumeInfo ? (
-        <Pressable onPress={handleResume} accessibilityRole="button" style={styles.resumeCard}>
-          <Text style={styles.resumeTitle}>Resume workout</Text>
-          <Text style={styles.resumeMeta}>
-            Started {formatStartedAt(resumeInfo.workout.startedAt)} · {resumeInfo.exerciseCount}{' '}
-            {resumeInfo.exerciseCount === 1 ? 'exercise' : 'exercises'}
-          </Text>
-        </Pressable>
-      ) : (
-        <View style={styles.startGroup}>
-          <Pressable
-            onPress={handleStartEmpty}
-            disabled={starting}
-            accessibilityRole="button"
-            style={[styles.startButton, starting ? styles.startButtonDisabled : null]}
-          >
-            <Text style={styles.startButtonText}>Start empty workout</Text>
+        {resumeInfo ? (
+          <Pressable onPress={handleResume} accessibilityRole="button" style={styles.resumeCard}>
+            <Text style={styles.resumeTitle}>Resume workout</Text>
+            <Text style={styles.resumeMeta}>
+              Started {formatStartedAt(resumeInfo.workout.startedAt)} · {resumeInfo.exerciseCount}{' '}
+              {resumeInfo.exerciseCount === 1 ? 'exercise' : 'exercises'}
+            </Text>
           </Pressable>
+        ) : (
+          <View style={styles.startGroup}>
+            <Pressable
+              onPress={handleStartEmpty}
+              disabled={starting}
+              accessibilityRole="button"
+              style={[styles.startButton, starting ? styles.startButtonDisabled : null]}
+            >
+              <Text style={styles.startButtonText}>Start empty workout</Text>
+            </Pressable>
 
-          <Pressable
-            onPress={() => setHistoryPickerOpen(true)}
-            accessibilityRole="button"
-            style={styles.startButtonOutline}
-          >
-            <Text style={styles.startButtonOutlineText}>Start from history</Text>
-          </Pressable>
+            <Pressable
+              onPress={() => setHistoryPickerOpen(true)}
+              accessibilityRole="button"
+              style={styles.startButtonOutline}
+            >
+              <Text style={styles.startButtonOutlineText}>Start from history</Text>
+            </Pressable>
 
-          <Text style={styles.emptyHeading}>No workout in progress</Text>
-          <Text style={styles.emptyBody}>Start an empty workout, or repeat one from your history.</Text>
+            <Text style={styles.emptyHeading}>No workout in progress</Text>
+            <Text style={styles.emptyBody}>Start an empty workout, or repeat one from your history.</Text>
+          </View>
+        )}
+
+        <View style={styles.templatesSection}>
+          <View style={styles.templatesSectionHeader}>
+            <Text style={styles.sectionTitle}>Templates</Text>
+            <Pressable
+              onPress={() => router.push('/templates/new')}
+              accessibilityRole="button"
+              style={styles.newTemplateButton}
+            >
+              <Text style={styles.newTemplateButtonText}>+ New template</Text>
+            </Pressable>
+          </View>
+
+          {templateGroups.length === 0 ? (
+            <Text style={styles.emptyBody}>No templates yet. Create one to start faster next time.</Text>
+          ) : (
+            templateGroups.map((group) => {
+              const key = group.folder ?? UNCATEGORIZED_KEY;
+              const expanded = expandedFolders[key] ?? true;
+              return (
+                <View key={key} style={styles.folderGroup}>
+                  <FolderSectionHeader
+                    title={group.folder ?? 'Uncategorized'}
+                    count={group.templates.length}
+                    expanded={expanded}
+                    onToggle={() => toggleFolder(key)}
+                  />
+                  {expanded
+                    ? group.templates.map((template) => (
+                        <TemplateRow
+                          key={template.id}
+                          label={template.name}
+                          exerciseCount={template.exerciseCount}
+                          onPress={() => void handlePickTemplate(template.id)}
+                        />
+                      ))
+                    : null}
+                </View>
+              );
+            })
+          )}
         </View>
-      )}
+      </ScrollView>
 
       {historyPickerOpen ? (
         <View style={styles.pickerOverlay}>
@@ -284,10 +414,13 @@ export default function WorkoutScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
     backgroundColor: theme.colors.background,
+  },
+  container: {
     padding: theme.spacing.xl,
+    paddingBottom: theme.spacing.xl * 2,
   },
   centered: {
     flex: 1,
@@ -356,6 +489,32 @@ const styles = StyleSheet.create({
   emptyBody: {
     ...theme.typography.caption,
     color: theme.colors.textMuted,
+  },
+  templatesSection: {
+    marginTop: theme.spacing.xl,
+    gap: theme.spacing.sm,
+  },
+  templatesSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  sectionTitle: {
+    ...theme.typography.title,
+    fontSize: 17,
+    color: theme.colors.text,
+  },
+  newTemplateButton: {
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  newTemplateButtonText: {
+    ...theme.typography.body,
+    color: theme.colors.accent,
+    fontWeight: '700',
+  },
+  folderGroup: {
+    gap: theme.spacing.xs,
   },
   pickerOverlay: {
     position: 'absolute',
