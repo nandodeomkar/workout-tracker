@@ -112,7 +112,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   4. User can open a plate calculator inline from the active workout to see plate loading for a target weight
   5. User can use a 1RM calculator and get warm-up set suggestions for a given working weight
 
-**Plans**: 6 plans (3 waves)
+**Plans**: 6 plans (3 waves) + gap closure GAP 07-08 (2 plans, from 03-UAT)
 **Mode:** mvp
 **UI hint**: yes
 
@@ -130,6 +130,11 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] 03-05-PLAN.md — Template builder + folder-grouped Workout-home list + start-from-template (TMPL-01/02)
 - [x] 03-06-PLAN.md — Active-workout inline calculators + template value pre-fill + save-as-template (UTIL-01/02/03, TMPL-02/03)
+
+**Gap closure** *(from 03-UAT — 2 defects, 3 gaps; parallel, Wave 1)*
+
+- [ ] 03-07-PLAN.md — Reachable template edit entry point: onEdit affordance on TemplateRow → /templates/[templateId] (TMPL-01, UAT Gap 1)
+- [ ] 03-08-PLAN.md — Warm-up log skips rest timer + per-set un-log (deleteSet helper) in handleLogSet (LOG-02/LOG-03, D-01 un-deferred, UAT Gaps 2-3)
 
 ### Phase 4: Stats & Charts
 
