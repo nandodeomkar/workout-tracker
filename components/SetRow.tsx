@@ -13,6 +13,12 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { theme } from '../theme';
 
+// Steppers render at a compact visual width so the whole row (index + weight
+// + reps + ✓) fits within a ~360dp phone without pushing the ✓ log button off
+// the right edge (the LOG-02 persistence blocker). hitSlop restores the
+// UI-SPEC 44dp touch target around the smaller visual box.
+const STEPPER_HIT_SLOP = { top: 8, bottom: 8, left: 7, right: 7 } as const;
+
 interface SetRowProps {
   setIndex: number;
   weightDisplay: number;
@@ -63,12 +69,13 @@ export function SetRow({
           onPress={onDecrementWeight}
           accessibilityRole="button"
           accessibilityLabel="Decrease weight"
+          hitSlop={STEPPER_HIT_SLOP}
           style={styles.stepper}
         >
           <Text style={styles.stepperText}>-</Text>
         </Pressable>
         <Pressable onPress={() => onEditNumber('weight')} accessibilityRole="button" style={styles.numberTap}>
-          <Text style={styles.numberText} numberOfLines={1}>
+          <Text style={styles.numberText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
             {weightDisplay}
             <Text style={styles.unitText}> {unit}</Text>
           </Text>
@@ -77,6 +84,7 @@ export function SetRow({
           onPress={onIncrementWeight}
           accessibilityRole="button"
           accessibilityLabel="Increase weight"
+          hitSlop={STEPPER_HIT_SLOP}
           style={styles.stepper}
         >
           <Text style={styles.stepperText}>+</Text>
@@ -88,17 +96,21 @@ export function SetRow({
           onPress={onDecrementReps}
           accessibilityRole="button"
           accessibilityLabel="Decrease reps"
+          hitSlop={STEPPER_HIT_SLOP}
           style={styles.stepper}
         >
           <Text style={styles.stepperText}>-</Text>
         </Pressable>
         <Pressable onPress={() => onEditNumber('reps')} accessibilityRole="button" style={styles.numberTap}>
-          <Text style={styles.numberText}>{repsDisplay}</Text>
+          <Text style={styles.numberText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+            {repsDisplay}
+          </Text>
         </Pressable>
         <Pressable
           onPress={onIncrementReps}
           accessibilityRole="button"
           accessibilityLabel="Increase reps"
+          hitSlop={STEPPER_HIT_SLOP}
           style={styles.stepper}
         >
           <Text style={styles.stepperText}>+</Text>
@@ -122,7 +134,7 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.sm,
+    gap: theme.spacing.xs,
     backgroundColor: theme.colors.surfaceAlt,
     borderRadius: theme.radius.md,
     minHeight: 56,
@@ -130,8 +142,9 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.xs,
   },
   indexChip: {
-    minWidth: 32,
+    width: 28,
     minHeight: 32,
+    flexShrink: 0,
     borderRadius: theme.radius.sm,
     alignItems: 'center',
     justifyContent: 'center',
@@ -148,13 +161,15 @@ const styles = StyleSheet.create({
     color: theme.colors.background,
   },
   numberControl: {
+    flex: 1,
+    minWidth: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.xs,
   },
   stepper: {
-    minWidth: 44,
+    width: 30,
     minHeight: 44,
+    flexShrink: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -163,7 +178,8 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
   },
   numberTap: {
-    minWidth: 60,
+    flex: 1,
+    minWidth: 0,
     minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
@@ -179,12 +195,12 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   logButton: {
-    minWidth: 44,
+    width: 44,
     minHeight: 44,
+    flexShrink: 0,
     borderRadius: theme.radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    marginLeft: 'auto',
   },
   logButtonOutline: {
     borderWidth: StyleSheet.hairlineWidth,
