@@ -216,6 +216,30 @@ export default function ActiveWorkoutScreen() {
     const parsedBarLb = Number(barWeightLbSetting ?? DEFAULT_BAR_WEIGHT_LB);
     setBarWeightLb(Number.isFinite(parsedBarLb) && parsedBarLb >= 0 ? parsedBarLb : DEFAULT_BAR_WEIGHT_LB);
 
+    // Start-from-template pre-fill merge (TMPL-02/D-01): loaded once per
+    // loadAll call, keyed by exerciseId, so each never-yet-logged card below
+    // can merge its own last-performance history with the template's target
+    // structure (lib/templatePrefill.ts#buildTemplatePrefillRows). A
+    // non-template workout (templateId null) or a missing/deleted template
+    // leaves this map null — every card falls through to the unchanged
+    // Phase-2 last-performance pre-fill branch below.
+    let templateTargetsByExerciseId: Map<number, TemplateTarget> | null = null;
+    if (detail.workout.templateId != null) {
+      const templateDetail = await loadTemplateDetail(db, detail.workout.templateId);
+      if (templateDetail) {
+        templateTargetsByExerciseId = new Map(
+          templateDetail.exercises.map(({ templateExercise }) => [
+            templateExercise.exerciseId,
+            {
+              targetSets: templateExercise.targetSets,
+              targetReps: templateExercise.targetReps,
+              targetWeightKg: templateExercise.targetWeightKg,
+            },
+          ]),
+        );
+      }
+    }
+
     const exerciseMap = new Map(exercisesList.map((exercise) => [exercise.id, exercise]));
     const entries: ExerciseEntry[] = [];
     const nextRows: Record<number, Row[]> = {};
@@ -240,24 +264,46 @@ export default function ActiveWorkoutScreen() {
           isWarmup: setRow.type === 'warmup',
           isCompleted: true,
         }));
-      } else {
-        // No completed sets on this card yet — pre-fill from the exercise's
-        // last FINISHED performance (D-06/Pattern 2). Empty (a single blank
-        // row) when this exercise has never been logged.
-        const lastPerformance = await loadLastPerformance(db, workoutExercise.exerciseId);
-        nextRows[workoutExercise.id] =
-          lastPerformance.length > 0
-            ? lastPerformance.map((setRow, index) => ({
-                key: `p-${workoutExercise.id}-${index}`,
-                setId: null,
-                setNumber: index + 1,
-                weightKg: setRow.weightKg,
-                reps: setRow.reps,
-                isWarmup: setRow.type === 'warmup',
-                isCompleted: false,
-              }))
-            : [emptyRow(workoutExercise.id, 1)];
+        continue;
       }
+
+      const templateTarget = templateTargetsByExerciseId?.get(workoutExercise.exerciseId);
+      if (templateTarget) {
+        // Template-started workout, never-yet-logged card: merge target
+        // structure with non-warmup history (Pitfall 4) via the tested pure
+        // merge fn — row count is always exactly targetSets.
+        const history = (await loadLastPerformance(db, workoutExercise.exerciseId))
+          .filter((setRow) => setRow.type !== 'warmup')
+          .map((setRow) => ({ weightKg: setRow.weightKg, reps: setRow.reps }));
+        const prefillRows = buildTemplatePrefillRows(templateTarget, history);
+        nextRows[workoutExercise.id] = prefillRows.map((row, index) => ({
+          key: `p-${workoutExercise.id}-${index}`,
+          setId: null,
+          setNumber: index + 1,
+          weightKg: row.weightKg,
+          reps: row.reps,
+          isWarmup: false,
+          isCompleted: false,
+        }));
+        continue;
+      }
+
+      // No completed sets on this card yet — pre-fill from the exercise's
+      // last FINISHED performance (D-06/Pattern 2). Empty (a single blank
+      // row) when this exercise has never been logged.
+      const lastPerformance = await loadLastPerformance(db, workoutExercise.exerciseId);
+      nextRows[workoutExercise.id] =
+        lastPerformance.length > 0
+          ? lastPerformance.map((setRow, index) => ({
+              key: `p-${workoutExercise.id}-${index}`,
+              setId: null,
+              setNumber: index + 1,
+              weightKg: setRow.weightKg,
+              reps: setRow.reps,
+              isWarmup: setRow.type === 'warmup',
+              isCompleted: false,
+            }))
+          : [emptyRow(workoutExercise.id, 1)];
     }
 
     setExerciseEntries(entries);
