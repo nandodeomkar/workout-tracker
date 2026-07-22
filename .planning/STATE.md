@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 04-03-PLAN.md
-last_updated: "2026-07-22T17:54:08.524Z"
+stopped_at: Completed 04-04-PLAN.md
+last_updated: "2026-07-22T18:11:53.188Z"
 last_activity: 2026-07-22 -- Phase 04 execution started
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 27
-  completed_plans: 24
+  completed_plans: 25
   percent: 38
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-07-19)
 ## Current Position
 
 Phase: 04 (stats-charts) — EXECUTING
-Plan: 4 of 6
+Plan: 2 of 6
 Status: Ready to execute
 Last activity: 2026-07-22 -- Phase 04 execution started
 
@@ -74,6 +74,7 @@ Progress: [██░░░░░░░░] 25% (2/8 phases)
 | Phase 03-templates-folders-calculators P08 | 8min | 2 tasks | 3 files |
 | Phase 04-stats-charts P02 | 10min | 3 tasks | 7 files |
 | Phase 04-stats-charts P03 | 15min | 3 tasks | 7 files |
+| Phase 04-stats-charts P04 | 13min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -134,6 +135,9 @@ Recent decisions affecting current work:
 - [Phase 04-stats-charts]: buildWeeklyVolume anchors its zero-filled weeksBack window to the current real date, independent of which weeks have rows in the input, so sparse weeks still render a 0 bar; a genuinely empty input still short-circuits to []
 - [Phase 04-stats-charts]: Section C exercise-picker row is a small inline Pressable (not a reuse of ExerciseRow), since loadExercisesWithSets intentionally returns no equipment field
 - [Phase 04-stats-charts]: loadExercisesWithSets dedupes in JS and sorts case-insensitively via localeCompare, mirroring db/templates.ts#loadFolderNames's precedent to keep the query driver-identical
+- [Phase ?]: computeAllTimeRecords/computeExerciseRecordBoard track running bests as objects (weightKg/e1rm, workoutId, date), not raw numbers, so PREvent/RecordBoardEntry can be emitted directly from the same scan
+- [Phase ?]: computeExerciseRecordBoard derives exerciseId from its input's first row rather than a separate parameter, matching the RESEARCH.md single-exercise call shape
+- [Phase ?]: Section A's PR-feed card-list styling is duplicated locally in app/(tabs)/stats.tsx and app/stats/records.tsx rather than factored into a shared component, since the plan scoped files_modified to only those two files
 
 ### Pending Todos
 
@@ -154,6 +158,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-22T17:54:08.500Z
-Stopped at: Completed 04-03-PLAN.md
+Last session: 2026-07-22T18:11:53.168Z
+Stopped at: Completed 04-04-PLAN.md
 Resume file: None
