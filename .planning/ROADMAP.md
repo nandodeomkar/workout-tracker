@@ -156,7 +156,7 @@ Plans:
 
 **Wave 1**
 
-- [ ] 04-01-PLAN.md — Charting deps install ([SUS] skia gate) + native dev-client rebuild (STAT-01/02 enabler)
+- [x] 04-01-PLAN.md — Charting deps install ([SUS] skia gate) + native dev-client rebuild (STAT-01/02 enabler)
 
 **Wave 2** *(blocked on Wave 1)*
 
@@ -243,7 +243,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Scaffold & Data Foundation | 6/6 | Complete   | 2026-07-21 |
 | 2. Core Logging (Active Workout) | 7/7 | Complete   | 2026-07-22 |
 | 3. Templates, Folders & Calculators | 8/8 | Complete   | 2026-07-22 |
-| 4. Stats & Charts | 0/6 | Planned | - |
+| 4. Stats & Charts | 1/6 | In Progress|  |
 | 5. Body Measurements | 0/TBD | Not started | - |
 | 6. Programs & Progression | 0/TBD | Not started | - |
 | 7. Backup & Export | 0/TBD | Not started | - |
