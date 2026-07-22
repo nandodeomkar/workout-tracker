@@ -15,11 +15,23 @@ const DEFAULT_REST_SECONDS = 90;
 const REST_STEP_SECONDS = 15;
 const MIN_REST_SECONDS = 15;
 
+// Barbell-weight defaults + step/clamp bounds (D-06/D-07, UTIL-01). The two
+// keys are stored and edited INDEPENDENTLY — never derived from each other
+// (Pitfall 1: a 20kg bar and a 45lb bar are separate manufactured standards,
+// not unit-conversions of one another).
+const DEFAULT_BAR_WEIGHT_KG = 20;
+const DEFAULT_BAR_WEIGHT_LB = 45;
+const BAR_WEIGHT_STEP_KG = 2.5;
+const BAR_WEIGHT_STEP_LB = 5;
+const MAX_BAR_WEIGHT = 500;
+
 type Unit = 'kg' | 'lb';
 
 export default function SettingsScreen() {
   const [units, setUnits] = useState<Unit>('kg');
   const [defaultRestSeconds, setDefaultRestSeconds] = useState<number>(DEFAULT_REST_SECONDS);
+  const [barWeightKg, setBarWeightKg] = useState<number>(DEFAULT_BAR_WEIGHT_KG);
+  const [barWeightLb, setBarWeightLb] = useState<number>(DEFAULT_BAR_WEIGHT_LB);
   const [loaded, setLoaded] = useState(false);
 
   // useFocusEffect cancelled-guard reload pattern (RESEARCH.md Pattern 5 /
@@ -29,9 +41,11 @@ export default function SettingsScreen() {
     useCallback(() => {
       let cancelled = false;
       (async () => {
-        const [unitsValue, restValue] = await Promise.all([
+        const [unitsValue, restValue, barKgValue, barLbValue] = await Promise.all([
           getSetting(db, 'units'),
           getSetting(db, 'default_rest_seconds'),
+          getSetting(db, 'bar_weight_kg'),
+          getSetting(db, 'bar_weight_lb'),
         ]);
         if (cancelled) {
           return;
@@ -39,6 +53,10 @@ export default function SettingsScreen() {
         setUnits(unitsValue === 'lb' ? 'lb' : 'kg');
         const parsedRest = Number(restValue ?? DEFAULT_REST_SECONDS);
         setDefaultRestSeconds(Number.isFinite(parsedRest) && parsedRest > 0 ? parsedRest : DEFAULT_REST_SECONDS);
+        const parsedBarKg = Number(barKgValue ?? DEFAULT_BAR_WEIGHT_KG);
+        setBarWeightKg(Number.isFinite(parsedBarKg) && parsedBarKg >= 0 ? parsedBarKg : DEFAULT_BAR_WEIGHT_KG);
+        const parsedBarLb = Number(barLbValue ?? DEFAULT_BAR_WEIGHT_LB);
+        setBarWeightLb(Number.isFinite(parsedBarLb) && parsedBarLb >= 0 ? parsedBarLb : DEFAULT_BAR_WEIGHT_LB);
         setLoaded(true);
       })();
       return () => {
@@ -61,9 +79,26 @@ export default function SettingsScreen() {
     await setSetting(db, 'default_rest_seconds', String(next));
   }
 
+  // T-03-10 mitigation: clamp non-negative + sane upper bound before persist.
+  // bar_weight_kg / bar_weight_lb are written independently — stepping one
+  // never touches the other's stored value (Pitfall 1).
+  async function handleStepBarWeight(direction: 1 | -1) {
+    if (units === 'kg') {
+      const next = Math.min(MAX_BAR_WEIGHT, Math.max(0, barWeightKg + direction * BAR_WEIGHT_STEP_KG));
+      setBarWeightKg(next);
+      await setSetting(db, 'bar_weight_kg', String(next));
+    } else {
+      const next = Math.min(MAX_BAR_WEIGHT, Math.max(0, barWeightLb + direction * BAR_WEIGHT_STEP_LB));
+      setBarWeightLb(next);
+      await setSetting(db, 'bar_weight_lb', String(next));
+    }
+  }
+
   if (!loaded) {
     return <View style={styles.container} />;
   }
+
+  const barWeightDisplay = units === 'kg' ? barWeightKg : barWeightLb;
 
   return (
     <View style={styles.container}>
@@ -93,6 +128,29 @@ export default function SettingsScreen() {
             onPress={() => void handleStepRest(1)}
             accessibilityRole="button"
             accessibilityLabel="Increase default rest"
+            style={styles.stepperButton}
+          >
+            <Text style={styles.stepperText}>+</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.label}>{`Barbell weight: ${barWeightDisplay}${units}`}</Text>
+        <View style={styles.stepperRow}>
+          <Pressable
+            onPress={() => void handleStepBarWeight(-1)}
+            accessibilityRole="button"
+            accessibilityLabel="Decrease barbell weight"
+            style={styles.stepperButton}
+          >
+            <Text style={styles.stepperText}>−</Text>
+          </Pressable>
+          <Text style={styles.stepperValue}>{`${barWeightDisplay}${units}`}</Text>
+          <Pressable
+            onPress={() => void handleStepBarWeight(1)}
+            accessibilityRole="button"
+            accessibilityLabel="Increase barbell weight"
             style={styles.stepperButton}
           >
             <Text style={styles.stepperText}>+</Text>
