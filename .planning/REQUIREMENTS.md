@@ -44,7 +44,7 @@
 - [x] **STAT-01**: User can view per-exercise charts: estimated 1RM, top set, and volume over time
 - [x] **STAT-02**: User can view weekly volume by muscle group
 - [x] **STAT-03**: User sees a PR feed; PRs are computed from sets, never stored
-- [ ] **STAT-04**: Charts stay responsive with years of history (validated against a large synthetic dataset)
+- [x] **STAT-04**: Charts stay responsive with years of history (validated against a large synthetic dataset)
 
 ### Body Measurements
 
@@ -114,7 +114,7 @@ Which phases cover which requirements. Filled by roadmap creation.
 | STAT-01 | Phase 4 | Complete |
 | STAT-02 | Phase 4 | Complete |
 | STAT-03 | Phase 4 | Complete |
-| STAT-04 | Phase 4 | Pending |
+| STAT-04 | Phase 4 | Complete |
 | MEAS-01 | Phase 5 | Pending |
 | MEAS-02 | Phase 5 | Pending |
 | PROG-01 | Phase 6 | Pending |

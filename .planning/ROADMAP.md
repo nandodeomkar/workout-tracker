@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Scaffold & Data Foundation** - Offline-first SQLite foundation with safe migrations and a searchable exercise library (6 plans + gap closure GAP-1..4; device UAT all 7 tests pass 2026-07-21, see 01-UAT.md)
 - [x] **Phase 2: Core Logging (Active Workout)** - Fast, crash-safe set logging with rest timer and workout history (completed 2026-07-22; device UAT 6/6 pass 2026-07-22, 2 fixes: SetRow ✓ overflow + rest-notif sound, see 02-UAT.md)
 - [x] **Phase 3: Templates, Folders & Calculators** - Reusable workout templates plus plate/1RM/warm-up calculators (completed 2026-07-22)
-- [ ] **Phase 4: Stats & Charts** - Per-exercise progress charts, weekly volume, and a live-computed PR feed
+- [x] **Phase 4: Stats & Charts** - Per-exercise progress charts, weekly volume, and a live-computed PR feed (completed 2026-07-22)
 - [ ] **Phase 5: Body Measurements** - Body measurement logging and trend graphs
 - [ ] **Phase 6: Programs & Progression** - Ordered program days with linear and percent-of-TM progression
 - [ ] **Phase 7: Backup & Export** - Optional Google Drive backup/restore and CSV/JSON export
@@ -173,7 +173,7 @@ Plans:
 **Wave 5** *(blocked on Wave 4; two parallel plans)*
 
 - [x] 04-05-PLAN.md — Per-exercise record board (curated rep-max + best e1RM, live) on the exercise screen (STAT-03)
-- [ ] 04-06-PLAN.md — STAT-04 performance validation: synthetic ~15,600-set history + timed query paths + on-device responsiveness check (STAT-04)
+- [x] 04-06-PLAN.md — STAT-04 performance validation: synthetic ~15,600-set history + timed query paths + on-device responsiveness check (STAT-04)
 
 ### Phase 5: Body Measurements
 
@@ -243,7 +243,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Scaffold & Data Foundation | 6/6 | Complete   | 2026-07-21 |
 | 2. Core Logging (Active Workout) | 7/7 | Complete   | 2026-07-22 |
 | 3. Templates, Folders & Calculators | 8/8 | Complete   | 2026-07-22 |
-| 4. Stats & Charts | 5/6 | In Progress|  |
+| 4. Stats & Charts | 6/6 | Complete   | 2026-07-22 |
 | 5. Body Measurements | 0/TBD | Not started | - |
 | 6. Programs & Progression | 0/TBD | Not started | - |
 | 7. Backup & Export | 0/TBD | Not started | - |
