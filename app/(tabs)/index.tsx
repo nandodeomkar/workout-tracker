@@ -5,23 +5,55 @@
 //   - Active session in progress (resumed on cold start via
 //     `findResumableWorkout`, RESEARCH.md Pattern 1, or already known to
 //     Zustand this app-lifetime) -> a single "Resume workout" card.
-//   - No active session -> "Start empty workout" (wired) plus a clearly
-//     non-interactive "Start from history" placeholder (Plan 07 wires it
-//     up) and the first-use empty-state copy.
+//   - No active session -> "Start empty workout" plus "Start from history"
+//     (Plan 07, D-04): opens a picker (reusing WorkoutRow) over
+//     `loadWorkoutHistory`; picking one starts a NEW workout, copies the
+//     picked workout's exercise list in order via `addWorkoutExercise`
+//     (D-05), and hands off to the active-workout screen, where each card
+//     pre-fills from its OWN most-recent performance via `loadLastPerformance`
+//     (D-06) — not necessarily the picked workout's numbers.
 //
 // Reload runs on every focus via the cancelled-guard pattern from
 // exercises/index.tsx, but skips the SQLite round-trip once Zustand already
 // holds `activeWorkoutId` for this app lifetime.
 
-import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 
+import { WorkoutRow } from '../../components/WorkoutRow';
 import { db } from '../../db/client';
-import { findResumableWorkout, loadWorkoutDetail, startWorkout } from '../../db/workouts';
+import { getSetting } from '../../db/settings';
+import {
+  addWorkoutExercise,
+  findResumableWorkout,
+  loadWorkoutDetail,
+  loadWorkoutHistory,
+  startWorkout,
+  type WorkoutHistoryEntry,
+} from '../../db/workouts';
 import type { Workout } from '../../db/schema';
 import { useActiveWorkout } from '../../store/activeWorkout';
 import { theme } from '../../theme';
+
+function workoutLabel(workout: Workout): string {
+  if (workout.name && workout.name.trim().length > 0) {
+    return workout.name;
+  }
+  return new Date(workout.startedAt).toLocaleDateString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+function durationMsFor(workout: Workout): number | null {
+  if (!workout.finishedAt) {
+    return null;
+  }
+  return Math.max(0, new Date(workout.finishedAt).getTime() - new Date(workout.startedAt).getTime());
+}
 
 interface ResumeInfo {
   workout: Workout;
@@ -48,12 +80,21 @@ async function loadResumeInfo(workoutId: number): Promise<ResumeInfo | null> {
 
 export default function WorkoutScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const activeWorkoutId = useActiveWorkout((state) => state.activeWorkoutId);
   const setActiveWorkout = useActiveWorkout((state) => state.setActiveWorkout);
 
   const [checking, setChecking] = useState(true);
   const [resumeInfo, setResumeInfo] = useState<ResumeInfo | null>(null);
   const [starting, setStarting] = useState(false);
+  const [unit, setUnit] = useState<'kg' | 'lb'>('kg');
+
+  // "Start from history" picker (D-04) — reuses WorkoutRow, filtered to
+  // finished workouts via loadWorkoutHistory (same query History's List view
+  // uses).
+  const [historyPickerOpen, setHistoryPickerOpen] = useState(false);
+  const [historyEntries, setHistoryEntries] = useState<WorkoutHistoryEntry[]>([]);
+  const [startingFromHistory, setStartingFromHistory] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -94,6 +135,22 @@ export default function WorkoutScreen() {
     }, [activeWorkoutId]),
   );
 
+  useEffect(() => {
+    if (!historyPickerOpen) {
+      return;
+    }
+    let cancelled = false;
+    Promise.all([loadWorkoutHistory(db), getSetting(db, 'units')]).then(([rows, unitSetting]) => {
+      if (!cancelled) {
+        setHistoryEntries(rows);
+        setUnit(unitSetting === 'lb' ? 'lb' : 'kg');
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [historyPickerOpen]);
+
   const handleResume = () => {
     const workout = resumeInfo?.workout;
     if (!workout) {
@@ -114,6 +171,37 @@ export default function WorkoutScreen() {
       router.push({ pathname: '/active-workout/[workoutId]', params: { workoutId: String(workout.id) } });
     } finally {
       setStarting(false);
+    }
+  };
+
+  function closeHistoryPicker() {
+    setHistoryPickerOpen(false);
+  }
+
+  // Starts a NEW workout copying the picked workout's exercise list (D-05);
+  // pre-fill happens naturally once the active-workout screen loads — each
+  // card has zero sets yet, so it pre-fills from its own most-recent
+  // performance via loadLastPerformance (D-06), not necessarily the picked
+  // workout's numbers.
+  const handlePickHistoryWorkout = async (pickedWorkoutId: number) => {
+    if (startingFromHistory) {
+      return;
+    }
+    setStartingFromHistory(true);
+    try {
+      const sourceDetail = await loadWorkoutDetail(db, pickedWorkoutId);
+      const workout = await startWorkout(db);
+      if (sourceDetail) {
+        for (let index = 0; index < sourceDetail.exercises.length; index += 1) {
+          const { workoutExercise } = sourceDetail.exercises[index];
+          await addWorkoutExercise(db, workout.id, workoutExercise.exerciseId, index);
+        }
+      }
+      setActiveWorkout(workout.id, 'logging');
+      closeHistoryPicker();
+      router.push({ pathname: '/active-workout/[workoutId]', params: { workoutId: String(workout.id) } });
+    } finally {
+      setStartingFromHistory(false);
     }
   };
 
@@ -148,17 +236,49 @@ export default function WorkoutScreen() {
             <Text style={styles.startButtonText}>Start empty workout</Text>
           </Pressable>
 
-          {/* Non-interactive placeholder — "Start from history" ships in
-              Plan 07 (D-04). Rendered so the layout matches the locked
-              UI-SPEC without implying functionality that isn't wired yet. */}
-          <View style={[styles.startButtonOutline, styles.startButtonOutlineDisabled]}>
+          <Pressable
+            onPress={() => setHistoryPickerOpen(true)}
+            accessibilityRole="button"
+            style={styles.startButtonOutline}
+          >
             <Text style={styles.startButtonOutlineText}>Start from history</Text>
-          </View>
+          </Pressable>
 
           <Text style={styles.emptyHeading}>No workout in progress</Text>
           <Text style={styles.emptyBody}>Start an empty workout, or repeat one from your history.</Text>
         </View>
       )}
+
+      {historyPickerOpen ? (
+        <View style={styles.pickerOverlay}>
+          <View style={[styles.pickerHeader, { paddingTop: insets.top + theme.spacing.sm }]}>
+            <Pressable onPress={closeHistoryPicker} accessibilityRole="button" style={styles.pickerCancelButton}>
+              <Text style={styles.pickerCancelText}>‹ Cancel</Text>
+            </Pressable>
+            <Text style={styles.pickerTitle}>Start from history</Text>
+          </View>
+
+          <ScrollView keyboardShouldPersistTaps="handled">
+            {historyEntries.length === 0 ? (
+              <View style={styles.pickerEmpty}>
+                <Text style={styles.pickerEmptyText}>No workouts yet</Text>
+              </View>
+            ) : (
+              historyEntries.map((entry) => (
+                <WorkoutRow
+                  key={entry.workout.id}
+                  label={workoutLabel(entry.workout)}
+                  exerciseCount={entry.exerciseCount}
+                  totalVolumeKg={entry.totalVolumeKg}
+                  durationMs={durationMsFor(entry.workout)}
+                  unit={unit}
+                  onPress={() => void handlePickHistoryWorkout(entry.workout.id)}
+                />
+              ))
+            )}
+          </ScrollView>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -220,9 +340,8 @@ const styles = StyleSheet.create({
     borderColor: theme.colors.border,
     paddingVertical: theme.spacing.md,
     alignItems: 'center',
-  },
-  startButtonOutlineDisabled: {
-    opacity: 0.4,
+    minHeight: 44,
+    justifyContent: 'center',
   },
   startButtonOutlineText: {
     ...theme.typography.body,
@@ -237,5 +356,43 @@ const styles = StyleSheet.create({
   emptyBody: {
     ...theme.typography.caption,
     color: theme.colors.textMuted,
+  },
+  pickerOverlay: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: theme.colors.background,
+  },
+  pickerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.sm,
+  },
+  pickerCancelButton: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingRight: theme.spacing.md,
+  },
+  pickerCancelText: {
+    ...theme.typography.body,
+    color: theme.colors.accent,
+    fontWeight: '700',
+  },
+  pickerTitle: {
+    ...theme.typography.title,
+    color: theme.colors.text,
+  },
+  pickerEmpty: {
+    alignItems: 'center',
+    marginTop: theme.spacing.xl,
+    paddingHorizontal: theme.spacing.lg,
+  },
+  pickerEmptyText: {
+    ...theme.typography.body,
+    color: theme.colors.textMuted,
+    textAlign: 'center',
   },
 });
