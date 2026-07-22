@@ -63,6 +63,9 @@ export default function RootLayout() {
             another sibling, reached via router.push from More, never a
             bottom tab (Open Question 1). */}
         <Stack.Screen name="tools" />
+        {/* Templates builder group (TMPL-01/D-03) — pushed sibling route
+            from Workout home, never a bottom tab. */}
+        <Stack.Screen name="templates" />
       </Stack>
     </GestureHandlerRootView>
   );
