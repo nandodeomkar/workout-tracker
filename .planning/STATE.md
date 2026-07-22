@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-02-PLAN.md
-last_updated: "2026-07-22T12:24:11.452Z"
+stopped_at: Completed 03-03-PLAN.md
+last_updated: "2026-07-22T12:34:14.116Z"
 last_activity: 2026-07-22 -- Phase 03 execution started
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 19
-  completed_plans: 15
+  completed_plans: 16
   percent: 25
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-07-19)
 ## Current Position
 
 Phase: 03 (templates-folders-calculators) — EXECUTING
-Plan: 3 of 6
+Plan: 4 of 6
 Status: Ready to execute
 Last activity: 2026-07-22 -- Phase 03 execution started
 
@@ -66,6 +66,7 @@ Progress: [██░░░░░░░░] 25% (2/8 phases)
 | Phase 02-core-logging-active-workout P07 | 18min | 3 tasks | 8 files |
 | Phase 03-templates-folders-calculators P01 | 8min | 3 tasks | 6 files |
 | Phase 03-templates-folders-calculators P02 | 2min | 2 tasks | 4 files |
+| Phase 03 P03 | 8min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -108,6 +109,8 @@ Recent decisions affecting current work:
 - [Phase 03-templates-folders-calculators]: percentOf1RM does not import estimate1RM - consumes a caller-supplied 1RM, keeping Epley the single formula source — Avoids reimplementing/duplicating the shared 1RM formula
 - [Phase ?]: buildTemplatePrefillRows loops i from 0 to targetSets, using history[i]?.weightKg ?? target.targetWeightKg ?? 0 and history[i]?.reps ?? target.targetReps -- verbatim per RESEARCH.md Pattern 2
 - [Phase ?]: buildTemplateExercisesFromWorkout includes an all-warmup exercise as targetSets 0 / targetReps 0 rather than skipping it, preserving exercise-slot structure in the captured template
+- [Phase 03-templates-folders-calculators]: deleteTemplate detaches workouts.template_id to null before deleting template_exercises/templates, in one synchronous transaction (Pitfall 3) — SQLite in this project does not enforce FK constraints at write time; a naive delete would leave workouts pointing at a nonexistent template row
+- [Phase 03-templates-folders-calculators]: loadFolderNames sorts case-insensitively in JS (localeCompare) rather than a SQL COLLATE NOCASE clause — Keeps the query identical across both Drizzle drivers (better-sqlite3 for tests, on-device driver) this module supports
 
 ### Pending Todos
 
@@ -128,6 +131,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-22T12:24:11.433Z
-Stopped at: Completed 03-02-PLAN.md
+Last session: 2026-07-22T12:34:14.097Z
+Stopped at: Completed 03-03-PLAN.md
 Resume file: None
