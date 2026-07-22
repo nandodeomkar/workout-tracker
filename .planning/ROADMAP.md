@@ -134,7 +134,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Gap closure** *(from 03-UAT — 2 defects, 3 gaps; parallel, Wave 1)*
 
 - [x] 03-07-PLAN.md — Reachable template edit entry point: onEdit affordance on TemplateRow → /templates/[templateId] (TMPL-01, UAT Gap 1)
-- [ ] 03-08-PLAN.md — Warm-up log skips rest timer + per-set un-log (deleteSet helper) in handleLogSet (LOG-02/LOG-03, D-01 un-deferred, UAT Gaps 2-3)
+- [x] 03-08-PLAN.md — Warm-up log skips rest timer + per-set un-log (deleteSet helper) in handleLogSet (LOG-02/LOG-03, D-01 un-deferred, UAT Gaps 2-3)
 
 ### Phase 4: Stats & Charts
 
@@ -219,7 +219,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 |-------|----------------|--------|-----------|
 | 1. Scaffold & Data Foundation | 6/6 | Complete   | 2026-07-21 |
 | 2. Core Logging (Active Workout) | 7/7 | Complete   | 2026-07-22 |
-| 3. Templates, Folders & Calculators | 7/8 | In Progress|  |
+| 3. Templates, Folders & Calculators | 8/8 | Complete   | 2026-07-22 |
 | 4. Stats & Charts | 0/TBD | Not started | - |
 | 5. Body Measurements | 0/TBD | Not started | - |
 | 6. Programs & Progression | 0/TBD | Not started | - |
