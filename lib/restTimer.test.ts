@@ -7,16 +7,16 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const scheduleNotificationAsync = vi.fn(async () => 'scheduled-id-1');
-const cancelScheduledNotificationAsync = vi.fn(async () => undefined);
-const setNotificationChannelAsync = vi.fn(async () => null);
+const scheduleNotificationAsync = vi.fn(async (_request: unknown) => 'scheduled-id-1');
+const cancelScheduledNotificationAsync = vi.fn(async (_id: string) => undefined);
+const setNotificationChannelAsync = vi.fn(async (_channelId: string, _config: unknown) => null);
 const getPermissionsAsync = vi.fn(async () => ({ granted: false }));
 const requestPermissionsAsync = vi.fn(async () => ({ granted: true }));
 
 vi.mock('expo-notifications', () => ({
-  scheduleNotificationAsync: (...args: unknown[]) => scheduleNotificationAsync(...args),
-  cancelScheduledNotificationAsync: (...args: unknown[]) => cancelScheduledNotificationAsync(...args),
-  setNotificationChannelAsync: (...args: unknown[]) => setNotificationChannelAsync(...args),
+  scheduleNotificationAsync: (request: unknown) => scheduleNotificationAsync(request),
+  cancelScheduledNotificationAsync: (id: string) => cancelScheduledNotificationAsync(id),
+  setNotificationChannelAsync: (channelId: string, config: unknown) => setNotificationChannelAsync(channelId, config),
   getPermissionsAsync: () => getPermissionsAsync(),
   requestPermissionsAsync: () => requestPermissionsAsync(),
   AndroidImportance: { HIGH: 6 },
@@ -44,9 +44,10 @@ describe('restTimer', () => {
 
     expect(id).toBe('scheduled-id-1');
     expect(scheduleNotificationAsync).toHaveBeenCalledTimes(1);
-    const [request] = scheduleNotificationAsync.mock.calls[0] as [
-      { content: { title: string; body: string }; trigger: { type: string; seconds: number } },
-    ];
+    const request = scheduleNotificationAsync.mock.calls[0][0] as {
+      content: { title: string; body: string };
+      trigger: { type: string; seconds: number };
+    };
     expect(request.trigger).toMatchObject({ type: 'timeInterval', seconds: 90 });
     expect(request.content.title).toBe('Rest complete');
   });

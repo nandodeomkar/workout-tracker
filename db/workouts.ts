@@ -14,6 +14,7 @@ import { and, asc, desc, eq, gte, inArray, isNotNull, isNull, lt } from 'drizzle
 import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core';
 
 import {
+  exercises,
   sets,
   workoutExercises,
   workouts,
@@ -33,6 +34,8 @@ const MAX_NAME_LENGTH = 200;
 const MAX_WEIGHT_KG = 1000;
 /** Sane upper bound on a single set's rep count. */
 const MAX_REPS = 1000;
+/** Sane upper bound on a per-exercise rest override, in seconds (30 min). */
+const MAX_REST_SECONDS = 1800;
 
 function assertValidName(name: string | null | undefined): string | null {
   if (name == null) {
@@ -74,6 +77,30 @@ export function assertValidReps(reps: number): number {
     throw new Error(`Reps must be ${MAX_REPS} or fewer`);
   }
   return reps;
+}
+
+/**
+ * Sets (or clears, when `restSeconds` is `null`) an exercise's per-exercise
+ * rest override (D-08). Rejects negative/NaN/non-integer values and caps at
+ * a sane upper bound (T-02-15/ASVS V5) before the parameterized update —
+ * `null` clears the override so the card falls back to
+ * `settings.default_rest_seconds` (Pattern 5).
+ */
+export async function setExerciseRestOverride(
+  db: AnyDrizzleDb,
+  exerciseId: number,
+  restSeconds: number | null,
+): Promise<void> {
+  if (restSeconds !== null) {
+    if (!Number.isInteger(restSeconds) || restSeconds < 0) {
+      throw new Error('Rest seconds must be a non-negative integer');
+    }
+    if (restSeconds > MAX_REST_SECONDS) {
+      throw new Error(`Rest seconds must be ${MAX_REST_SECONDS} or fewer`);
+    }
+  }
+
+  await db.update(exercises).set({ restSeconds }).where(eq(exercises.id, exerciseId));
 }
 
 export interface StartWorkoutInput {

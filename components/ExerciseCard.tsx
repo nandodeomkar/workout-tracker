@@ -10,6 +10,7 @@
 // "⋯" opens the Replace/Remove menu (also parent-owned — both mutate
 // workout_exercises via db/workouts.ts and need workoutId-level context).
 
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
@@ -17,6 +18,8 @@ import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 
 import { muscleIcon } from '../constants/muscleIcons';
 import { theme } from '../theme';
 import { SetRow } from './SetRow';
+
+const REST_STEP_SECONDS = 15;
 
 export interface SetRowViewModel {
   key: string;
@@ -32,6 +35,10 @@ interface ExerciseCardProps {
   muscleGroup: string;
   unit: 'kg' | 'lb';
   rows: SetRowViewModel[];
+  /** Effective rest seconds for this card's ✓-tap auto-start (override ?? global default, D-08). */
+  restSeconds: number;
+  /** Persists a new per-exercise rest override (D-08) — called on ± tap in the inline stepper. */
+  onChangeRestSeconds: (restSeconds: number) => void;
   onLogSet: (rowKey: string) => void;
   onAddSet: () => void;
   onIncrementWeight: (rowKey: string) => void;
@@ -53,6 +60,8 @@ export function ExerciseCard({
   muscleGroup,
   unit,
   rows,
+  restSeconds,
+  onChangeRestSeconds,
   onLogSet,
   onAddSet,
   onIncrementWeight,
@@ -66,6 +75,7 @@ export function ExerciseCard({
 }: ExerciseCardProps) {
   const translateY = useSharedValue(0);
   const isDragging = useSharedValue(false);
+  const [restStepperOpen, setRestStepperOpen] = useState(false);
 
   function handleDragEndOnJs(translation: number) {
     onDragEnd(translation);
@@ -115,6 +125,14 @@ export function ExerciseCard({
           {exerciseName}
         </Text>
         <Pressable
+          onPress={() => setRestStepperOpen((open) => !open)}
+          accessibilityRole="button"
+          accessibilityLabel="Rest timer override"
+          style={styles.restPill}
+        >
+          <Text style={styles.restPillText}>⏱ {restSeconds}s ›</Text>
+        </Pressable>
+        <Pressable
           onPress={onOverflowPress}
           accessibilityRole="button"
           accessibilityLabel="Exercise options"
@@ -123,6 +141,28 @@ export function ExerciseCard({
           <Text style={styles.overflow}>⋯</Text>
         </Pressable>
       </View>
+
+      {restStepperOpen ? (
+        <View style={styles.restStepperRow}>
+          <Pressable
+            onPress={() => onChangeRestSeconds(Math.max(0, restSeconds - REST_STEP_SECONDS))}
+            accessibilityRole="button"
+            accessibilityLabel="Decrease rest time"
+            style={styles.restStepButton}
+          >
+            <Text style={styles.restStepButtonText}>−</Text>
+          </Pressable>
+          <Text style={styles.restStepperValue}>Rest: {restSeconds}s</Text>
+          <Pressable
+            onPress={() => onChangeRestSeconds(restSeconds + REST_STEP_SECONDS)}
+            accessibilityRole="button"
+            accessibilityLabel="Increase rest time"
+            style={styles.restStepButton}
+          >
+            <Text style={styles.restStepButtonText}>+</Text>
+          </Pressable>
+        </View>
+      ) : null}
 
       <View style={styles.rows}>
         {rows.map((row) => (
@@ -184,6 +224,17 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     flex: 1,
   },
+  restPill: {
+    minHeight: 32,
+    justifyContent: 'center',
+    paddingHorizontal: theme.spacing.sm,
+    borderRadius: theme.radius.sm,
+    backgroundColor: theme.colors.surfaceAlt,
+  },
+  restPillText: {
+    ...theme.typography.caption,
+    color: theme.colors.textMuted,
+  },
   overflowButton: {
     minWidth: 44,
     minHeight: 44,
@@ -194,6 +245,29 @@ const styles = StyleSheet.create({
     ...theme.typography.title,
     color: theme.colors.textMuted,
     paddingHorizontal: theme.spacing.xs,
+  },
+  restStepperRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.md,
+    backgroundColor: theme.colors.surfaceAlt,
+    borderRadius: theme.radius.md,
+    paddingVertical: theme.spacing.xs,
+  },
+  restStepButton: {
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  restStepButtonText: {
+    ...theme.typography.title,
+    color: theme.colors.accent,
+  },
+  restStepperValue: {
+    ...theme.typography.body,
+    color: theme.colors.text,
   },
   rows: {
     gap: theme.spacing.sm,

@@ -1,9 +1,8 @@
-// Active-workout logging screen (LOG-01/LOG-02/D-01/D-06/D-15,
-// UI-SPEC "1. Active workout screen") — the app's core loop: pre-filled
-// checkmark-to-log sets, immediate crash-safe SQLite writes, add-exercise
-// via the reused Phase-1 picker. Rest timer, drag-reorder, replace/remove,
-// and Discard/Finish wiring land in Plans 05-06 (this screen renders their
-// affordances as clearly-marked placeholders per Task 3's scope).
+// Active-workout logging screen (LOG-01/LOG-02/LOG-03/LOG-05/D-01/D-06/D-07/
+// D-08/D-09/D-15, UI-SPEC "1. Active workout screen") — the app's core loop:
+// pre-filled checkmark-to-log sets, immediate crash-safe SQLite writes,
+// add-exercise via the reused Phase-1 picker, an auto-starting rest timer,
+// drag-reorder, replace/remove, and Discard/Finish.
 //
 // Mode (Pitfall 1): `logging` inserts new `sets` rows on checkmark;
 // `editing` (History's future "Edit" entry, Plan 07) updates existing rows
@@ -12,6 +11,14 @@
 // — this covers both "editing mode field edits persist on change" (Pitfall
 // 1) and "an already-logged set edited later in the same logging session
 // stays in sync with what's on screen."
+//
+// Rest timer (LOG-03/D-07/D-09): auto-starts the instant a set is logged in
+// `logging` mode only (never in `editing` mode — editing a past workout is
+// not a live session). Duration resolves from the card's exercise's
+// `rest_seconds` override, falling back to `settings.default_rest_seconds`
+// (D-07/D-08, Pattern 5). `restEndsAt` is an absolute wall-clock timestamp
+// stored in the Zustand session store (RESEARCH.md Pitfall 4) so
+// `RestTimerBar` can recompute remaining time without drift.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -34,6 +41,7 @@ import { ExerciseRow } from '../../components/ExerciseRow';
 import { FilterChipRow } from '../../components/FilterChipRow';
 import { MuscleGroupPills } from '../../components/MuscleGroupPills';
 import { NumericKeypad } from '../../components/NumericKeypad';
+import { RestTimerBar } from '../../components/RestTimerBar';
 import { EQUIPMENT, type EquipmentType, type MuscleGroup } from '../../constants/taxonomy';
 import { db } from '../../db/client';
 import { loadActiveExercises, loadAllExercises } from '../../db/exercises';
@@ -47,12 +55,21 @@ import {
   removeWorkoutExercise,
   reorderWorkoutExercises,
   replaceWorkoutExercise,
+  setExerciseRestOverride,
   updateSet,
 } from '../../db/workouts';
 import { filterExercises } from '../../lib/exerciseFilter';
+import {
+  cancelRestNotification,
+  ensureNotificationChannel,
+  requestRestPermission,
+  scheduleRestNotification,
+} from '../../lib/restTimer';
 import { displayToKg, kgToDisplay } from '../../lib/weightUnits';
 import { useActiveWorkout } from '../../store/activeWorkout';
 import { theme } from '../../theme';
+
+const DEFAULT_REST_SECONDS_FALLBACK = 90;
 
 // Android-first transient feedback — copied verbatim from
 // exercises/[id].tsx (RESEARCH.md "Android-first transient feedback").
@@ -89,6 +106,8 @@ interface ExerciseEntry {
   exerciseId: number;
   name: string;
   muscleGroup: string;
+  /** Per-exercise rest override (D-08); null = use the global default. */
+  restSecondsOverride: number | null;
 }
 
 function emptyRow(prefixId: number | string, setNumber: number): Row {
@@ -108,6 +127,10 @@ export default function ActiveWorkoutScreen() {
   const workoutId = Number(workoutIdParam);
   const insets = useSafeAreaInsets();
   const mode = useActiveWorkout((state) => state.mode);
+  const restEndsAt = useActiveWorkout((state) => state.restEndsAt);
+  const restNotificationId = useActiveWorkout((state) => state.restNotificationId);
+  const setRestEndsAt = useActiveWorkout((state) => state.setRestEndsAt);
+  const setRestNotificationId = useActiveWorkout((state) => state.setRestNotificationId);
 
   const [loading, setLoading] = useState(true);
   const [workout, setWorkout] = useState<Workout | null>(null);
@@ -115,6 +138,9 @@ export default function ActiveWorkoutScreen() {
   const [exerciseEntries, setExerciseEntries] = useState<ExerciseEntry[]>([]);
   const [rowsByWE, setRowsByWE] = useState<Record<number, Row[]>>({});
   const [nowTick, setNowTick] = useState(() => Date.now());
+  const [defaultRestSeconds, setDefaultRestSeconds] = useState(DEFAULT_REST_SECONDS_FALLBACK);
+  const [restTotalSeconds, setRestTotalSeconds] = useState(DEFAULT_REST_SECONDS_FALLBACK);
+  const [notificationsDenied, setNotificationsDenied] = useState(false);
   const [editingTarget, setEditingTarget] = useState<{
     weId: number;
     rowKey: string;
@@ -142,10 +168,11 @@ export default function ActiveWorkoutScreen() {
 
   const loadAll = useCallback(async () => {
     setLoading(true);
-    const [detail, exercisesList, unitSetting] = await Promise.all([
+    const [detail, exercisesList, unitSetting, defaultRestSetting] = await Promise.all([
       loadWorkoutDetail(db, workoutId),
       loadAllExercises(db),
       getSetting(db, 'units'),
+      getSetting(db, 'default_rest_seconds'),
     ]);
 
     if (!detail) {
@@ -156,6 +183,8 @@ export default function ActiveWorkoutScreen() {
 
     setWorkout(detail.workout);
     setUnit(unitSetting === 'lb' ? 'lb' : 'kg');
+    const parsedDefaultRest = Number(defaultRestSetting ?? DEFAULT_REST_SECONDS_FALLBACK);
+    setDefaultRestSeconds(Number.isFinite(parsedDefaultRest) ? parsedDefaultRest : DEFAULT_REST_SECONDS_FALLBACK);
 
     const exerciseMap = new Map(exercisesList.map((exercise) => [exercise.id, exercise]));
     const entries: ExerciseEntry[] = [];
@@ -168,6 +197,7 @@ export default function ActiveWorkoutScreen() {
         exerciseId: workoutExercise.exerciseId,
         name: exercise?.name ?? 'Unknown exercise',
         muscleGroup: exercise?.muscleGroup ?? 'Other',
+        restSecondsOverride: exercise?.restSeconds ?? null,
       });
 
       if (setRows.length > 0) {
@@ -216,6 +246,115 @@ export default function ActiveWorkoutScreen() {
     const interval = setInterval(() => setNowTick(Date.now()), 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Notification channel/permission bootstrap (Pitfall 5: channel MUST exist
+  // before the permission request). Logging-mode only — editing a past
+  // workout never schedules rest notifications. Denial only drives the
+  // non-blocking "Notifications are off" banner (LOG-03 must never gate
+  // logging), never a crash or blocking dialog.
+  useEffect(() => {
+    if (mode !== 'logging') {
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        await ensureNotificationChannel();
+        const granted = await requestRestPermission();
+        if (!cancelled) {
+          setNotificationsDenied(!granted);
+        }
+      } catch {
+        if (!cancelled) {
+          setNotificationsDenied(true);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [mode]);
+
+  // Cancels any outstanding rest notification when this screen unmounts
+  // entirely (e.g. Discard/Finish navigate away) so a stale alert never
+  // fires for a session that's no longer active (T-02-16).
+  useEffect(() => {
+    return () => {
+      void cancelRestNotification(useActiveWorkout.getState().restNotificationId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Auto-starts (or restarts) the rest timer on ✓ (D-07/D-09) — resolves
+  // duration from the card's exercise rest override, falling back to the
+  // global default (Pattern 5), cancels any outstanding notification, and
+  // schedules a new one. Never throws into the caller: a notification
+  // scheduling failure must not block logging (LOG-03).
+  async function startRestTimer(seconds: number) {
+    const endsAt = Date.now() + seconds * 1000;
+    setRestEndsAt(endsAt);
+    setRestTotalSeconds(seconds);
+    try {
+      await ensureNotificationChannel();
+      await cancelRestNotification(restNotificationId);
+      const id = await scheduleRestNotification(seconds);
+      setRestNotificationId(id);
+    } catch {
+      setRestNotificationId(null);
+    }
+  }
+
+  async function handleSkipRest() {
+    try {
+      await cancelRestNotification(restNotificationId);
+    } catch {
+      // Non-blocking — the on-screen bar clears regardless.
+    }
+    setRestEndsAt(null);
+    setRestNotificationId(null);
+  }
+
+  // ±15s (D-09): recompute the absolute end time and cancel/reschedule the
+  // notification against it. Subtracting past zero ends the rest early,
+  // same as Skip.
+  async function handleAdjustRest(deltaSeconds: number) {
+    if (restEndsAt == null) {
+      return;
+    }
+    const nextEndsAt = restEndsAt + deltaSeconds * 1000;
+    const remainingMs = nextEndsAt - Date.now();
+    if (remainingMs <= 0) {
+      await handleSkipRest();
+      return;
+    }
+    setRestEndsAt(nextEndsAt);
+    setRestTotalSeconds((prev) => Math.max(1, prev + deltaSeconds));
+    try {
+      await cancelRestNotification(restNotificationId);
+      const id = await scheduleRestNotification(Math.ceil(remainingMs / 1000));
+      setRestNotificationId(id);
+    } catch {
+      setRestNotificationId(null);
+    }
+  }
+
+  // Rest-override pill (D-08): persists to `exercises.rest_seconds`,
+  // updating every card showing this exercise (an exercise's override is
+  // global to that exercise, not per-card).
+  async function handleChangeRestSeconds(weId: number, restSeconds: number) {
+    const entry = exerciseEntries.find((e) => e.weId === weId);
+    if (!entry) {
+      return;
+    }
+    try {
+      await setExerciseRestOverride(db, entry.exerciseId, restSeconds);
+      setExerciseEntries((prev) =>
+        prev.map((e) => (e.exerciseId === entry.exerciseId ? { ...e, restSecondsOverride: restSeconds } : e)),
+      );
+    } catch {
+      notify("Couldn't save rest time. Check your device storage and try again.");
+    }
+  }
 
   const elapsedLabel = useMemo(() => {
     if (!workout) {
@@ -331,6 +470,14 @@ export default function ActiveWorkoutScreen() {
           [weId]: currentRows.map((r) => (r.key === rowKey ? { ...r, setId: created.id, isCompleted: true } : r)),
         };
       });
+
+      // Auto-start the rest timer (D-07/D-09) — logging mode only; editing a
+      // past workout is not a live session (mode gate).
+      if (mode === 'logging') {
+        const entry = exerciseEntries.find((e) => e.weId === weId);
+        const seconds = entry?.restSecondsOverride ?? defaultRestSeconds;
+        void startRestTimer(seconds);
+      }
     } catch {
       notify("Couldn't save that set. Check your device storage and try again.");
     }
@@ -406,7 +553,13 @@ export default function ActiveWorkoutScreen() {
 
     setExerciseEntries((prev) => [
       ...prev,
-      { weId: created.id, exerciseId: exercise.id, name: exercise.name, muscleGroup: exercise.muscleGroup },
+      {
+        weId: created.id,
+        exerciseId: exercise.id,
+        name: exercise.name,
+        muscleGroup: exercise.muscleGroup,
+        restSecondsOverride: exercise.restSeconds ?? null,
+      },
     ]);
     setRowsByWE((prev) => ({ ...prev, [created.id]: newRows }));
     closePicker();
@@ -429,6 +582,7 @@ export default function ActiveWorkoutScreen() {
         exerciseId: exercise.id,
         name: exercise.name,
         muscleGroup: exercise.muscleGroup,
+        restSecondsOverride: exercise.restSeconds ?? null,
       });
       return next;
     });
@@ -451,7 +605,13 @@ export default function ActiveWorkoutScreen() {
       setExerciseEntries((prev) =>
         prev.map((entry) =>
           entry.weId === weId
-            ? { ...entry, exerciseId: exercise.id, name: exercise.name, muscleGroup: exercise.muscleGroup }
+            ? {
+                ...entry,
+                exerciseId: exercise.id,
+                name: exercise.name,
+                muscleGroup: exercise.muscleGroup,
+                restSecondsOverride: exercise.restSeconds ?? null,
+              }
             : entry,
         ),
       );
@@ -649,6 +809,8 @@ export default function ActiveWorkoutScreen() {
                   muscleGroup={entry.muscleGroup}
                   unit={unit}
                   rows={(rowsByWE[entry.weId] ?? []).map(toViewModel)}
+                  restSeconds={entry.restSecondsOverride ?? defaultRestSeconds}
+                  onChangeRestSeconds={(seconds) => void handleChangeRestSeconds(entry.weId, seconds)}
                   onLogSet={(rowKey) => void handleLogSet(entry.weId, rowKey)}
                   onAddSet={() => handleAddSet(entry.weId)}
                   onIncrementWeight={(rowKey) => handleIncrementWeight(entry.weId, rowKey)}
@@ -669,6 +831,17 @@ export default function ActiveWorkoutScreen() {
           </>
         )}
       </ScrollView>
+
+      {restEndsAt != null ? (
+        <RestTimerBar
+          restEndsAt={restEndsAt}
+          totalSeconds={restTotalSeconds}
+          notificationsDenied={notificationsDenied}
+          onSubtract15={() => void handleAdjustRest(-15)}
+          onAdd15={() => void handleAdjustRest(15)}
+          onSkip={() => void handleSkipRest()}
+        />
+      ) : null}
 
       <NumericKeypad
         visible={editingTarget != null}
