@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 04 UI-SPEC approved
-last_updated: "2026-07-22T17:37:25.172Z"
+stopped_at: Completed 04-03-PLAN.md
+last_updated: "2026-07-22T17:54:08.524Z"
 last_activity: 2026-07-22 -- Phase 04 execution started
 progress:
   total_phases: 8
   completed_phases: 3
   total_plans: 27
-  completed_plans: 23
+  completed_plans: 24
   percent: 38
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-07-19)
 ## Current Position
 
 Phase: 04 (stats-charts) — EXECUTING
-Plan: 2 of 6
+Plan: 4 of 6
 Status: Ready to execute
 Last activity: 2026-07-22 -- Phase 04 execution started
 
@@ -73,6 +73,7 @@ Progress: [██░░░░░░░░] 25% (2/8 phases)
 | Phase 03-templates-folders-calculators P07 | 4min | 1 tasks | 2 files |
 | Phase 03-templates-folders-calculators P08 | 8min | 2 tasks | 3 files |
 | Phase 04-stats-charts P02 | 10min | 3 tasks | 7 files |
+| Phase 04-stats-charts P03 | 15min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -130,6 +131,9 @@ Recent decisions affecting current work:
 - [Phase 03-templates-folders-calculators]: Per-set un-log reuses the existing checkmark control (tap it again to un-log) rather than adding a new SetRow affordance, per the UAT-chosen interaction
 - [Phase 04-stats-charts]: buildChartSeries recomputed via useMemo(metric) over a single fetched ChartSet[] rather than re-querying on toggle tap, keeping useFocusEffect live-recompute scoped to exerciseId/focus — Matches D-11 (never cached) + RESEARCH.md Open Question 2 (fetch all-time once, filter client-side)
 - [Phase 04-stats-charts]: MetricToggle built as its own dedicated single-select component rather than reusing FilterChipRow — FilterChipRow is multi-select; UI-SPEC calls for radio-group semantics for the metric toggle and range chips
+- [Phase 04-stats-charts]: buildWeeklyVolume anchors its zero-filled weeksBack window to the current real date, independent of which weeks have rows in the input, so sparse weeks still render a 0 bar; a genuinely empty input still short-circuits to []
+- [Phase 04-stats-charts]: Section C exercise-picker row is a small inline Pressable (not a reuse of ExerciseRow), since loadExercisesWithSets intentionally returns no equipment field
+- [Phase 04-stats-charts]: loadExercisesWithSets dedupes in JS and sorts case-insensitively via localeCompare, mirroring db/templates.ts#loadFolderNames's precedent to keep the query driver-identical
 
 ### Pending Todos
 
@@ -150,6 +154,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-22T17:36:37.438Z
-Stopped at: Phase 04 UI-SPEC approved
-Resume file: .planning/phases/04-stats-charts/04-UI-SPEC.md
+Last session: 2026-07-22T17:54:08.500Z
+Stopped at: Completed 04-03-PLAN.md
+Resume file: None

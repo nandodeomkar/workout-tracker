@@ -164,7 +164,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2)*
 
-- [ ] 04-03-PLAN.md — Weekly volume by muscle group: weeklyVolume lib + palette + query + Stats dashboard shell + stacked bar + exercise picker (STAT-02)
+- [x] 04-03-PLAN.md — Weekly volume by muscle group: weeklyVolume lib + palette + query + Stats dashboard shell + stacked bar + exercise picker (STAT-02)
 
 **Wave 4** *(blocked on Wave 3)*
 
@@ -243,7 +243,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Scaffold & Data Foundation | 6/6 | Complete   | 2026-07-21 |
 | 2. Core Logging (Active Workout) | 7/7 | Complete   | 2026-07-22 |
 | 3. Templates, Folders & Calculators | 8/8 | Complete   | 2026-07-22 |
-| 4. Stats & Charts | 2/6 | In Progress|  |
+| 4. Stats & Charts | 3/6 | In Progress|  |
 | 5. Body Measurements | 0/TBD | Not started | - |
 | 6. Programs & Progression | 0/TBD | Not started | - |
 | 7. Backup & Export | 0/TBD | Not started | - |
