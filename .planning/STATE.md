@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-07-22T12:18:26.860Z"
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-07-22T12:24:11.452Z"
 last_activity: 2026-07-22 -- Phase 03 execution started
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 19
-  completed_plans: 14
+  completed_plans: 15
   percent: 25
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-07-19)
 ## Current Position
 
 Phase: 03 (templates-folders-calculators) — EXECUTING
-Plan: 2 of 6
+Plan: 3 of 6
 Status: Ready to execute
 Last activity: 2026-07-22 -- Phase 03 execution started
 
@@ -65,6 +65,7 @@ Progress: [██░░░░░░░░] 25% (2/8 phases)
 | Phase 02-core-logging-active-workout P06 | 35min | 3 tasks | 9 files |
 | Phase 02-core-logging-active-workout P07 | 18min | 3 tasks | 8 files |
 | Phase 03-templates-folders-calculators P01 | 8min | 3 tasks | 6 files |
+| Phase 03-templates-folders-calculators P02 | 2min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -105,6 +106,8 @@ Recent decisions affecting current work:
 - [Phase 03-templates-folders-calculators]: Plate-solver rounding uses its own plate set's smallest denomination, not lib/weightUnits.ts's 0.5kg/1lb display rounding — Pitfall 2: display rounding granularity does not match actual plate-loadable granularity
 - [Phase 03-templates-folders-calculators]: Warm-up ladder values locked as [ASSUMED A1]: Bar x8, 40% x5, 60% x3, 80% x2 — CONTEXT.md D-09 discretion; generic strength-training convention
 - [Phase 03-templates-folders-calculators]: percentOf1RM does not import estimate1RM - consumes a caller-supplied 1RM, keeping Epley the single formula source — Avoids reimplementing/duplicating the shared 1RM formula
+- [Phase ?]: buildTemplatePrefillRows loops i from 0 to targetSets, using history[i]?.weightKg ?? target.targetWeightKg ?? 0 and history[i]?.reps ?? target.targetReps -- verbatim per RESEARCH.md Pattern 2
+- [Phase ?]: buildTemplateExercisesFromWorkout includes an all-warmup exercise as targetSets 0 / targetReps 0 rather than skipping it, preserving exercise-slot structure in the captured template
 
 ### Pending Todos
 
@@ -125,6 +128,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-22T12:18:26.846Z
-Stopped at: Completed 03-01-PLAN.md
+Last session: 2026-07-22T12:24:11.433Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None

@@ -29,8 +29,8 @@
 ### Templates
 
 - [ ] **TMPL-01**: User can create, edit, and organize workout templates in folders
-- [ ] **TMPL-02**: Starting from a template pre-fills exercises and last-performance values
-- [ ] **TMPL-03**: User can save a completed workout as a template
+- [x] **TMPL-02**: Starting from a template pre-fills exercises and last-performance values
+- [x] **TMPL-03**: User can save a completed workout as a template
 
 ### Programs & Progression
 
@@ -106,8 +106,8 @@ Which phases cover which requirements. Filled by roadmap creation.
 | HIST-01 | Phase 2 | Complete |
 | HIST-02 | Phase 2 | Complete |
 | TMPL-01 | Phase 3 | Pending |
-| TMPL-02 | Phase 3 | Pending |
-| TMPL-03 | Phase 3 | Pending |
+| TMPL-02 | Phase 3 | Complete |
+| TMPL-03 | Phase 3 | Complete |
 | UTIL-01 | Phase 3 | Complete |
 | UTIL-02 | Phase 3 | Complete |
 | UTIL-03 | Phase 3 | Complete |
