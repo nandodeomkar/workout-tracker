@@ -1,9 +1,9 @@
 ---
-status: diagnosed
+status: resolved
 phase: 04-stats-charts
 source: [04-VERIFICATION.md]
 started: 2026-07-23T01:20:00Z
-updated: 2026-07-23T02:10:00Z
+updated: 2026-07-23T04:18:32Z
 ---
 
 ## Current Test
@@ -18,9 +18,11 @@ result: pass
 
 ### 2. Empty / sparse states across all three surfaces
 expected: A never-logged exercise's chart shows "No data yet for {name}"; an exercise with exactly one workout shows the point + "Log one more workout..." caption; a fresh account shows "No PRs yet" and "No training logged yet" on the dashboard.
-result: issue
+result: pass
 reported: "no single point visible for exercise with one log. \"Log one more workout' caption visible but hard to read"
 severity: major
+resolved_by: 04-07
+resolution: "Fixed in plan 04-07 (commit b805503): added victory-native <Scatter radius={6}> over points.value so a single-datum series paints a visible accent dot, and raised sparseCaption to typography.body (16px) + colors.text + textAlign:'center'. Re-run of UAT Test 2 on the physical device passed — single dot visible on all three metrics, caption legible; multi-point and empty states unregressed."
 
 ### 3. Chart/Records toggle + PR-feed tap-through to record board
 expected: Tapping a PR-feed row (or the "Records" toggle on the chart screen) opens the exercise's live record board — curated 1/3/5/8/10/12-rep-max rows (only logged counts) + best-e1RM hero card, in the user's display unit.
@@ -33,8 +35,8 @@ result: pass
 ## Summary
 
 total: 4
-passed: 3
-issues: 1
+passed: 4
+issues: 0
 pending: 0
 skipped: 0
 blocked: 0
@@ -42,7 +44,9 @@ blocked: 0
 ## Gaps
 
 - truth: "Exercise with exactly one logged workout shows a single visible data point on the chart, plus a legible 'Log one more workout...' caption"
-  status: failed
+  status: resolved
+  resolved_by: 04-07
+  resolved_at: 2026-07-23T04:18:32Z
   reason: "User reported: no single point visible for exercise with one log. \"Log one more workout' caption visible but hard to read"
   severity: major
   test: 2

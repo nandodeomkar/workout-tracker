@@ -1,6 +1,6 @@
 # Debug: chart-single-point-invisible
 
-**Status:** root cause found
+**Status:** resolved — fixed in plan 04-07 (commit b805503); on-device UAT Test 2 re-passed 2026-07-23
 **Discovered:** Phase 04 UAT — Test 2 (Empty / sparse states)
 **Severity:** major
 
