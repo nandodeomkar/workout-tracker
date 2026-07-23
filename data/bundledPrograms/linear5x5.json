@@ -1,0 +1,70 @@
+{
+  "name": "Linear 5x5 (3-Day)",
+  "notes": null,
+  "days": [
+    {
+      "name": "Day A",
+      "exercises": [
+        {
+          "seedId": "barbell-squat",
+          "targetSets": 5,
+          "targetReps": 5,
+          "progression": {
+            "type": "linear",
+            "incrementKg": 2.5
+          }
+        },
+        {
+          "seedId": "barbell-bench-press-medium-grip",
+          "targetSets": 5,
+          "targetReps": 5,
+          "progression": {
+            "type": "linear",
+            "incrementKg": 2.5
+          }
+        },
+        {
+          "seedId": "bent-over-barbell-row",
+          "targetSets": 5,
+          "targetReps": 5,
+          "progression": {
+            "type": "linear",
+            "incrementKg": 2.5
+          }
+        }
+      ]
+    },
+    {
+      "name": "Day B",
+      "exercises": [
+        {
+          "seedId": "barbell-squat",
+          "targetSets": 5,
+          "targetReps": 5,
+          "progression": {
+            "type": "linear",
+            "incrementKg": 2.5
+          }
+        },
+        {
+          "seedId": "standing-military-press",
+          "targetSets": 5,
+          "targetReps": 5,
+          "progression": {
+            "type": "linear",
+            "incrementKg": 2.5
+          }
+        },
+        {
+          "seedId": "barbell-deadlift",
+          "targetSets": 1,
+          "targetReps": 5,
+          "progression": {
+            "type": "linear",
+            "incrementKg": 5
+          }
+        }
+      ]
+    }
+  ]
+}

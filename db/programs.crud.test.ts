@@ -27,6 +27,7 @@ import {
   startWorkoutFromProgramDay,
   type BundledProgramDefinition,
 } from './programs';
+import { linear5x5, percentWave, resolveExerciseSeedIds } from '../data/bundledPrograms';
 
 type TestDb = ReturnType<typeof createTestDb>['db'];
 
@@ -298,5 +299,62 @@ describe('training maxes', () => {
 
     const tms = await listProgramTrainingMaxes(db, program.id);
     expect(tms).toEqual([{ exerciseId: squat.id, maxKg: 140 }]);
+  });
+});
+
+describe('bundled program seed mapping (seed mapping)', () => {
+  let db: TestDb;
+
+  beforeEach(() => {
+    ({ db } = createTestDb());
+  });
+
+  it('resolves every seed_id in both bundles against the seeded exercise library (Pitfall 6)', async () => {
+    const lifts = [
+      { name: 'Barbell Squat', seedId: 'barbell-squat' },
+      { name: 'Barbell Bench Press', seedId: 'barbell-bench-press-medium-grip' },
+      { name: 'Barbell Deadlift', seedId: 'barbell-deadlift' },
+      { name: 'Standing Military Press', seedId: 'standing-military-press' },
+      { name: 'Bent Over Barbell Row', seedId: 'bent-over-barbell-row' },
+    ];
+    for (const lift of lifts) {
+      await seedExercise(db, lift.name, lift.seedId);
+    }
+
+    const linearSeedMap = await resolveExerciseSeedIds(db, linear5x5);
+    const waveSeedMap = await resolveExerciseSeedIds(db, percentWave);
+
+    const linearSeedIds = new Set(linear5x5.days.flatMap((day) => day.exercises.map((exercise) => exercise.seedId)));
+    const waveSeedIds = new Set(percentWave.days.flatMap((day) => day.exercises.map((exercise) => exercise.seedId)));
+
+    for (const seedId of linearSeedIds) {
+      expect(linearSeedMap.has(seedId)).toBe(true);
+    }
+    for (const seedId of waveSeedIds) {
+      expect(waveSeedMap.has(seedId)).toBe(true);
+    }
+  });
+
+  it('materializes linear5x5 into 2 program_days and percentWave into exactly 16', async () => {
+    const lifts = [
+      { name: 'Barbell Squat', seedId: 'barbell-squat' },
+      { name: 'Barbell Bench Press', seedId: 'barbell-bench-press-medium-grip' },
+      { name: 'Barbell Deadlift', seedId: 'barbell-deadlift' },
+      { name: 'Standing Military Press', seedId: 'standing-military-press' },
+      { name: 'Bent Over Barbell Row', seedId: 'bent-over-barbell-row' },
+    ];
+    for (const lift of lifts) {
+      await seedExercise(db, lift.name, lift.seedId);
+    }
+
+    const linearSeedMap = await resolveExerciseSeedIds(db, linear5x5);
+    const linearProgram = await materializeBundledProgram(db, linear5x5, linearSeedMap);
+    const linearDayRows = await db.select().from(programDays).where(eq(programDays.programId, linearProgram.id));
+    expect(linearDayRows).toHaveLength(2);
+
+    const waveSeedMap = await resolveExerciseSeedIds(db, percentWave);
+    const waveProgram = await materializeBundledProgram(db, percentWave, waveSeedMap);
+    const waveDayRows = await db.select().from(programDays).where(eq(programDays.programId, waveProgram.id));
+    expect(waveDayRows).toHaveLength(16);
   });
 });
