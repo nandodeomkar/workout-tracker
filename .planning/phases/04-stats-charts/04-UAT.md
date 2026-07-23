@@ -1,9 +1,9 @@
 ---
-status: complete
+status: diagnosed
 phase: 04-stats-charts
 source: [04-VERIFICATION.md]
 started: 2026-07-23T01:20:00Z
-updated: 2026-07-23T02:00:00Z
+updated: 2026-07-23T02:10:00Z
 ---
 
 ## Current Test
@@ -46,7 +46,13 @@ blocked: 0
   reason: "User reported: no single point visible for exercise with one log. \"Log one more workout' caption visible but hard to read"
   severity: major
   test: 2
-  root_cause: ""     # Filled by diagnosis
-  artifacts: []      # Filled by diagnosis
-  missing: []        # Filled by diagnosis
-  debug_session: ""  # Filled by diagnosis
+  root_cause: "Two distinct defects in app/stats/[exerciseId].tsx. (1) major: chart renders only <Line> (194-196); victory-native <Line> draws a path connecting points, so a single-point series has a zero-length path and no point marker — nothing is painted. buildChartSeries correctly emits one point; the render just has no dot/Scatter mark. (2) cosmetic: sparse caption (304-309) uses typography.caption (13px) + textMuted (#8B94A3), the low-emphasis treatment — legible-but-weak, and worse next to the chart made empty-looking by defect 1."
+  artifacts:
+    - path: "app/stats/[exerciseId].tsx"
+      issue: "Lines 194-196: CartesianChart children render <Line> only; no point/Scatter mark, so a single-point (1-workout) series shows nothing."
+    - path: "app/stats/[exerciseId].tsx"
+      issue: "Lines 304-309: sparseCaption style uses caption/13px + textMuted, low-emphasis; caption reads as hard to read on-device."
+  missing:
+    - "Add a point/marker mark to the chart (e.g. victory-native <Scatter> over points.value, ~6px accent dots) so every datum — including a lone single point — is visible. Confirm victory-native v41/XL API."
+    - "Raise sparse-caption legibility: use theme.colors.text (or bump to typography.body 16px) and consider textAlign:'center' so the single-point state reads as intentional."
+  debug_session: ".planning/debug/chart-single-point-invisible.md, .planning/debug/sparse-caption-low-contrast.md"
