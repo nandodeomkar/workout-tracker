@@ -1,10 +1,11 @@
 ---
 phase: 5
 slug: body-measurements
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-07-23
+reviewed_at: 2026-07-23
 ---
 
 # Phase 5 — UI Design Contract
@@ -130,7 +131,7 @@ Reached by tapping a metric row on screen 1.
 - **Chart:** `CartesianChart` + `Line` (accent stroke, 3px width) + `Scatter` (accent, radius 6) for single-point visibility — identical component usage to `app/stats/[exerciseId].tsx:194-201`, min height 240px, axis font per Design System above. Data source: `buildMeasurementSeries` (not `buildChartSeries` — per RESEARCH.md Pitfall 3, no min/max reduction) + unit conversion via `kgToDisplay` (weight) / `cmToDisplay` (length, new) / pass-through (percent).
 - **Empty state** (zero readings ever for this metric): heading + body copy per Copywriting Contract, plus a "+ Add a reading" link (accent) that opens screen 3 in **single-metric mode**, pre-scoped to this metric + today.
 - **Sparse-data caption** (exactly 1 point): same treatment as Phase 4 — caption below the chart, Body/`text`, centered (see Copywriting Contract).
-- **History list**, below the chart, `theme.spacing.xl` gap: reverse-chronological list of every dated reading for this metric. Each `HistoryRow` (new component): date (Body, `text`) as primary text + value (Body, `text`, right-aligned) as a second column, with two trailing 44×44 icon buttons — edit `✎` (opens screen 3 in edit mode, pre-filled) and delete `🗑` (opens the Alert.alert destructive confirmation, D-09). Row anatomy/padding matches the existing `recordRow` pattern (`theme.spacing.lg` vertical/horizontal padding, hairline border-bottom).
+- **History list**, below the chart, `theme.spacing.xl` gap: reverse-chronological list of every dated reading for this metric. Each `HistoryRow` (new component): date (Body, `text`) as primary text + value (Body, `text`, right-aligned) as a second column, with two trailing 44×44 icon buttons — edit `✎` (opens screen 3 in edit mode, pre-filled) and delete `🗑` (opens the Alert.alert destructive confirmation, D-09). **Both icon-only buttons are labelled for screen readers: `accessibilityRole="button"` + `accessibilityLabel="Edit reading"` / `"Delete reading"`** (icon-only actions carry no visible text, so the label is mandatory — apply the same treatment to any other icon-only glyph button introduced by this phase). Row anatomy/padding matches the existing `recordRow` pattern (`theme.spacing.lg` vertical/horizontal padding, hairline border-bottom).
 - **"+ Add a reading" link** (accent, Label 700) below the history list — same target as the empty-state link above, always visible even once data exists (so back-dating an older reading doesn't require deleting/re-adding).
 
 ### 3. Add/Edit Measurements form — `app/measurements/entry.tsx` (or a modal route, NEW; shared by both entry models per D-08)
@@ -186,11 +187,11 @@ Not applicable — React Native/Expo project, no shadcn or component registry in
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS (FLAG resolved — icon-only edit/delete buttons now declare `accessibilityLabel`)
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS (N/A — no shadcn/registry in RN/Expo project)
 
-**Approval:** pending
+**Approval:** approved — 2026-07-23. 0 blocking issues; 1 non-blocking FLAG raised by gsd-ui-checker (Dim 2 accessibility) closed in-spec before approval.
