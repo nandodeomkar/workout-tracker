@@ -112,8 +112,9 @@ export default function ProgramsIndexScreen() {
       await load();
       if (bundle === percentWave) {
         // D-16: %TM programs prompt TM setup up front — the seed can't know
-        // the user's training maxes.
-        router.push('/programs/training-maxes');
+        // the user's training maxes. programId scopes the first-time setup
+        // sheet to this program's distinct %TM exercises.
+        router.push({ pathname: '/programs/training-maxes', params: { programId: String(program.id) } });
       } else {
         openProgramDetail(program.id);
       }

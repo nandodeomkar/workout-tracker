@@ -14,8 +14,10 @@
 // but only when a DIFFERENT program is currently active; if no program is
 // active yet, there is nothing to switch from.
 //
-// TODO(Plan 05): insert a "🎯 Training Maxes" section here (rendered only
-// when a day has a percent_tm exercise) — deferred, not built in this plan.
+// "🎯 Training Maxes" section (D-10/D-16, Plan 05): rendered only when
+// listProgramTrainingMaxes finds at least one distinct percent_tm exercise
+// across this program's days; each row's "Edit" opens the TM-setup sheet
+// (app/programs/training-maxes.tsx) pre-scoped to that single exercise.
 
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Platform, Pressable, ScrollView, StyleSheet, Text, ToastAndroid, View } from 'react-native';
@@ -23,8 +25,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 
 import { db } from '../../db/client';
+import { loadExerciseById } from '../../db/exercises';
 import {
   deleteProgram,
+  listProgramTrainingMaxes,
   loadActiveProgram,
   loadProgramDetail,
   setActiveProgram,
@@ -33,8 +37,16 @@ import {
   type ProgramDayDetail,
   type ProgramDetail,
 } from '../../db/programs';
+import { getSetting } from '../../db/settings';
+import { kgToDisplay } from '../../lib/weightUnits';
 import { useActiveWorkout } from '../../store/activeWorkout';
 import { theme } from '../../theme';
+
+interface TrainingMaxSummaryRow {
+  exerciseId: number;
+  name: string;
+  maxKg: number | null;
+}
 
 // Android-first transient feedback — copied verbatim (app/active-workout/summary.tsx precedent).
 function notify(message: string): void {
@@ -79,11 +91,27 @@ export default function ProgramDetailScreen() {
   const [detail, setDetail] = useState<ProgramDetail | undefined>(undefined);
   const [activeProgram, setActiveProgramState] = useState<ActiveProgramDetail | undefined>(undefined);
   const [starting, setStarting] = useState(false);
+  const [unit, setUnit] = useState<'kg' | 'lb'>('kg');
+  const [trainingMaxes, setTrainingMaxes] = useState<TrainingMaxSummaryRow[]>([]);
 
   const load = useCallback(async () => {
-    const [detailResult, active] = await Promise.all([loadProgramDetail(db, programId), loadActiveProgram(db)]);
+    const [detailResult, active, tmEntries, unitSetting] = await Promise.all([
+      loadProgramDetail(db, programId),
+      loadActiveProgram(db),
+      listProgramTrainingMaxes(db, programId),
+      getSetting(db, 'units'),
+    ]);
     setDetail(detailResult);
     setActiveProgramState(active);
+    setUnit(unitSetting === 'lb' ? 'lb' : 'kg');
+
+    const tmRows: TrainingMaxSummaryRow[] = [];
+    for (const entry of tmEntries) {
+      const exercise = await loadExerciseById(db, entry.exerciseId);
+      tmRows.push({ exerciseId: entry.exerciseId, name: exercise?.name ?? 'Exercise', maxKg: entry.maxKg });
+    }
+    setTrainingMaxes(tmRows);
+
     setLoading(false);
   }, [programId]);
 
@@ -251,10 +279,28 @@ export default function ProgramDetailScreen() {
           })}
         </View>
 
-        {/* TODO(Plan 05): "🎯 Training Maxes" section — one row per distinct
-            %TM exercise across this program's days (D-10/D-16), only
-            rendered when at least one day carries a percent_tm rule.
-            Deferred — not built in this plan. */}
+        {trainingMaxes.length > 0 ? (
+          <View style={styles.tmSection}>
+            <Text style={styles.tmSectionHeading}>🎯 Training Maxes</Text>
+            {trainingMaxes.map((tm) => (
+              <View key={tm.exerciseId} style={styles.tmRow}>
+                <Text style={styles.tmName} numberOfLines={1}>
+                  {tm.name}
+                </Text>
+                <Text style={styles.tmValue}>{tm.maxKg != null ? `${kgToDisplay(tm.maxKg, unit)} ${unit}` : `— ${unit}`}</Text>
+                <Pressable
+                  onPress={() =>
+                    router.push({ pathname: '/programs/training-maxes', params: { exerciseId: String(tm.exerciseId) } })
+                  }
+                  accessibilityRole="button"
+                  style={styles.tmEditButton}
+                >
+                  <Text style={styles.tmEditButtonText}>Edit</Text>
+                </Pressable>
+              </View>
+            ))}
+          </View>
+        ) : null}
 
         <Pressable onPress={handleRemove} accessibilityRole="button" style={styles.removeLink}>
           <Text style={styles.removeLinkText}>Remove program</Text>
@@ -359,6 +405,42 @@ const styles = StyleSheet.create({
   emptyBody: {
     ...theme.typography.caption,
     color: theme.colors.textMuted,
+  },
+  tmSection: {
+    marginTop: theme.spacing['2xl'],
+    gap: theme.spacing.sm,
+  },
+  tmSectionHeading: {
+    ...theme.typography.title,
+    color: theme.colors.text,
+    marginBottom: theme.spacing.xs,
+  },
+  tmRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    paddingVertical: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.lg,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.md,
+  },
+  tmName: {
+    ...theme.typography.body,
+    color: theme.colors.text,
+    flex: 1,
+  },
+  tmValue: {
+    ...theme.typography.body,
+    color: theme.colors.textMuted,
+  },
+  tmEditButton: {
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  tmEditButtonText: {
+    ...theme.typography.caption,
+    color: theme.colors.accent,
+    fontWeight: '700',
   },
   removeLink: {
     minHeight: 44,
