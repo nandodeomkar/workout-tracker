@@ -20,6 +20,7 @@ import { and, asc, eq, isNotNull } from 'drizzle-orm';
 import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core';
 
 import {
+  programDays,
   templateExercises,
   templates,
   workouts,
@@ -261,6 +262,20 @@ export async function setTemplateExercises(
  * workouts pointing at a nonexistent row.
  */
 export async function deleteTemplate(db: AnyDrizzleDb, templateId: number): Promise<void> {
+  // WR-02 (Pitfall 3, program edge): a template used as a program day must
+  // never be hard-deleted. program_days.template_id has no write-time FK
+  // enforcement here, so a naive delete would leave a dangling program_days
+  // row — desyncing the program pointer and mistiming the cycle-wrap /
+  // %TM-bump math. Refuse with a clear error and let the caller remove the
+  // day (or the whole program) first.
+  const programDayRefs = await db
+    .select({ id: programDays.id })
+    .from(programDays)
+    .where(eq(programDays.templateId, templateId));
+  if (programDayRefs.length > 0) {
+    throw new Error('Cannot delete template: it is used by a program. Remove it from the program first.');
+  }
+
   const teRows = await db
     .select({ id: templateExercises.id })
     .from(templateExercises)

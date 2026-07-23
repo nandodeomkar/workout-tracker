@@ -925,7 +925,19 @@ export async function applyProgressionAndAdvance(db: AnyDrizzleDb, workoutId: nu
     // Unrecognized/none `rule.type` — skip silently (no progression to apply).
   }
 
-  const { position: nextPosition, wrapped } = nextDayPosition(dayPosition, detail.days.length);
+  // WR-02: base the cycle-wrap boundary on the TRUE program_days count, not
+  // the post-filter detail.days.length. loadProgramDetail silently drops any
+  // day whose template fails to load, which would otherwise shift the modulo
+  // boundary and mistime the wrap (and its %TM training-max bump). deleteTemplate
+  // now refuses to remove a program-referenced template, so this is
+  // defense-in-depth against a transiently unloadable day.
+  const allProgramDayRows = await db
+    .select({ id: programDays.id })
+    .from(programDays)
+    .where(eq(programDays.programId, programId));
+  const totalDays = allProgramDayRows.length > 0 ? allProgramDayRows.length : detail.days.length;
+
+  const { position: nextPosition, wrapped } = nextDayPosition(dayPosition, totalDays);
 
   // D-12/Pitfall 3: TM bump fires ONLY on a cycle-wrapping finish (pointer
   // wraps from the last day back to 0) — never per lift-week. Every DISTINCT
@@ -987,7 +999,7 @@ export async function applyProgressionAndAdvance(db: AnyDrizzleDb, workoutId: nu
     outcomes,
     nextPosition,
     wrapped,
-    totalDays: detail.days.length,
+    totalDays,
     bumpedTrainingMaxes,
   };
 }
