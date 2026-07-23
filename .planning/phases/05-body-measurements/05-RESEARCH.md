@@ -386,17 +386,19 @@ Not applicable — this phase reuses Phase 4's charting stack, installed 1 day p
 | A4 | The Measurements feature is two screens (index list + per-metric detail), not one screen showing all metrics at once | Recommended Project Structure | Low — D-07's literal wording ("one dedicated Measurements screen... per metric it shows...") could be read as a single screen; the "Specific Ideas" section's explicit StrengthLog reference ("a list of measurements, each opening to a trend graph") is used here as the disambiguating source, and a single 15-metric-tall scroll-of-everything is impractical on a phone screen regardless |
 | A5 | Length-metric rounding for display (nearest 0.1cm / nearest 0.25in) — no plate-loadable analog exists for body parts | Pattern 3 | Very low — purely cosmetic; any reasonable rounding works, not a functional risk |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should same-date duplicate readings average or latest-win in the trend graph?**
    - What we know: D-09 guarantees full edit/delete control over history rows; D-12 says the series is "already one value per date" and to mirror the shape, not the aggregation, of `buildChartSeries`.
    - What's unclear: Whether "one value per date" is a description of the expected common case (users log once/day) or a hard reduction rule for the rare double-entry case.
    - Recommendation: Latest-wins (Assumption A3) is simplest and matches "the value I entered most recently is what I meant" semantics; confirm with user only if this surfaces as a real friction point in beta.
+   - **RESOLVED:** Latest-id-wins per date (Pitfall 3 / A3 / D-12). Implemented by `lib/measurementSeries.ts#buildMeasurementSeries` in Plan 05-01 Task 2 — no averaging, no double-plot.
 
 2. **Extract `rangeCutoffISO` to a shared lib, or duplicate it?**
    - What we know: The function is 10 lines, pure, and currently private to `app/stats/[exerciseId].tsx`.
    - What's unclear: Whether touching an already-shipped Phase 4 file is in-scope for a Phase 5 plan (it is additive/non-breaking either way).
    - Recommendation: Extract to `lib/dateRange.ts` — matches the `lib/duration.ts` extraction precedent and avoids a second copy of range-cutoff math to keep in sync.
+   - **RESOLVED:** Extract to shared `lib/dateRange.ts` and repoint `app/stats/[exerciseId].tsx` at it. Implemented in Plan 05-01 Task 3.
 
 ## Environment Availability
 

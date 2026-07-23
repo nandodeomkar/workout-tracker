@@ -1,9 +1,9 @@
 ---
 phase: 05
 slug: body-measurements
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: approved
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-07-23
 ---
 
@@ -48,9 +48,9 @@ created: 2026-07-23
 
 ## Wave 0 Requirements
 
-- [ ] `lib/lengthUnits.test.ts` — cm↔in conversion (MEAS-01)
-- [ ] `lib/measurementSeries.test.ts` — date-only series build, same-date latest-wins (MEAS-02)
-- [ ] `db/measurements.test.ts` — CRUD + history queries against better-sqlite3 in-memory (MEAS-01/02)
+- [x] `lib/lengthUnits.test.ts` — cm↔in conversion (MEAS-01) — covered by Plan 05-01 Task 1
+- [x] `lib/measurementSeries.test.ts` — date-only series build, same-date latest-wins (MEAS-02) — covered by Plan 05-01 Task 2
+- [x] `db/measurements.crud.test.ts` — CRUD + history queries against better-sqlite3 in-memory (MEAS-01/02) — covered by Plan 05-02 Task 2; migration upgrade covered by `db/migrations.test.ts` (Plan 05-02 Task 1)
 
 *If none: "Existing infrastructure covers all phase requirements."*
 
@@ -76,4 +76,4 @@ created: 2026-07-23
 - [ ] Feedback latency < 15s
 - [ ] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved — all Wave-0 validation requirements satisfied by inline `<automated>` vitest commands in Plans 05-01/05-02 (plan-checker verified, 2026-07-23).
