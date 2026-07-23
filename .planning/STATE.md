@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-04-PLAN.md
-last_updated: "2026-07-23T09:59:42.271Z"
+stopped_at: Completed 05-05-PLAN.md
+last_updated: "2026-07-23T10:24:08.605Z"
 last_activity: 2026-07-23 -- Phase 05 execution started
 progress:
   total_phases: 8
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 33
-  completed_plans: 32
-  percent: 50
+  completed_plans: 33
+  percent: 63
 ---
 
 # Project State
@@ -26,11 +26,11 @@ See: .planning/PROJECT.md (updated 2026-07-19)
 ## Current Position
 
 Phase: 05 (body-measurements) — EXECUTING
-Plan: 2 of 5
-Status: Ready to execute
-Last activity: 2026-07-23 -- Phase 05 execution started
+Plan: 5 of 5
+Status: Phase complete — ready for verification
+Last activity: 2026-07-23 -- Completed 05-05-PLAN.md (custom metrics, final plan of Phase 05)
 
-Progress: [█████░░░░░] 50% (4/8 phases)
+Progress: [██████░░░░] 63% (5/8 phases)
 
 ## Performance Metrics
 
@@ -81,6 +81,7 @@ Progress: [█████░░░░░] 50% (4/8 phases)
 | Phase 05-body-measurements P02 | 25min | 2 tasks | 11 files |
 | Phase 05-body-measurements P03 | 22min | 3 tasks | 6 files |
 | Phase 05-body-measurements P04 | 25min | 2 tasks | 5 files |
+| Phase 05-body-measurements P05 | 15min | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -156,6 +157,7 @@ Recent decisions affecting current work:
 - [Phase 05-body-measurements]: Values entered via NumericKeypad in the entry form are stored as DISPLAY-unit numbers, converted to canonical kg/cm only at save time via displayToKg/displayToCm
 - [Phase 05-body-measurements]: Dated-session blank-skip (D-08b) implemented via presence in a values Map (touched-row semantics), not a sentinel value
 - [Phase 05-body-measurements]: Added app/measurements/_layout.tsx to close a Plan-03 gap: every sibling pushed-route group (templates/tools/active-workout) has a Stack _layout.tsx but measurements did not, breaking expo-router typed-routes folding for index.tsx and [metric].tsx
+- [Phase 05-body-measurements]: metricKey derived client-side (lowercase/trim/collapse-non-alphanumeric/disambiguate) rather than relying on createCustomMetric's onConflictDoNothing alone, guaranteeing a same-named second custom metric always gets a distinct key instead of silently no-opping
 
 ### Pending Todos
 
@@ -176,6 +178,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-23T09:59:42.247Z
-Stopped at: Completed 05-04-PLAN.md
+Last session: 2026-07-23T10:24:08.577Z
+Stopped at: Completed 05-05-PLAN.md
 Resume file: None

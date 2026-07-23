@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Core Logging (Active Workout)** - Fast, crash-safe set logging with rest timer and workout history (completed 2026-07-22; device UAT 6/6 pass 2026-07-22, 2 fixes: SetRow ✓ overflow + rest-notif sound, see 02-UAT.md)
 - [x] **Phase 3: Templates, Folders & Calculators** - Reusable workout templates plus plate/1RM/warm-up calculators (completed 2026-07-22)
 - [x] **Phase 4: Stats & Charts** - Per-exercise progress charts, weekly volume, and a live-computed PR feed (completed 2026-07-22)
-- [ ] **Phase 5: Body Measurements** - Body measurement logging and trend graphs
+- [x] **Phase 5: Body Measurements** - Body measurement logging and trend graphs (completed 2026-07-23)
 - [ ] **Phase 6: Programs & Progression** - Ordered program days with linear and percent-of-TM progression
 - [ ] **Phase 7: Backup & Export** - Optional Google Drive backup/restore and CSV/JSON export
 - [ ] **Phase 8: Polish & Beta Distribution** - Zero-paywall UI audit, notification hardening, and friend APK distribution
@@ -214,7 +214,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4)*
 
-- [ ] 05-05-PLAN.md — Custom-metric slice: add-custom-metric form + per-metric unit-type persistence + custom rendering (MEAS-01, D-02/D-06)
+- [x] 05-05-PLAN.md — Custom-metric slice: add-custom-metric form + per-metric unit-type persistence + custom rendering (MEAS-01, D-02/D-06)
 
 ### Phase 6: Programs & Progression
 
@@ -271,7 +271,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 2. Core Logging (Active Workout) | 7/7 | Complete   | 2026-07-22 |
 | 3. Templates, Folders & Calculators | 8/8 | Complete   | 2026-07-22 |
 | 4. Stats & Charts | 7/7 | Complete    | 2026-07-23 |
-| 5. Body Measurements | 4/5 | In Progress|  |
+| 5. Body Measurements | 5/5 | Complete   | 2026-07-23 |
 | 6. Programs & Progression | 0/TBD | Not started | - |
 | 7. Backup & Export | 0/TBD | Not started | - |
 | 8. Polish & Beta Distribution | 0/TBD | Not started | - |
