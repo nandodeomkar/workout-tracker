@@ -235,7 +235,7 @@ Plans:
 
 **Wave 1** *(tested pure-logic substrate)*
 
-- [ ] 06-01-PLAN.md — lib/progression.ts pure resolvers (linear success/hold/deload, %TM weight, TM-from-1RM, TM bump, day-wrap) + vitest (PROG-02/03)
+- [x] 06-01-PLAN.md — lib/progression.ts pure resolvers (linear success/hold/deload, %TM weight, TM-from-1RM, TM bump, day-wrap) + vitest (PROG-02/03)
 
 **Wave 2** *(blocked on Wave 1)*
 
@@ -298,7 +298,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 3. Templates, Folders & Calculators | 8/8 | Complete   | 2026-07-22 |
 | 4. Stats & Charts | 7/7 | Complete    | 2026-07-23 |
 | 5. Body Measurements | 5/5 | Complete   | 2026-07-23 |
-| 6. Programs & Progression | 0/6 | Planned | - |
+| 6. Programs & Progression | 1/6 | In Progress|  |
 | 7. Backup & Export | 0/TBD | Not started | - |
 | 8. Polish & Beta Distribution | 0/TBD | Not started | - |
 
