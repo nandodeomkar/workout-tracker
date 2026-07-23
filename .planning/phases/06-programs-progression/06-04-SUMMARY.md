@@ -116,3 +116,14 @@ None - no external service configuration required.
 ---
 *Phase: 06-programs-progression*
 *Completed: 2026-07-24*
+
+## Self-Check: PASSED
+
+- FOUND: db/programs.ts
+- FOUND: db/programs.crud.test.ts
+- FOUND: app/active-workout/summary.tsx
+- FOUND: .planning/phases/06-programs-progression/06-04-SUMMARY.md
+- FOUND: 56a84ac (Task 1 RED commit)
+- FOUND: 76ba4b8 (Task 1 GREEN commit)
+- FOUND: 035dbfb (Task 2 commit)
+- FOUND: 89de991 (Summary commit)
