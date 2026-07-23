@@ -121,6 +121,14 @@ export interface AddTemplateExerciseInput {
   targetSets: number;
   targetReps: number;
   targetWeightKg: number | null;
+  /**
+   * Phase-6 addition (D-17): serialized progression rule JSON
+   * (`{type:"linear",incrementKg:N}` | `{type:"percent_tm",sets:[...]}`),
+   * authored by the template builder or set during bundled-program
+   * materialization (db/programs.ts). Defaults to null (no progression)
+   * when omitted.
+   */
+  progression?: string | null;
 }
 
 export interface TemplateExerciseInput {
@@ -129,6 +137,8 @@ export interface TemplateExerciseInput {
   targetSets: number;
   targetReps: number;
   targetWeightKg: number | null;
+  /** Phase-6 addition (D-17) — see AddTemplateExerciseInput's doc comment. */
+  progression?: string | null;
 }
 
 /**
@@ -206,6 +216,7 @@ export async function addTemplateExercise(
       targetSets,
       targetReps,
       targetWeightKg,
+      progression: input.progression ?? null,
     })
     .returning();
 
@@ -231,6 +242,7 @@ export async function setTemplateExercises(
     targetSets: assertValidTargetSets(row.targetSets),
     targetReps: assertValidTargetReps(row.targetReps),
     targetWeightKg: assertValidTargetWeightKg(row.targetWeightKg),
+    progression: row.progression ?? null,
   }));
 
   db.transaction((tx) => {
