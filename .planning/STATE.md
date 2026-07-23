@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 5 UI-SPEC approved
-last_updated: "2026-07-23T05:25:13.651Z"
-last_activity: 2026-07-23 -- Phase 05 planning complete
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-07-23T05:37:02.870Z"
+last_activity: 2026-07-23 -- Phase 05 execution started
 progress:
   total_phases: 8
   completed_phases: 4
-  total_plans: 28
-  completed_plans: 28
+  total_plans: 33
+  completed_plans: 29
   percent: 50
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-19)
 
 **Core value:** Logging a strength workout in the gym must be fast, offline, and never lose data — free, with no clutter or upsell.
-**Current focus:** Phase 05 — body-measurements (Phase 04 complete)
+**Current focus:** Phase 05 — body-measurements
 
 ## Current Position
 
-Phase: 5
-Plan: Not started
+Phase: 05 (body-measurements) — EXECUTING
+Plan: 2 of 5
 Status: Ready to execute
-Last activity: 2026-07-23 -- Phase 05 planning complete
+Last activity: 2026-07-23 -- Phase 05 execution started
 
 Progress: [█████░░░░░] 50% (4/8 phases)
 
@@ -77,6 +77,7 @@ Progress: [█████░░░░░] 50% (4/8 phases)
 | Phase 04-stats-charts P04 | 13min | 3 tasks | 6 files |
 | Phase 04-stats-charts P05 | 5min | 1 tasks | 1 files |
 | Phase 04-stats-charts P07 | 12min | 2 tasks | 1 files |
+| Phase 05-body-measurements P01 | 8min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -142,6 +143,9 @@ Recent decisions affecting current work:
 - [Phase ?]: Section A's PR-feed card-list styling is duplicated locally in app/(tabs)/stats.tsx and app/stats/records.tsx rather than factored into a shared component, since the plan scoped files_modified to only those two files
 - [Phase 04-stats-charts]: Records view fetches loadAllHistorySets in the same useFocusEffect as the chart's existing loadExerciseChartSets call rather than a second effect or new query, keeping one live-recompute discipline for the whole /stats/[exerciseId] route (D-11/T-04-07)
 - [Phase 04-stats-charts]: 04-07 gap closure: added victory-native Scatter mark (radius=6) over points.value alongside Line so single-datum chart series paint a visible dot; Line alone draws a zero-length invisible path for one point
+- [Phase 05-body-measurements]: BuiltInMetric includes an icon field directly in the interface (per plan's explicit spec), single lookup table for getMetricIcon
+- [Phase 05-body-measurements]: body_fat_pct shipped as a seeded built-in metric (unitType percent), resolving D-03 planner discretion
+- [Phase 05-body-measurements]: lib/dateRange.ts extracted from app/stats/[exerciseId].tsx as a shared range-cutoff helper (lib/duration.ts precedent) for reuse by the Measurements chart screen
 
 ### Pending Todos
 
@@ -162,6 +166,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-23T04:57:37.768Z
-Stopped at: Phase 5 UI-SPEC approved
-Resume file: .planning/phases/05-body-measurements/05-UI-SPEC.md
+Last session: 2026-07-23T05:37:02.844Z
+Stopped at: Completed 05-01-PLAN.md
+Resume file: None

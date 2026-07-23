@@ -198,7 +198,7 @@ Plans:
 
 **Wave 1** *(tested pure-logic substrate)*
 
-- [ ] 05-01-PLAN.md — Measurement pure libs: metric registry, cm/in converter, one-point-per-date series reducer, shared range-cutoff extraction (MEAS-01/02)
+- [x] 05-01-PLAN.md — Measurement pure libs: metric registry, cm/in converter, one-point-per-date series reducer, shared range-cutoff extraction (MEAS-01/02)
 
 **Wave 2** *(blocked on Wave 1)*
 
@@ -271,7 +271,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 2. Core Logging (Active Workout) | 7/7 | Complete   | 2026-07-22 |
 | 3. Templates, Folders & Calculators | 8/8 | Complete   | 2026-07-22 |
 | 4. Stats & Charts | 7/7 | Complete    | 2026-07-23 |
-| 5. Body Measurements | 0/5 | Not started | - |
+| 5. Body Measurements | 1/5 | In Progress|  |
 | 6. Programs & Progression | 0/TBD | Not started | - |
 | 7. Backup & Export | 0/TBD | Not started | - |
 | 8. Polish & Beta Distribution | 0/TBD | Not started | - |

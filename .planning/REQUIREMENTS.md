@@ -48,8 +48,8 @@
 
 ### Body Measurements
 
-- [ ] **MEAS-01**: User can log body measurements (weight, body parts) with date
-- [ ] **MEAS-02**: User can view measurement history as graphs
+- [x] **MEAS-01**: User can log body measurements (weight, body parts) with date
+- [x] **MEAS-02**: User can view measurement history as graphs
 
 ### Utilities
 
@@ -115,8 +115,8 @@ Which phases cover which requirements. Filled by roadmap creation.
 | STAT-02 | Phase 4 | Complete |
 | STAT-03 | Phase 4 | Complete |
 | STAT-04 | Phase 4 | Complete |
-| MEAS-01 | Phase 5 | Pending |
-| MEAS-02 | Phase 5 | Pending |
+| MEAS-01 | Phase 5 | Complete |
+| MEAS-02 | Phase 5 | Complete |
 | PROG-01 | Phase 6 | Pending |
 | PROG-02 | Phase 6 | Pending |
 | PROG-03 | Phase 6 | Pending |
