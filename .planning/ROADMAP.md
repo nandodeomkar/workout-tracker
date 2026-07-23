@@ -243,7 +243,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 — first demoable slice)*
 
-- [ ] 06-03-PLAN.md — Add & start a program: programs manager + program detail + "Next in program" home card + Settings row (PROG-01/04, D-01/D-04/D-05/D-14/D-15)
+- [x] 06-03-PLAN.md — Add & start a program: programs manager + program detail + "Next in program" home card + Settings row (PROG-01/04, D-01/D-04/D-05/D-14/D-15)
 
 **Wave 4** *(blocked on Wave 3)*
 
@@ -298,7 +298,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 3. Templates, Folders & Calculators | 8/8 | Complete   | 2026-07-22 |
 | 4. Stats & Charts | 7/7 | Complete    | 2026-07-23 |
 | 5. Body Measurements | 5/5 | Complete   | 2026-07-23 |
-| 6. Programs & Progression | 2/6 | In Progress|  |
+| 6. Programs & Progression | 3/6 | In Progress|  |
 | 7. Backup & Export | 0/TBD | Not started | - |
 | 8. Polish & Beta Distribution | 0/TBD | Not started | - |
 
