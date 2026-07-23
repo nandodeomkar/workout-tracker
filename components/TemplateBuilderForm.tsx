@@ -36,11 +36,13 @@ import { useRouter } from 'expo-router';
 
 import { ExerciseRow } from './ExerciseRow';
 import { FilterChipRow } from './FilterChipRow';
+import { MetricToggle, type MetricToggleOption } from './MetricToggle';
 import { MuscleGroupPills } from './MuscleGroupPills';
 import { EQUIPMENT, type EquipmentType, type MuscleGroup } from '../constants/taxonomy';
 import { db } from '../db/client';
 import { loadActiveExercises, loadAllExercises } from '../db/exercises';
 import type { Exercise } from '../db/schema';
+import { getSetting } from '../db/settings';
 import {
   createTemplate,
   loadFolderNames,
@@ -51,7 +53,110 @@ import {
   type TemplateExerciseInput,
 } from '../db/templates';
 import { filterExercises } from '../lib/exerciseFilter';
+import { DEFAULT_LINEAR_INCREMENT_KG } from '../lib/progression';
+import { displayToKg, kgToDisplay } from '../lib/weightUnits';
 import { theme } from '../theme';
+
+type WeightUnit = 'kg' | 'lb';
+
+// D-17: the three per-exercise progression authoring options — reused
+// verbatim MetricToggle single-select (matches lib/progression.ts's two
+// locked rule shapes; "None" writes progression: null).
+type ProgressionType = 'none' | 'linear' | 'percent_tm';
+
+const PROGRESSION_TYPE_OPTIONS: MetricToggleOption<ProgressionType>[] = [
+  { value: 'none', label: 'None' },
+  { value: 'linear', label: 'Linear' },
+  { value: 'percent_tm', label: '%TM' },
+];
+
+/** Per-tap stepper granularity for the linear increment field, keyed by display unit (UI-SPEC screen 6). */
+const LINEAR_INCREMENT_STEP: Record<WeightUnit, number> = { kg: DEFAULT_LINEAR_INCREMENT_KG.squat, lb: 5 };
+
+interface BuilderPercentTmSetRow {
+  key: string;
+  /** Fraction 0.3-1.0 (30%-100% of TM), step 0.05. */
+  pct: number;
+  reps: number;
+  /** Only ever serialized true when this is the LAST set in the scheme. */
+  amrap: boolean;
+}
+
+function newPercentTmSetRow(): BuilderPercentTmSetRow {
+  return { key: `pct-${Date.now()}-${Math.random()}`, pct: 0.75, reps: 5, amrap: false };
+}
+
+/**
+ * Parses a stored `template_exercises.progression` JSON string back into
+ * builder row state (edit-mode hydrate). Malformed/unrecognized JSON falls
+ * back to "None" defaults rather than throwing (mirrors db/programs.ts's own
+ * parse-and-skip guard, T-06-01).
+ */
+function hydrateProgression(
+  raw: string | null | undefined,
+  unit: WeightUnit,
+): Pick<BuilderExerciseRow, 'progressionType' | 'linearIncrementDisplay' | 'percentTmSets'> {
+  const defaults: Pick<BuilderExerciseRow, 'progressionType' | 'linearIncrementDisplay' | 'percentTmSets'> = {
+    progressionType: 'none',
+    linearIncrementDisplay: LINEAR_INCREMENT_STEP[unit],
+    percentTmSets: [newPercentTmSetRow()],
+  };
+  if (!raw) {
+    return defaults;
+  }
+  try {
+    const parsed = JSON.parse(raw) as { type?: string; incrementKg?: unknown; sets?: unknown };
+    if (parsed.type === 'linear' && typeof parsed.incrementKg === 'number' && parsed.incrementKg > 0) {
+      return { ...defaults, progressionType: 'linear', linearIncrementDisplay: kgToDisplay(parsed.incrementKg, unit) };
+    }
+    if (parsed.type === 'percent_tm' && Array.isArray(parsed.sets) && parsed.sets.length > 0) {
+      const sets: BuilderPercentTmSetRow[] = parsed.sets.map((raw, index) => {
+        const s = raw as { pct?: unknown; reps?: unknown; amrap?: unknown };
+        return {
+          key: `pct-${index}-${Date.now()}`,
+          pct: typeof s.pct === 'number' ? s.pct : 0.75,
+          reps: typeof s.reps === 'number' ? s.reps : 5,
+          amrap: s.amrap === true,
+        };
+      });
+      return { ...defaults, progressionType: 'percent_tm', percentTmSets: sets };
+    }
+  } catch {
+    // Malformed progression JSON — fall back to None (T-06-01).
+  }
+  return defaults;
+}
+
+/**
+ * Serializes a builder row's authored rule into the exact locked JSON shape
+ * (`{type:"linear",incrementKg}` / `{type:"percent_tm",sets:[...]}`) for
+ * `template_exercises.progression`, or `null` for "None"/an invalid linear
+ * increment (<=0, mirrors db/programs.ts#parseValidLinearRule's own positive-
+ * only invariant so a zeroed-out stepper never persists a dead rule).
+ */
+function serializeProgression(
+  row: Pick<BuilderExerciseRow, 'progressionType' | 'linearIncrementDisplay' | 'percentTmSets'>,
+  unit: WeightUnit,
+): string | null {
+  if (row.progressionType === 'linear') {
+    const incrementKg = displayToKg(row.linearIncrementDisplay, unit);
+    if (incrementKg > 0) {
+      return JSON.stringify({ type: 'linear', incrementKg });
+    }
+    return null;
+  }
+  if (row.progressionType === 'percent_tm' && row.percentTmSets.length > 0) {
+    return JSON.stringify({
+      type: 'percent_tm',
+      sets: row.percentTmSets.map((set, index) => ({
+        pct: set.pct,
+        reps: set.reps,
+        ...(index === row.percentTmSets.length - 1 && set.amrap ? { amrap: true } : {}),
+      })),
+    });
+  }
+  return null;
+}
 
 // Android-first transient feedback (mirrors app/(tabs)/exercises/[id].tsx —
 // this project duplicates this small helper per-file rather than sharing a
@@ -68,6 +173,11 @@ interface BuilderExerciseRow {
   name: string;
   targetSets: number;
   targetReps: number;
+  /** D-17: per-exercise progression authoring — defaults to 'none' (unchanged behavior). */
+  progressionType: ProgressionType;
+  /** Display-unit-native value (converted to canonical kg only at save time, Measurements-phase precedent). */
+  linearIncrementDisplay: number;
+  percentTmSets: BuilderPercentTmSetRow[];
 }
 
 const DEFAULT_TARGET_SETS = 3;
@@ -89,6 +199,10 @@ export function TemplateBuilderForm({ templateId }: TemplateBuilderFormProps) {
   const [folder, setFolder] = useState('');
   const [folderNames, setFolderNames] = useState<string[]>([]);
   const [exerciseRows, setExerciseRows] = useState<BuilderExerciseRow[]>([]);
+  // D-17: display unit for the linear-increment stepper's label/step size
+  // (loaded once at mount, mirrors app/programs/training-maxes.tsx's own
+  // one-shot getSetting(db, 'units') read).
+  const [unit, setUnit] = useState<WeightUnit>('kg');
 
   // Add-exercise picker (reuses the active-workout screen's
   // ExerciseRow/MuscleGroupPills/FilterChipRow picker overlay wholesale).
@@ -98,47 +212,58 @@ export function TemplateBuilderForm({ templateId }: TemplateBuilderFormProps) {
   const [pickerMuscleGroup, setPickerMuscleGroup] = useState<MuscleGroup | null>(null);
   const [pickerEquipment, setPickerEquipment] = useState<EquipmentType[]>([]);
 
+  const loadEdit = useCallback(
+    async (resolvedUnit: WeightUnit) => {
+      if (!isEdit) {
+        return;
+      }
+      setLoading(true);
+      const detail = await loadTemplateDetail(db, templateId!);
+      if (!detail) {
+        setLoading(false);
+        return;
+      }
+      const allExercises = await loadAllExercises(db);
+      const exerciseById = new Map(allExercises.map((exercise) => [exercise.id, exercise]));
+      setName(detail.template.name);
+      setFolder(detail.template.folder ?? '');
+      setExerciseRows(
+        detail.exercises.map(({ templateExercise }) => ({
+          key: `te-${templateExercise.id}`,
+          exerciseId: templateExercise.exerciseId,
+          name: exerciseById.get(templateExercise.exerciseId)?.name ?? 'Unknown exercise',
+          targetSets: templateExercise.targetSets,
+          targetReps: templateExercise.targetReps,
+          ...hydrateProgression(templateExercise.progression, resolvedUnit),
+        })),
+      );
+      setLoading(false);
+    },
+    [isEdit, templateId],
+  );
+
+  // Single sequenced init: resolve the display unit BEFORE hydrating edit-mode
+  // rows (the hydrate step needs `unit` to convert stored incrementKg into a
+  // display value) — avoids a re-run race where a late-resolving unit setting
+  // would re-fetch and clobber in-progress user edits.
   useEffect(() => {
     let cancelled = false;
-    loadFolderNames(db).then((names) => {
-      if (!cancelled) {
-        setFolderNames(names);
+    (async () => {
+      const [unitSetting, names] = await Promise.all([getSetting(db, 'units'), loadFolderNames(db)]);
+      if (cancelled) {
+        return;
       }
-    });
+      const resolvedUnit: WeightUnit = unitSetting === 'lb' ? 'lb' : 'kg';
+      setUnit(resolvedUnit);
+      setFolderNames(names);
+      if (isEdit) {
+        await loadEdit(resolvedUnit);
+      }
+    })();
     return () => {
       cancelled = true;
     };
-  }, []);
-
-  const loadEdit = useCallback(async () => {
-    if (!isEdit) {
-      return;
-    }
-    setLoading(true);
-    const detail = await loadTemplateDetail(db, templateId!);
-    if (!detail) {
-      setLoading(false);
-      return;
-    }
-    const allExercises = await loadAllExercises(db);
-    const exerciseById = new Map(allExercises.map((exercise) => [exercise.id, exercise]));
-    setName(detail.template.name);
-    setFolder(detail.template.folder ?? '');
-    setExerciseRows(
-      detail.exercises.map(({ templateExercise }) => ({
-        key: `te-${templateExercise.id}`,
-        exerciseId: templateExercise.exerciseId,
-        name: exerciseById.get(templateExercise.exerciseId)?.name ?? 'Unknown exercise',
-        targetSets: templateExercise.targetSets,
-        targetReps: templateExercise.targetReps,
-      })),
-    );
-    setLoading(false);
-  }, [isEdit, templateId]);
-
-  useEffect(() => {
-    loadEdit();
-  }, [loadEdit]);
+  }, [isEdit, loadEdit]);
 
   useEffect(() => {
     if (!pickerOpen) {
@@ -189,6 +314,9 @@ export function TemplateBuilderForm({ templateId }: TemplateBuilderFormProps) {
         name: exercise.name,
         targetSets: DEFAULT_TARGET_SETS,
         targetReps: DEFAULT_TARGET_REPS,
+        progressionType: 'none',
+        linearIncrementDisplay: LINEAR_INCREMENT_STEP[unit],
+        percentTmSets: [newPercentTmSetRow()],
       },
     ]);
     closePicker();
@@ -223,6 +351,83 @@ export function TemplateBuilderForm({ templateId }: TemplateBuilderFormProps) {
     );
   }
 
+  function updateProgressionType(key: string, progressionType: ProgressionType) {
+    setExerciseRows((prev) => prev.map((row) => (row.key === key ? { ...row, progressionType } : row)));
+  }
+
+  function updateLinearIncrement(key: string, direction: -1 | 1) {
+    setExerciseRows((prev) =>
+      prev.map((row) =>
+        row.key === key
+          ? { ...row, linearIncrementDisplay: Math.max(0, row.linearIncrementDisplay + direction * LINEAR_INCREMENT_STEP[unit]) }
+          : row,
+      ),
+    );
+  }
+
+  function addPercentTmSet(key: string) {
+    setExerciseRows((prev) =>
+      prev.map((row) => (row.key === key ? { ...row, percentTmSets: [...row.percentTmSets, newPercentTmSetRow()] } : row)),
+    );
+  }
+
+  function removePercentTmSet(key: string, setKey: string) {
+    setExerciseRows((prev) =>
+      prev.map((row) =>
+        row.key === key && row.percentTmSets.length > 1
+          ? { ...row, percentTmSets: row.percentTmSets.filter((set) => set.key !== setKey) }
+          : row,
+      ),
+    );
+  }
+
+  function updatePercentTmPct(key: string, setKey: string, delta: number) {
+    setExerciseRows((prev) =>
+      prev.map((row) =>
+        row.key === key
+          ? {
+              ...row,
+              percentTmSets: row.percentTmSets.map((set) =>
+                set.key === setKey
+                  ? { ...set, pct: Math.min(1, Math.max(0.3, Math.round((set.pct + delta) * 100) / 100)) }
+                  : set,
+              ),
+            }
+          : row,
+      ),
+    );
+  }
+
+  function updatePercentTmReps(key: string, setKey: string, delta: number) {
+    setExerciseRows((prev) =>
+      prev.map((row) =>
+        row.key === key
+          ? {
+              ...row,
+              percentTmSets: row.percentTmSets.map((set) =>
+                set.key === setKey ? { ...set, reps: Math.max(1, set.reps + delta) } : set,
+              ),
+            }
+          : row,
+      ),
+    );
+  }
+
+  function toggleAmrap(key: string, setKey: string) {
+    setExerciseRows((prev) =>
+      prev.map((row) =>
+        row.key === key
+          ? {
+              ...row,
+              percentTmSets: row.percentTmSets.map((set) =>
+                set.key === setKey ? { ...set, amrap: !set.amrap } : set,
+              ),
+            }
+          : row,
+      ),
+    );
+  }
+
   const trimmedName = name.trim();
   const canSave = trimmedName.length > 0 && !saving;
 
@@ -239,6 +444,7 @@ export function TemplateBuilderForm({ templateId }: TemplateBuilderFormProps) {
         targetSets: row.targetSets,
         targetReps: row.targetReps,
         targetWeightKg: null,
+        progression: serializeProgression(row, unit),
       }));
 
       if (isEdit) {
@@ -382,6 +588,114 @@ export function TemplateBuilderForm({ templateId }: TemplateBuilderFormProps) {
                     <Text style={styles.reorderButtonText}>▼</Text>
                   </Pressable>
                 </View>
+              </View>
+
+              <View style={styles.progressionSection}>
+                <Text style={styles.progressionLabel}>Progression</Text>
+                <MetricToggle
+                  options={PROGRESSION_TYPE_OPTIONS}
+                  value={row.progressionType}
+                  onChange={(value) => updateProgressionType(row.key, value)}
+                />
+
+                {row.progressionType === 'linear' ? (
+                  <View style={styles.stepperGroup}>
+                    <Pressable
+                      onPress={() => updateLinearIncrement(row.key, -1)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Decrease increment"
+                      style={styles.stepButton}
+                    >
+                      <Text style={styles.stepButtonText}>−</Text>
+                    </Pressable>
+                    <Text style={styles.stepperValue}>
+                      +{row.linearIncrementDisplay}
+                      {unit} per success
+                    </Text>
+                    <Pressable
+                      onPress={() => updateLinearIncrement(row.key, 1)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Increase increment"
+                      style={styles.stepButton}
+                    >
+                      <Text style={styles.stepButtonText}>+</Text>
+                    </Pressable>
+                  </View>
+                ) : null}
+
+                {row.progressionType === 'percent_tm' ? (
+                  <View style={styles.percentTmCard}>
+                    {row.percentTmSets.map((setRow, setIndex) => (
+                      <View key={setRow.key} style={styles.percentTmSetRow}>
+                        <View style={styles.stepperGroup}>
+                          <Pressable
+                            onPress={() => updatePercentTmPct(row.key, setRow.key, -0.05)}
+                            accessibilityRole="button"
+                            accessibilityLabel="Decrease percent of training max"
+                            style={styles.stepButton}
+                          >
+                            <Text style={styles.stepButtonText}>−</Text>
+                          </Pressable>
+                          <Text style={styles.stepperValue}>{Math.round(setRow.pct * 100)}% of TM</Text>
+                          <Pressable
+                            onPress={() => updatePercentTmPct(row.key, setRow.key, 0.05)}
+                            accessibilityRole="button"
+                            accessibilityLabel="Increase percent of training max"
+                            style={styles.stepButton}
+                          >
+                            <Text style={styles.stepButtonText}>+</Text>
+                          </Pressable>
+                        </View>
+                        <View style={styles.stepperGroup}>
+                          <Pressable
+                            onPress={() => updatePercentTmReps(row.key, setRow.key, -1)}
+                            accessibilityRole="button"
+                            accessibilityLabel="Decrease reps"
+                            style={styles.stepButton}
+                          >
+                            <Text style={styles.stepButtonText}>−</Text>
+                          </Pressable>
+                          <Text style={styles.stepperValue}>{setRow.reps} reps</Text>
+                          <Pressable
+                            onPress={() => updatePercentTmReps(row.key, setRow.key, 1)}
+                            accessibilityRole="button"
+                            accessibilityLabel="Increase reps"
+                            style={styles.stepButton}
+                          >
+                            <Text style={styles.stepButtonText}>+</Text>
+                          </Pressable>
+                        </View>
+                        {setIndex === row.percentTmSets.length - 1 ? (
+                          <Pressable
+                            onPress={() => toggleAmrap(row.key, setRow.key)}
+                            accessibilityRole="checkbox"
+                            accessibilityState={{ checked: setRow.amrap }}
+                            accessibilityLabel="AMRAP on last set"
+                            style={styles.amrapToggle}
+                          >
+                            <Text style={styles.amrapToggleText}>{setRow.amrap ? '☑' : '☐'} AMRAP</Text>
+                          </Pressable>
+                        ) : null}
+                        <Pressable
+                          onPress={() => removePercentTmSet(row.key, setRow.key)}
+                          disabled={row.percentTmSets.length === 1}
+                          accessibilityRole="button"
+                          accessibilityLabel="Remove set"
+                          style={[styles.removeButton, row.percentTmSets.length === 1 ? styles.reorderButtonDisabled : null]}
+                        >
+                          <Text style={styles.removeButtonText}>✕</Text>
+                        </Pressable>
+                      </View>
+                    ))}
+                    <Pressable
+                      onPress={() => addPercentTmSet(row.key)}
+                      accessibilityRole="button"
+                      style={styles.addSetButton}
+                    >
+                      <Text style={styles.addExerciseText}>+ Add set</Text>
+                    </Pressable>
+                  </View>
+                ) : null}
               </View>
             </View>
           ))
@@ -583,6 +897,46 @@ const styles = StyleSheet.create({
   reorderButtonText: {
     ...theme.typography.caption,
     color: theme.colors.textMuted,
+  },
+  progressionSection: {
+    gap: theme.spacing.sm,
+    paddingTop: theme.spacing.xs,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: theme.colors.border,
+  },
+  progressionLabel: {
+    ...theme.typography.caption,
+    color: theme.colors.textMuted,
+  },
+  percentTmCard: {
+    backgroundColor: theme.colors.surfaceAlt,
+    borderRadius: theme.radius.md,
+    padding: theme.spacing.sm,
+    gap: theme.spacing.sm,
+  },
+  percentTmSetRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+  },
+  amrapToggle: {
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  amrapToggleText: {
+    ...theme.typography.caption,
+    color: theme.colors.text,
+    fontWeight: '700',
+  },
+  addSetButton: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border,
+    borderRadius: theme.radius.md,
+    paddingVertical: theme.spacing.sm,
+    alignItems: 'center',
+    minHeight: 44,
+    justifyContent: 'center',
   },
   addExerciseButton: {
     marginTop: theme.spacing.sm,
