@@ -229,7 +229,33 @@ Plans:
   3. A percent-of-training-max exercise computes prescribed weights from a per-exercise training max across a wave (5/3/1-style)
   4. User can select from a small set of bundled generic programs (public methodologies, no proprietary content) and start using one immediately
 
-**Plans**: TBD
+**Plans**: 6 plans (6 waves) — MVP vertical slices
+
+Plans:
+
+**Wave 1** *(tested pure-logic substrate)*
+
+- [ ] 06-01-PLAN.md — lib/progression.ts pure resolvers (linear success/hold/deload, %TM weight, TM-from-1RM, TM bump, day-wrap) + vitest (PROG-02/03)
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 06-02-PLAN.md — Additive migration 0004 (origin marker + fail counter) + db/programs.ts data layer + two bundled-program JSON definitions (PROG-01/04)
+
+**Wave 3** *(blocked on Wave 2 — first demoable slice)*
+
+- [ ] 06-03-PLAN.md — Add & start a program: programs manager + program detail + "Next in program" home card + Settings row (PROG-01/04, D-01/D-04/D-05/D-14/D-15)
+
+**Wave 4** *(blocked on Wave 3)*
+
+- [ ] 06-04-PLAN.md — Linear progression on finish: applyProgressionAndAdvance (evaluate/write/advance-wrap) + Program-progress summary section (PROG-02, D-02/D-06/D-08/D-09)
+
+**Wave 5** *(blocked on Wave 4)*
+
+- [ ] 06-05-PLAN.md — %TM engine: TM-setup sheet + prescribed-weight prefill + TM bump on cycle wrap + cycle-complete banner (PROG-03, D-10/D-11/D-12/D-13/D-16)
+
+**Wave 6** *(blocked on Wave 5)*
+
+- [ ] 06-06-PLAN.md — Progression authoring in the template builder + custom program builder (PROG-01, D-07/D-16/D-17)
 
 ### Phase 7: Backup & Export
 
@@ -272,7 +298,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 3. Templates, Folders & Calculators | 8/8 | Complete   | 2026-07-22 |
 | 4. Stats & Charts | 7/7 | Complete    | 2026-07-23 |
 | 5. Body Measurements | 5/5 | Complete   | 2026-07-23 |
-| 6. Programs & Progression | 0/TBD | Not started | - |
+| 6. Programs & Progression | 0/6 | Planned | - |
 | 7. Backup & Export | 0/TBD | Not started | - |
 | 8. Polish & Beta Distribution | 0/TBD | Not started | - |
 
