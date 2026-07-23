@@ -210,7 +210,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3)*
 
-- [ ] 05-04-PLAN.md — Dated-session + body-part slice: entry form (dated/single/edit) + back-date picker + independent cm/in length-unit setting (MEAS-01/02, D-04/D-08b/D-09)
+- [x] 05-04-PLAN.md — Dated-session + body-part slice: entry form (dated/single/edit) + back-date picker + independent cm/in length-unit setting (MEAS-01/02, D-04/D-08b/D-09)
 
 **Wave 5** *(blocked on Wave 4)*
 
@@ -271,7 +271,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 2. Core Logging (Active Workout) | 7/7 | Complete   | 2026-07-22 |
 | 3. Templates, Folders & Calculators | 8/8 | Complete   | 2026-07-22 |
 | 4. Stats & Charts | 7/7 | Complete    | 2026-07-23 |
-| 5. Body Measurements | 3/5 | In Progress|  |
+| 5. Body Measurements | 4/5 | In Progress|  |
 | 6. Programs & Progression | 0/TBD | Not started | - |
 | 7. Backup & Export | 0/TBD | Not started | - |
 | 8. Polish & Beta Distribution | 0/TBD | Not started | - |

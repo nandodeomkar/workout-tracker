@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-03-PLAN.md
-last_updated: "2026-07-23T09:32:53.903Z"
+stopped_at: Completed 05-04-PLAN.md
+last_updated: "2026-07-23T09:59:42.271Z"
 last_activity: 2026-07-23 -- Phase 05 execution started
 progress:
   total_phases: 8
   completed_phases: 4
   total_plans: 33
-  completed_plans: 31
+  completed_plans: 32
   percent: 50
 ---
 
@@ -80,6 +80,7 @@ Progress: [█████░░░░░] 50% (4/8 phases)
 | Phase 05-body-measurements P01 | 8min | 3 tasks | 9 files |
 | Phase 05-body-measurements P02 | 25min | 2 tasks | 11 files |
 | Phase 05-body-measurements P03 | 22min | 3 tasks | 6 files |
+| Phase 05-body-measurements P04 | 25min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -152,6 +153,9 @@ Recent decisions affecting current work:
 - [Phase 05-body-measurements]: insertReadingsForDate pre-fetches existing same-date rows OUTSIDE the transaction, then only performs synchronous .run() writes inside db.transaction, avoiding undocumented sync-only query-builder methods on the AnyDrizzleDb union type
 - [Phase 05-body-measurements]: Placeholder-route-then-implement pattern (Phase 2 precedent) applied to app/measurements/index.tsx and app/measurements/[metric].tsx so expo-router's generated typed-routes could resolve router.push calls made from earlier tasks in the same plan
 - [Phase 05-body-measurements]: Date-only YYYY-MM-DD readings formatted via a manual year/month/day Date constructor, not new Date(iso), avoiding a UTC-midnight-parse day-shift in negative-UTC-offset timezones
+- [Phase 05-body-measurements]: Values entered via NumericKeypad in the entry form are stored as DISPLAY-unit numbers, converted to canonical kg/cm only at save time via displayToKg/displayToCm
+- [Phase 05-body-measurements]: Dated-session blank-skip (D-08b) implemented via presence in a values Map (touched-row semantics), not a sentinel value
+- [Phase 05-body-measurements]: Added app/measurements/_layout.tsx to close a Plan-03 gap: every sibling pushed-route group (templates/tools/active-workout) has a Stack _layout.tsx but measurements did not, breaking expo-router typed-routes folding for index.tsx and [metric].tsx
 
 ### Pending Todos
 
@@ -172,6 +176,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-23T09:32:53.867Z
-Stopped at: Completed 05-03-PLAN.md
+Last session: 2026-07-23T09:59:42.247Z
+Stopped at: Completed 05-04-PLAN.md
 Resume file: None
