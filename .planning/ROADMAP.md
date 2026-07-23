@@ -175,6 +175,10 @@ Plans:
 - [x] 04-05-PLAN.md — Per-exercise record board (curated rep-max + best e1RM, live) on the exercise screen (STAT-03)
 - [x] 04-06-PLAN.md — STAT-04 performance validation: synthetic ~15,600-set history + timed query paths + on-device responsiveness check (STAT-04)
 
+**Gap Closure** *(post-UAT — 04-UAT.md Test 2)*
+
+- [ ] 04-07-PLAN.md — Single-point chart fix: victory-native <Scatter> point mark over points.value + higher-emphasis sparse caption (STAT-01; UAT Gap: single dot invisible + caption low-contrast)
+
 ### Phase 5: Body Measurements
 
 **Goal**: Users can track body measurements independently of the workout-logging core.
