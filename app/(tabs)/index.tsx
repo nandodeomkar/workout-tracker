@@ -26,6 +26,12 @@ import { FolderSectionHeader } from '../../components/FolderSectionHeader';
 import { TemplateRow } from '../../components/TemplateRow';
 import { WorkoutRow } from '../../components/WorkoutRow';
 import { db } from '../../db/client';
+import {
+  loadActiveProgram,
+  loadProgramDetail,
+  startWorkoutFromProgramDay,
+  type ActiveProgramDetail,
+} from '../../db/programs';
 import { getSetting } from '../../db/settings';
 import {
   loadTemplateDetail,
@@ -120,6 +126,15 @@ export default function WorkoutScreen() {
   const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
   const [startingFromTemplate, setStartingFromTemplate] = useState(false);
 
+  // "Next in program" card (PROG-01/D-01/D-04, UI-SPEC screen 1) — own
+  // cancelled-guard load, independent of the resume/template loads above,
+  // reloading on every focus so a program added/removed elsewhere (Settings
+  // -> Programs) is never stale. Omitted entirely (no card, no empty state)
+  // when no program is active (D-01).
+  const [activeProgram, setActiveProgram] = useState<ActiveProgramDetail | undefined>(undefined);
+  const [programTotalDays, setProgramTotalDays] = useState(0);
+  const [startingFromProgram, setStartingFromProgram] = useState(false);
+
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
@@ -193,6 +208,35 @@ export default function WorkoutScreen() {
       };
 
       void loadTemplates();
+      return () => {
+        cancelled = true;
+      };
+    }, []),
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+
+      const loadProgram = async () => {
+        const active = await loadActiveProgram(db);
+        if (cancelled) {
+          return;
+        }
+        if (!active) {
+          setActiveProgram(undefined);
+          setProgramTotalDays(0);
+          return;
+        }
+        const detail = await loadProgramDetail(db, active.program.id);
+        if (cancelled) {
+          return;
+        }
+        setActiveProgram(active);
+        setProgramTotalDays(detail?.days.length ?? 0);
+      };
+
+      void loadProgram();
       return () => {
         cancelled = true;
       };
@@ -291,6 +335,28 @@ export default function WorkoutScreen() {
     }
   };
 
+  // Starts the active program's currently-pointed-to day (D-01/D-04):
+  // startWorkoutFromProgramDay (db/programs.ts) writes the origin marker
+  // (D-05) and re-confirms the pointer at this position — mirrors
+  // handlePickTemplate's guard-against-double-tap + navigation.
+  const handleStartProgramDay = async () => {
+    if (startingFromProgram || !activeProgram?.currentDay) {
+      return;
+    }
+    setStartingFromProgram(true);
+    try {
+      const workout = await startWorkoutFromProgramDay(
+        db,
+        activeProgram.program.id,
+        activeProgram.currentDay.day.position,
+      );
+      setActiveWorkout(workout.id, 'logging');
+      router.push({ pathname: '/active-workout/[workoutId]', params: { workoutId: String(workout.id) } });
+    } finally {
+      setStartingFromProgram(false);
+    }
+  };
+
   if (checking) {
     return (
       <View style={styles.centered}>
@@ -335,6 +401,20 @@ export default function WorkoutScreen() {
             <Text style={styles.emptyBody}>Start an empty workout, or repeat one from your history.</Text>
           </View>
         )}
+
+        {activeProgram?.currentDay ? (
+          <Pressable
+            onPress={() => void handleStartProgramDay()}
+            disabled={startingFromProgram}
+            accessibilityRole="button"
+            style={styles.programCard}
+          >
+            <Text style={styles.programCardTitle}>{'🗓️'} {activeProgram.program.name}</Text>
+            <Text style={styles.programCardMeta}>
+              {`Day ${activeProgram.currentDay.day.position + 1} of ${programTotalDays}: ${activeProgram.currentDay.template.template.name}`}
+            </Text>
+          </Pressable>
+        ) : null}
 
         <View style={styles.templatesSection}>
           <View style={styles.templatesSectionHeader}>
@@ -453,6 +533,24 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   resumeMeta: {
+    ...theme.typography.caption,
+    color: theme.colors.textMuted,
+  },
+  programCard: {
+    backgroundColor: theme.colors.surfaceAlt,
+    borderRadius: theme.radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.accent,
+    padding: theme.spacing.lg,
+    marginTop: theme.spacing['2xl'],
+    gap: theme.spacing.xs,
+  },
+  programCardTitle: {
+    ...theme.typography.body,
+    color: theme.colors.accent,
+    fontWeight: '700',
+  },
+  programCardMeta: {
     ...theme.typography.caption,
     color: theme.colors.textMuted,
   },
