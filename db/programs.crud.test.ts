@@ -14,8 +14,10 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { createTestDb } from './test/fixture';
 import { exercises, programDays, programState, workouts } from './schema';
 import { createTemplate, setTemplateExercises, startWorkoutFromTemplate } from './templates';
+import { finishWorkout, insertSet, loadWorkoutDetail } from './workouts';
 import {
   addProgramDay,
+  applyProgressionAndAdvance,
   createProgram,
   deleteProgram,
   getTrainingMax,
@@ -344,6 +346,187 @@ describe('training maxes', () => {
 
     const tms = await listProgramTrainingMaxes(db, program.id);
     expect(tms).toEqual([{ exerciseId: squat.id, maxKg: 140 }]);
+  });
+});
+
+describe('applyProgressionAndAdvance', () => {
+  let db: TestDb;
+
+  beforeEach(() => {
+    ({ db } = createTestDb());
+  });
+
+  async function setupTwoDayLinearProgram(initialWeightKg = 100) {
+    const squat = await seedExercise(db, 'Barbell Squat', 'barbell-squat');
+    const templateA = await createTemplate(db, { name: 'Day A', position: 0 });
+    await setTemplateExercises(db, templateA.id, [
+      {
+        exerciseId: squat.id,
+        position: 0,
+        targetSets: 5,
+        targetReps: 5,
+        targetWeightKg: initialWeightKg,
+        progression: JSON.stringify({ type: 'linear', incrementKg: 2.5 }),
+      },
+    ]);
+    const templateB = await createTemplate(db, { name: 'Day B', position: 0 });
+    await setTemplateExercises(db, templateB.id, [
+      {
+        exerciseId: squat.id,
+        position: 0,
+        targetSets: 5,
+        targetReps: 5,
+        targetWeightKg: initialWeightKg,
+        progression: JSON.stringify({ type: 'linear', incrementKg: 2.5 }),
+      },
+    ]);
+    const program = await createProgram(db, { name: 'Linear Test' });
+    await addProgramDay(db, { programId: program.id, position: 0, templateId: templateA.id });
+    await addProgramDay(db, { programId: program.id, position: 1, templateId: templateB.id });
+    return { program, squat, templateA, templateB };
+  }
+
+  async function logSets(workoutId: number, weightKg: number, reps: number, count = 5) {
+    const detail = await loadWorkoutDetail(db, workoutId);
+    const workoutExercise = detail!.exercises[0]!.workoutExercise;
+    for (let i = 0; i < count; i++) {
+      await insertSet(db, { workoutExerciseId: workoutExercise.id, setNumber: i + 1, weightKg, reps, type: 'normal' });
+    }
+  }
+
+  it('linear success bumps weight, resets fails, and advances the pointer', async () => {
+    const { program } = await setupTwoDayLinearProgram(100);
+    const workout = await startWorkoutFromProgramDay(db, program.id, 0);
+    await logSets(workout.id, 100, 5);
+    await finishWorkout(db, workout.id);
+
+    const result = await applyProgressionAndAdvance(db, workout.id);
+
+    expect(result.applied).toBe(true);
+    expect(result.outcomes).toHaveLength(1);
+    const outcome = result.outcomes[0] as any;
+    expect(outcome.type).toBe('linear');
+    expect(outcome.outcome).toBe('success');
+    expect(outcome.nextWeightKg).toBe(102.5);
+    expect(result.nextPosition).toBe(1);
+    expect(result.wrapped).toBe(false);
+    expect(result.totalDays).toBe(2);
+
+    const detail = await loadProgramDetail(db, program.id);
+    const updatedTe = detail!.days[0]!.template.exercises[0]!.templateExercise;
+    expect(updatedTe.targetWeightKg).toBe(102.5);
+    expect(updatedTe.consecutiveFails).toBe(0);
+
+    const active = await loadActiveProgram(db);
+    expect(active?.state.currentDayPosition).toBe(1);
+  });
+
+  it('a miss holds the weight and increments the fail counter', async () => {
+    const { program } = await setupTwoDayLinearProgram(100);
+    const workout = await startWorkoutFromProgramDay(db, program.id, 0);
+    await logSets(workout.id, 100, 3); // missed target reps
+    await finishWorkout(db, workout.id);
+
+    const result = await applyProgressionAndAdvance(db, workout.id);
+    const outcome = result.outcomes[0] as any;
+    expect(outcome.outcome).toBe('hold');
+    expect(outcome.nextWeightKg).toBe(100);
+    expect(outcome.consecutiveFails).toBe(1);
+
+    const detail = await loadProgramDetail(db, program.id);
+    const updatedTe = detail!.days[0]!.template.exercises[0]!.templateExercise;
+    expect(updatedTe.targetWeightKg).toBe(100);
+    expect(updatedTe.consecutiveFails).toBe(1);
+  });
+
+  it('three consecutive misses trigger exactly one deload on the third', async () => {
+    const { program } = await setupTwoDayLinearProgram(100);
+
+    let workout = await startWorkoutFromProgramDay(db, program.id, 0);
+    await logSets(workout.id, 100, 3);
+    await finishWorkout(db, workout.id);
+    let result = await applyProgressionAndAdvance(db, workout.id);
+    expect((result.outcomes[0] as any).outcome).toBe('hold');
+
+    workout = await startWorkoutFromProgramDay(db, program.id, 0);
+    await logSets(workout.id, 100, 3);
+    await finishWorkout(db, workout.id);
+    result = await applyProgressionAndAdvance(db, workout.id);
+    expect((result.outcomes[0] as any).outcome).toBe('hold');
+
+    workout = await startWorkoutFromProgramDay(db, program.id, 0);
+    await logSets(workout.id, 100, 3);
+    await finishWorkout(db, workout.id);
+    result = await applyProgressionAndAdvance(db, workout.id);
+    const outcome = result.outcomes[0] as any;
+    expect(outcome.outcome).toBe('deload');
+    expect(outcome.nextWeightKg).toBe(90);
+
+    const detail = await loadProgramDetail(db, program.id);
+    const updatedTe = detail!.days[0]!.template.exercises[0]!.templateExercise;
+    expect(updatedTe.targetWeightKg).toBe(90);
+    expect(updatedTe.consecutiveFails).toBe(0);
+  });
+
+  it('wraps the pointer from the last day back to 0 with wrapped:true', async () => {
+    const { program } = await setupTwoDayLinearProgram(100);
+    const workout = await startWorkoutFromProgramDay(db, program.id, 1);
+    await logSets(workout.id, 100, 5);
+    await finishWorkout(db, workout.id);
+
+    const result = await applyProgressionAndAdvance(db, workout.id);
+    expect(result.nextPosition).toBe(0);
+    expect(result.wrapped).toBe(true);
+
+    const active = await loadActiveProgram(db);
+    expect(active?.state.currentDayPosition).toBe(0);
+  });
+
+  it('an ad-hoc workout (program_id null) returns an empty result with no writes', async () => {
+    const squat = await seedExercise(db, 'Barbell Squat', 'barbell-squat');
+    const template = await createTemplate(db, { name: 'Ad-hoc', position: 0 });
+    await setTemplateExercises(db, template.id, [
+      { exerciseId: squat.id, position: 0, targetSets: 5, targetReps: 5, targetWeightKg: 100 },
+    ]);
+    const workout = await startWorkoutFromTemplate(db, template.id);
+    await logSets(workout.id, 100, 5);
+    await finishWorkout(db, workout.id);
+
+    const result = await applyProgressionAndAdvance(db, workout.id);
+    expect(result.applied).toBe(false);
+    expect(result.outcomes).toHaveLength(0);
+
+    const active = await loadActiveProgram(db);
+    expect(active).toBeUndefined();
+  });
+
+  it('skips a malformed (negative-increment) progression rule without throwing the whole finish', async () => {
+    const squat = await seedExercise(db, 'Barbell Squat', 'barbell-squat');
+    const template = await createTemplate(db, { name: 'Day A', position: 0 });
+    await setTemplateExercises(db, template.id, [
+      {
+        exerciseId: squat.id,
+        position: 0,
+        targetSets: 5,
+        targetReps: 5,
+        targetWeightKg: 100,
+        progression: JSON.stringify({ type: 'linear', incrementKg: -5 }),
+      },
+    ]);
+    const program = await createProgram(db, { name: 'Malformed' });
+    await addProgramDay(db, { programId: program.id, position: 0, templateId: template.id });
+
+    const workout = await startWorkoutFromProgramDay(db, program.id, 0);
+    await logSets(workout.id, 100, 5);
+    await finishWorkout(db, workout.id);
+
+    const applied = await applyProgressionAndAdvance(db, workout.id);
+    expect(applied.applied).toBe(true);
+    expect(applied.outcomes).toHaveLength(0);
+
+    const detail = await loadProgramDetail(db, program.id);
+    const te = detail!.days[0]!.template.exercises[0]!.templateExercise;
+    expect(te.targetWeightKg).toBe(100);
   });
 });
 
