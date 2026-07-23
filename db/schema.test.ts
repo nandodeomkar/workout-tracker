@@ -16,10 +16,11 @@ const EXPECTED_TABLES = [
   'body_measurements',
   'settings',
   'backup_meta',
+  'metric_definitions',
 ];
 
 describe('migration 0001', () => {
-  it('creates all 13 design-spec tables against a fresh database', () => {
+  it('creates all 14 design-spec tables against a fresh database', () => {
     const { sqlite } = createTestDb();
 
     const rows = sqlite

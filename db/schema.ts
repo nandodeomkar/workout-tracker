@@ -135,6 +135,18 @@ export const bodyMeasurements = sqliteTable("body_measurements", {
   measuredAt: text("measured_at").notNull(),
 });
 
+// Phase-5 addition (MEAS-01/D-06): single runtime source of truth for
+// built-in + custom body-measurement metric identity, mirroring the
+// exercises table's seedId/isCustom pattern (metricKey plays seedId's role
+// as the stable unique conflict target for additive seeding).
+export const metricDefinitions = sqliteTable("metric_definitions", {
+  metricKey: text("metric_key").primaryKey(),
+  label: text().notNull(),
+  unitType: text("unit_type").$type<"weight" | "length" | "percent">().notNull(),
+  isCustom: int("is_custom", { mode: "boolean" }).notNull().default(false),
+  position: int().notNull(),
+});
+
 export const settings = sqliteTable("settings", {
   key: text().primaryKey(),
   value: text().notNull(),
@@ -168,6 +180,8 @@ export type TrainingMax = typeof trainingMaxes.$inferSelect;
 export type NewTrainingMax = typeof trainingMaxes.$inferInsert;
 export type BodyMeasurement = typeof bodyMeasurements.$inferSelect;
 export type NewBodyMeasurement = typeof bodyMeasurements.$inferInsert;
+export type MetricDefinition = typeof metricDefinitions.$inferSelect;
+export type NewMetricDefinition = typeof metricDefinitions.$inferInsert;
 export type Setting = typeof settings.$inferSelect;
 export type NewSetting = typeof settings.$inferInsert;
 export type BackupMeta = typeof backupMeta.$inferSelect;

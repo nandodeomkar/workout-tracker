@@ -165,3 +165,55 @@ describe('D-08: migration 0001 -> 0002 (rest_seconds) preserves data (simulated 
     sqlite.close();
   });
 });
+
+describe('MEAS-01: migration 0002 -> 0003 (metric_definitions) preserves data (simulated app upgrade)', () => {
+  it('applies migration 0003 on top of a populated 0002 database without losing body_measurements rows, adding metric_definitions', () => {
+    // 1. Open a fresh in-memory DB and apply only migrations 0000+0001+0002.
+    const sqlite = new Database(':memory:');
+    applyMigrationsUpTo(sqlite, 3);
+
+    // 2. Populate with a known, deterministic body_measurements dataset via
+    //    raw SQL (metric_definitions does not exist on the physical DB yet
+    //    at this migration point).
+    sqlite
+      .prepare('INSERT INTO body_measurements (metric, value, measured_at) VALUES (?, ?, ?)')
+      .run('weight', 82.5, '2026-07-01');
+    sqlite
+      .prepare('INSERT INTO body_measurements (metric, value, measured_at) VALUES (?, ?, ?)')
+      .run('waist', 88, '2026-07-01');
+
+    const beforeMeasurements = sqlite
+      .prepare('SELECT * FROM body_measurements ORDER BY id')
+      .all() as Record<string, unknown>[];
+    expect(beforeMeasurements.length).toBe(2);
+
+    const tablesBefore = sqlite
+      .prepare("SELECT name FROM sqlite_master WHERE type='table'")
+      .all() as { name: string }[];
+    expect(tablesBefore.map((t) => t.name)).not.toContain('metric_definitions');
+
+    // 3. Apply the idx-3 migration in the journal (simulated app upgrade to 0003).
+    const journal = readJournal();
+    expect(journal.entries.length).toBeGreaterThanOrEqual(4);
+    const nextEntry = journal.entries[3]!;
+    applyMigrationEntry(sqlite, nextEntry);
+
+    // 4. Assert every inserted body_measurements row survives unchanged.
+    const afterMeasurements = sqlite
+      .prepare('SELECT * FROM body_measurements ORDER BY id')
+      .all() as Record<string, unknown>[];
+    expect(afterMeasurements).toEqual(beforeMeasurements);
+
+    // 5. Assert the new metric_definitions table now exists (additive-only,
+    //    no ALTER on any existing table).
+    const columns = sqlite.prepare('PRAGMA table_info(metric_definitions)').all() as { name: string }[];
+    const columnNames = columns.map((c) => c.name);
+    expect(columnNames).toContain('metric_key');
+    expect(columnNames).toContain('label');
+    expect(columnNames).toContain('unit_type');
+    expect(columnNames).toContain('is_custom');
+    expect(columnNames).toContain('position');
+
+    sqlite.close();
+  });
+});
