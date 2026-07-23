@@ -48,7 +48,17 @@ import {
   type TemplateDetail,
   type TemplateExerciseInput,
 } from './templates';
-import type { LinearProgressionRule, PercentTmRule } from '../lib/progression';
+import { loadWorkoutDetail } from './workouts';
+import {
+  DEFAULT_DELOAD_PCT,
+  DEFAULT_FAIL_THRESHOLD,
+  evaluateLinearSuccess,
+  nextDayPosition,
+  resolveLinearProgression,
+  type LinearProgressionRule,
+  type PercentTmRule,
+  type WorkingSetPerformance,
+} from '../lib/progression';
 
 type AnyDrizzleDb = BaseSQLiteDatabase<'async' | 'sync', any, any>;
 
@@ -535,4 +545,233 @@ export async function listProgramTrainingMaxes(db: AnyDrizzleDb, programId: numb
   }
 
   return entries;
+}
+
+/** One linear-progression exercise's finish-time outcome (D-06/D-08/D-09). */
+export interface LinearProgressionOutcome {
+  type: 'linear';
+  exerciseId: number;
+  outcome: 'success' | 'hold' | 'deload';
+  /** Rule increment (kg) — feeds the success badge "+{N}{unit}". */
+  incrementKg: number;
+  /** Deload percentage (0-1) — feeds the deload badge "-{pct}%". */
+  deloadPct: number;
+  /** Consecutive-miss count: post-write value for hold, the threshold that fired for deload. */
+  consecutiveFails: number;
+  failThreshold: number;
+  nextWeightKg: number;
+}
+
+/**
+ * One percent-of-TM exercise's finish-time outcome — informational only
+ * (Task 1: TM-bump-on-wrap logic is added in Plan 05, NOT here). Reports the
+ * top/main set of this day's scheme (the highest-pct set, typically the
+ * AMRAP/work set) as the single representative prescribed pct/reps pair.
+ */
+export interface PercentTmProgressionOutcome {
+  type: 'percent_tm';
+  exerciseId: number;
+  pct: number;
+  reps: number;
+}
+
+export type ProgressionOutcome = LinearProgressionOutcome | PercentTmProgressionOutcome;
+
+/**
+ * Result of applyProgressionAndAdvance. `applied` is false for an ad-hoc/
+ * template-only/empty finish (workout.programId == null, Pitfall 1/7) — in
+ * that case NO further fields are meaningful and NO writes occurred.
+ */
+export interface ProgramProgressResult {
+  applied: boolean;
+  outcomes: ProgressionOutcome[];
+  nextPosition: number;
+  wrapped: boolean;
+  totalDays: number;
+}
+
+const EMPTY_PROGRESS_RESULT: ProgramProgressResult = {
+  applied: false,
+  outcomes: [],
+  nextPosition: 0,
+  wrapped: false,
+  totalDays: 0,
+};
+
+/**
+ * Type-guards + numeric-range validates a parsed `template_exercises.progression`
+ * linear rule before ANY progression math runs (T-06-01 Tampering mitigation).
+ * Rejects a missing/non-finite/non-positive incrementKg. Mirrors
+ * assertValidIncrementKg's positive-only invariant used at authoring time.
+ */
+function parseValidLinearRule(parsed: { incrementKg?: unknown }): LinearProgressionRule | null {
+  const incrementKg = parsed.incrementKg;
+  if (typeof incrementKg !== 'number' || !Number.isFinite(incrementKg) || incrementKg <= 0) {
+    return null;
+  }
+  return { type: 'linear', incrementKg };
+}
+
+/**
+ * Type-guards + numeric-range validates a parsed `template_exercises.progression`
+ * percent_tm rule before it is ever read for display (T-06-01). Rejects a
+ * missing/empty `sets` array or any set whose pct is outside (0,1] or whose
+ * reps is not a positive integer.
+ */
+function parseValidPercentTmSets(parsed: { sets?: unknown }): Array<{ pct: number; reps: number; amrap?: boolean }> | null {
+  if (!Array.isArray(parsed.sets) || parsed.sets.length === 0) {
+    return null;
+  }
+  const validated: Array<{ pct: number; reps: number; amrap?: boolean }> = [];
+  for (const raw of parsed.sets) {
+    if (typeof raw !== 'object' || raw === null) {
+      return null;
+    }
+    const { pct, reps, amrap } = raw as { pct?: unknown; reps?: unknown; amrap?: unknown };
+    if (typeof pct !== 'number' || !Number.isFinite(pct) || pct <= 0 || pct > 1) {
+      return null;
+    }
+    if (typeof reps !== 'number' || !Number.isInteger(reps) || reps <= 0) {
+      return null;
+    }
+    validated.push({ pct, reps, amrap: typeof amrap === 'boolean' ? amrap : undefined });
+  }
+  return validated;
+}
+
+/**
+ * D-02/D-09: the finish-time orchestration. Evaluates every progression-rule
+ * exercise on the just-finished program day (linear success/hold/deload via
+ * lib/progression.ts, percent_tm informational-only per Task 1), writes the
+ * next weight + fail counter in place on the user-owned template_exercises
+ * rows, and advances/wraps the active-program pointer — all in ONE
+ * synchronous transaction (mirrors setTemplateExercises's convention).
+ *
+ * Guards on `workout.programId == null` as the VERY FIRST check, before any
+ * further query (Pitfall 1/7) — an ad-hoc/template-only/empty finish does
+ * zero program work and returns EMPTY_PROGRESS_RESULT.
+ *
+ * Malformed/negative/out-of-range progression JSON is validated and skipped
+ * per-exercise (T-06-01) — a single bad rule never aborts the whole finish.
+ */
+export async function applyProgressionAndAdvance(db: AnyDrizzleDb, workoutId: number): Promise<ProgramProgressResult> {
+  const [workout] = await db.select().from(workouts).where(eq(workouts.id, workoutId));
+  if (!workout || workout.programId == null || workout.programDayPosition == null) {
+    return EMPTY_PROGRESS_RESULT;
+  }
+
+  const programId = workout.programId;
+  const dayPosition = workout.programDayPosition;
+
+  const detail = await loadProgramDetail(db, programId);
+  if (!detail || detail.days.length === 0) {
+    return EMPTY_PROGRESS_RESULT;
+  }
+
+  const day = detail.days.find((d) => d.day.position === dayPosition);
+  if (!day) {
+    return EMPTY_PROGRESS_RESULT;
+  }
+
+  const workoutDetail = await loadWorkoutDetail(db, workoutId);
+  const setsByExerciseId = new Map<number, Array<{ weightKg: number; reps: number; type: WorkingSetPerformance['type'] }>>();
+  if (workoutDetail) {
+    for (const { workoutExercise, sets: setRows } of workoutDetail.exercises) {
+      const list = setsByExerciseId.get(workoutExercise.exerciseId) ?? [];
+      for (const setRow of setRows) {
+        list.push({ weightKg: setRow.weightKg, reps: setRow.reps, type: setRow.type });
+      }
+      setsByExerciseId.set(workoutExercise.exerciseId, list);
+    }
+  }
+
+  const outcomes: ProgressionOutcome[] = [];
+  const writes: Array<{ templateExerciseId: number; targetWeightKg: number; consecutiveFails: number }> = [];
+
+  for (const { templateExercise } of day.template.exercises) {
+    if (!templateExercise.progression) {
+      continue;
+    }
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(templateExercise.progression);
+    } catch {
+      continue; // Malformed progression JSON — skip, never crash the finish (T-06-01).
+    }
+    if (!parsed || typeof parsed !== 'object') {
+      continue;
+    }
+    const rule = parsed as { type?: unknown; incrementKg?: unknown; sets?: unknown };
+
+    if (rule.type === 'linear') {
+      const linearRule = parseValidLinearRule(rule);
+      if (!linearRule) {
+        continue; // Negative/non-finite/missing incrementKg — skip (T-06-01).
+      }
+
+      const rawSets = setsByExerciseId.get(templateExercise.exerciseId) ?? [];
+      const setsForEval: WorkingSetPerformance[] = rawSets.map((s) => ({
+        weightKg: s.weightKg,
+        reps: s.reps,
+        targetReps: templateExercise.targetReps,
+        type: s.type,
+      }));
+
+      const currentWeightKg = templateExercise.targetWeightKg ?? 0;
+      const success = evaluateLinearSuccess(setsForEval, currentWeightKg);
+      const result = resolveLinearProgression(currentWeightKg, linearRule, success, templateExercise.consecutiveFails);
+
+      writes.push({
+        templateExerciseId: templateExercise.id,
+        targetWeightKg: result.nextWeightKg,
+        consecutiveFails: result.nextConsecutiveFails,
+      });
+
+      outcomes.push({
+        type: 'linear',
+        exerciseId: templateExercise.exerciseId,
+        outcome: result.deloaded ? 'deload' : success ? 'success' : 'hold',
+        incrementKg: linearRule.incrementKg,
+        deloadPct: DEFAULT_DELOAD_PCT,
+        consecutiveFails: result.deloaded ? DEFAULT_FAIL_THRESHOLD : result.nextConsecutiveFails,
+        failThreshold: DEFAULT_FAIL_THRESHOLD,
+        nextWeightKg: result.nextWeightKg,
+      });
+    } else if (rule.type === 'percent_tm') {
+      const validSets = parseValidPercentTmSets(rule);
+      if (!validSets) {
+        continue; // Missing/out-of-range pct or reps — skip (T-06-01).
+      }
+      const topSet = validSets[validSets.length - 1]!;
+      outcomes.push({
+        type: 'percent_tm',
+        exerciseId: templateExercise.exerciseId,
+        pct: topSet.pct,
+        reps: topSet.reps,
+      });
+    }
+    // Unrecognized/none `rule.type` — skip silently (no progression to apply).
+  }
+
+  const { position: nextPosition, wrapped } = nextDayPosition(dayPosition, detail.days.length);
+
+  db.transaction((tx) => {
+    for (const write of writes) {
+      tx.update(templateExercises)
+        .set({ targetWeightKg: write.targetWeightKg, consecutiveFails: write.consecutiveFails })
+        .where(eq(templateExercises.id, write.templateExerciseId))
+        .run();
+    }
+    tx.delete(programState).run();
+    tx.insert(programState).values({ programId, currentDayPosition: nextPosition }).run();
+  });
+
+  return {
+    applied: true,
+    outcomes,
+    nextPosition,
+    wrapped,
+    totalDays: detail.days.length,
+  };
 }
