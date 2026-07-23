@@ -69,6 +69,10 @@ export default function RootLayout() {
         {/* Body Measurements group (MEAS-01/MEAS-02, D-07/D-10) — pushed
             sibling route from Settings/More, never a bottom tab. */}
         <Stack.Screen name="measurements" />
+        {/* Programs group (PROG-01/PROG-04, D-01/D-17) — programs manager,
+            program detail, and the training-maxes/new placeholders. Pushed
+            sibling route from Settings/More, never a bottom tab. */}
+        <Stack.Screen name="programs" />
       </Stack>
     </GestureHandlerRootView>
   );

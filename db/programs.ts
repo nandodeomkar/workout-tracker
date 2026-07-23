@@ -212,6 +212,64 @@ export async function loadProgramDetail(db: AnyDrizzleDb, programId: number): Pr
   return { program, days };
 }
 
+export interface ProgramSummary {
+  program: Program;
+  dayCount: number;
+  /** "Linear" | "Percent-TM" | "Mixed" | "Custom" — derived from each day's template_exercises.progression (06-03 programs-manager list caption). */
+  origin: string;
+}
+
+/**
+ * Every user-owned program (bundled-materialized or custom-built), each
+ * paired with its day count and a derived progression-origin summary for the
+ * programs-manager list caption ("{N} days · {origin}"). Origin is "Linear"
+ * or "Percent-TM" when every day's exercises share one progression type,
+ * "Mixed" when a program combines both, and "Custom" when no day carries a
+ * progression rule yet. Malformed/unparseable `progression` JSON is skipped
+ * rather than thrown (same Tampering guard as listProgramTrainingMaxes).
+ */
+export async function loadAllPrograms(db: AnyDrizzleDb): Promise<ProgramSummary[]> {
+  const programRows = await db.select().from(programs).orderBy(programs.id);
+
+  const summaries: ProgramSummary[] = [];
+  for (const program of programRows) {
+    const dayRows = await db.select().from(programDays).where(eq(programDays.programId, program.id));
+    const templateIds = dayRows.map((day) => day.templateId);
+
+    const types = new Set<string>();
+    if (templateIds.length > 0) {
+      const teRows = await db
+        .select()
+        .from(templateExercises)
+        .where(inArray(templateExercises.templateId, templateIds));
+      for (const te of teRows) {
+        if (!te.progression) {
+          continue;
+        }
+        try {
+          const parsed = JSON.parse(te.progression) as { type?: string };
+          if (parsed?.type === 'linear' || parsed?.type === 'percent_tm') {
+            types.add(parsed.type);
+          }
+        } catch {
+          // Malformed progression JSON — skip rather than crash (ASVS V5).
+        }
+      }
+    }
+
+    let origin = 'Custom';
+    if (types.size === 1) {
+      origin = types.has('linear') ? 'Linear' : 'Percent-TM';
+    } else if (types.size > 1) {
+      origin = 'Mixed';
+    }
+
+    summaries.push({ program, dayCount: dayRows.length, origin });
+  }
+
+  return summaries;
+}
+
 export interface ActiveProgramDetail {
   state: ProgramState;
   program: Program;

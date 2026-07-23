@@ -21,6 +21,7 @@ import {
   getTrainingMax,
   listProgramTrainingMaxes,
   loadActiveProgram,
+  loadAllPrograms,
   loadProgramDetail,
   materializeBundledProgram,
   setTrainingMax,
@@ -102,6 +103,50 @@ describe('createProgram / addProgramDay / loadProgramDetail', () => {
 
   it('rejects an empty program name before insert', async () => {
     await expect(createProgram(db, { name: '   ' })).rejects.toThrow();
+  });
+});
+
+describe('loadAllPrograms', () => {
+  let db: TestDb;
+
+  beforeEach(() => {
+    ({ db } = createTestDb());
+  });
+
+  it('summarizes day count and origin per program (Linear/Percent-TM/Mixed/Custom)', async () => {
+    const squat = await seedExercise(db, 'Barbell Squat', 'barbell-squat');
+
+    const linearTemplate = await createTemplate(db, { name: 'Day A', position: 0 });
+    await setTemplateExercises(db, linearTemplate.id, [
+      {
+        exerciseId: squat.id,
+        position: 0,
+        targetSets: 5,
+        targetReps: 5,
+        targetWeightKg: null,
+        progression: JSON.stringify({ type: 'linear', incrementKg: 2.5 }),
+      },
+    ]);
+    const linearProgram = await createProgram(db, { name: 'Linear Only' });
+    await addProgramDay(db, { programId: linearProgram.id, position: 0, templateId: linearTemplate.id });
+
+    const customTemplate = await createTemplate(db, { name: 'Day B', position: 0 });
+    await setTemplateExercises(db, customTemplate.id, [
+      { exerciseId: squat.id, position: 0, targetSets: 3, targetReps: 8, targetWeightKg: null },
+    ]);
+    const customProgram = await createProgram(db, { name: 'No Progression Yet' });
+    await addProgramDay(db, { programId: customProgram.id, position: 0, templateId: customTemplate.id });
+
+    const summaries = await loadAllPrograms(db);
+    expect(summaries).toHaveLength(2);
+
+    const linearSummary = summaries.find((s) => s.program.id === linearProgram.id);
+    expect(linearSummary?.dayCount).toBe(1);
+    expect(linearSummary?.origin).toBe('Linear');
+
+    const customSummary = summaries.find((s) => s.program.id === customProgram.id);
+    expect(customSummary?.dayCount).toBe(1);
+    expect(customSummary?.origin).toBe('Custom');
   });
 });
 

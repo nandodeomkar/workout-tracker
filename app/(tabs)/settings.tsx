@@ -190,6 +190,14 @@ export default function SettingsScreen() {
           <Text style={styles.toolRowText}>Body Measurements</Text>
           <Text style={styles.navChevron}>›</Text>
         </Pressable>
+        <Pressable
+          onPress={() => router.push('/programs')}
+          accessibilityRole="button"
+          style={[styles.toolRow, styles.navRow, styles.navRowSpaced]}
+        >
+          <Text style={styles.toolRowText}>{'🗓️'} Programs</Text>
+          <Text style={styles.navChevron}>›</Text>
+        </Pressable>
       </View>
 
       <View style={styles.section}>
@@ -327,6 +335,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  navRowSpaced: {
+    marginTop: theme.spacing.sm,
   },
   navChevron: {
     color: theme.colors.textMuted,
