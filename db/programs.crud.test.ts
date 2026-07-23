@@ -357,7 +357,7 @@ describe('applyProgressionAndAdvance', () => {
     ({ db } = createTestDb());
   });
 
-  async function setupTwoDayLinearProgram(initialWeightKg = 100) {
+  async function setupTwoDayLinearProgram(initialWeightKg: number | null = 100) {
     const squat = await seedExercise(db, 'Barbell Squat', 'barbell-squat');
     const templateA = await createTemplate(db, { name: 'Day A', position: 0 });
     await setTemplateExercises(db, templateA.id, [
@@ -420,6 +420,45 @@ describe('applyProgressionAndAdvance', () => {
 
     const active = await loadActiveProgram(db);
     expect(active?.state.currentDayPosition).toBe(1);
+  });
+
+  // CR-01 regression: every program-creation path (bundled materialization,
+  // custom template builder) seeds target_weight_kg = null. The first finish
+  // must anchor on the weight actually logged this session, not 0 — otherwise
+  // a 100 kg squat prescribes 2.5 kg next (0 + increment) and crawls up forever.
+  it('CR-01: null target anchors on the logged weight so success prescribes lifted+increment (not 2.5)', async () => {
+    const { program } = await setupTwoDayLinearProgram(null);
+    const workout = await startWorkoutFromProgramDay(db, program.id, 0);
+    await logSets(workout.id, 100, 5);
+    await finishWorkout(db, workout.id);
+
+    const result = await applyProgressionAndAdvance(db, workout.id);
+
+    const outcome = result.outcomes[0] as any;
+    expect(outcome.outcome).toBe('success');
+    expect(outcome.nextWeightKg).toBe(102.5); // 100 + 2.5, never 0 + 2.5
+
+    const detail = await loadProgramDetail(db, program.id);
+    const updatedTe = detail!.days[0]!.template.exercises[0]!.templateExercise;
+    expect(updatedTe.targetWeightKg).toBe(102.5);
+  });
+
+  it('CR-01: a missed-reps finish with null target holds at the logged weight, not 0', async () => {
+    const { program } = await setupTwoDayLinearProgram(null);
+    const workout = await startWorkoutFromProgramDay(db, program.id, 0);
+    await logSets(workout.id, 100, 3); // missed target reps (5)
+    await finishWorkout(db, workout.id);
+
+    const result = await applyProgressionAndAdvance(db, workout.id);
+
+    const outcome = result.outcomes[0] as any;
+    expect(outcome.outcome).toBe('hold');
+    expect(outcome.nextWeightKg).toBe(100); // holds at the logged weight, NOT 0
+
+    const detail = await loadProgramDetail(db, program.id);
+    const updatedTe = detail!.days[0]!.template.exercises[0]!.templateExercise;
+    expect(updatedTe.targetWeightKg).toBe(100);
+    expect(updatedTe.consecutiveFails).toBe(1);
   });
 
   it('a miss holds the weight and increments the fail counter', async () => {
