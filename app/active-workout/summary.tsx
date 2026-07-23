@@ -18,6 +18,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { db } from '../../db/client';
 import { loadAllExercises } from '../../db/exercises';
+import { applyProgressionAndAdvance, loadProgramDetail, type ProgramProgressResult } from '../../db/programs';
 import { getSetting } from '../../db/settings';
 import type { Workout } from '../../db/schema';
 import { addTemplateExercise, createTemplate, loadTemplatesGroupedByFolder } from '../../db/templates';
@@ -30,6 +31,17 @@ import { useActiveWorkout } from '../../store/activeWorkout';
 import { theme } from '../../theme';
 
 type PRHitWithName = ReturnType<typeof detectPRs>[number] & { exerciseName: string };
+
+// Program progress row (finish screen, D-02, UI-SPEC screen 7's Copywriting
+// Contract) — pre-rendered text/badge computed once in the load effect
+// (exercise names + display-unit formatting resolved there), so render never
+// re-derives copy from raw ProgressionOutcome values.
+interface ProgramProgressRow {
+  key: string;
+  text: string;
+  badgeText: string | null;
+  muted: boolean;
+}
 
 // Android-first transient feedback — copied verbatim from
 // exercises/[id].tsx (RESEARCH.md "Android-first transient feedback").
@@ -78,6 +90,11 @@ export default function WorkoutSummaryScreen() {
   const [volumeKg, setVolumeKg] = useState(0);
   const [prHits, setPrHits] = useState<PRHitWithName[]>([]);
   const [savingTemplate, setSavingTemplate] = useState(false);
+  // D-02: program-origin finish state (null for an ad-hoc/template-only/empty
+  // workout — Pitfall 7, zero layout change for the common case).
+  const [programProgress, setProgramProgress] = useState<ProgramProgressResult | null>(null);
+  const [programProgressRows, setProgramProgressRows] = useState<ProgramProgressRow[]>([]);
+  const [nextDayLabel, setNextDayLabel] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -109,13 +126,67 @@ export default function WorkoutSummaryScreen() {
       const priorBests = await loadPriorBests(db, exerciseIds, workoutId);
       const hits = detectPRs(allSets, priorBests);
 
+      // D-02/Pitfall 7: guard on program origin BEFORE any program-table
+      // query — an ad-hoc/template-only/empty finish does zero program work.
+      // applyProgressionAndAdvance runs exactly once here, as part of this
+      // one-shot load effect (never re-invoked on re-render).
+      const resolvedUnit: 'kg' | 'lb' = unitSetting === 'lb' ? 'lb' : 'kg';
+      let progressResult: ProgramProgressResult | null = null;
+      let rows: ProgramProgressRow[] = [];
+      let dayLabel: string | null = null;
+      if (detail.workout.programId != null) {
+        progressResult = await applyProgressionAndAdvance(db, workoutId);
+        if (progressResult.applied) {
+          rows = progressResult.outcomes.map((outcome, index) => {
+            const exerciseName = exerciseMap.get(outcome.exerciseId)?.name ?? 'Exercise';
+            if (outcome.type === 'linear') {
+              if (outcome.outcome === 'success') {
+                return {
+                  key: `${outcome.exerciseId}-${index}`,
+                  text: `${exerciseName} — hit all sets.`,
+                  badgeText: `+${kgToDisplay(outcome.incrementKg, resolvedUnit)}${resolvedUnit}`,
+                  muted: false,
+                };
+              }
+              if (outcome.outcome === 'hold') {
+                return {
+                  key: `${outcome.exerciseId}-${index}`,
+                  text: `${exerciseName} — missed a rep. Same weight next time (${outcome.consecutiveFails}/${outcome.failThreshold}).`,
+                  badgeText: null,
+                  muted: true,
+                };
+              }
+              // deload
+              return {
+                key: `${outcome.exerciseId}-${index}`,
+                text: `${exerciseName} — ${outcome.failThreshold} misses in a row.`,
+                badgeText: `−${Math.round(outcome.deloadPct * 100)}%`,
+                muted: false,
+              };
+            }
+            // percent_tm — informational only (Plan 05 adds the TM-bump-on-wrap
+            // extension; this task never bumps training_maxes).
+            return {
+              key: `${outcome.exerciseId}-${index}`,
+              text: `${exerciseName} — prescribed ${Math.round(outcome.pct * 100)}% × ${outcome.reps}.`,
+              badgeText: null,
+              muted: false,
+            };
+          });
+
+          const programDetail = await loadProgramDetail(db, detail.workout.programId);
+          const nextDay = programDetail?.days.find((d) => d.day.position === progressResult!.nextPosition);
+          dayLabel = nextDay?.template.template.name ?? null;
+        }
+      }
+
       if (cancelled) {
         return;
       }
 
       setWorkout(detail.workout);
       setWorkoutDetail(detail);
-      setUnit(unitSetting === 'lb' ? 'lb' : 'kg');
+      setUnit(resolvedUnit);
       setVolumeKg(workingSetVolume(allSets));
       setPrHits(
         hits.map((hit) => ({
@@ -123,6 +194,9 @@ export default function WorkoutSummaryScreen() {
           exerciseName: exerciseMap.get(hit.exerciseId)?.name ?? 'Exercise',
         })),
       );
+      setProgramProgress(progressResult);
+      setProgramProgressRows(rows);
+      setNextDayLabel(dayLabel);
       setLoading(false);
     })();
     return () => {
@@ -215,6 +289,39 @@ export default function WorkoutSummaryScreen() {
           </View>
         </View>
 
+        {/* D-02: Program progress — only rendered for a program-origin finish
+            (programProgress?.applied), zero layout change for ad-hoc/
+            template-only/empty finishes. Extension point (Plan 05): a
+            "🎉 Cycle complete" banner is added above this section when
+            programProgress.wrapped is true — not built here (Task 1's
+            percent_tm outcomes are informational-only, no TM bump yet). */}
+        {programProgress?.applied && programProgressRows.length > 0 ? (
+          <View style={styles.programProgressSection}>
+            <Text style={styles.programProgressHeading}>Program progress</Text>
+            <View style={styles.prList}>
+              {programProgressRows.map((row) => (
+                <View key={row.key} style={styles.prRow}>
+                  {row.badgeText ? (
+                    <View style={styles.prBadge}>
+                      <Text style={styles.prBadgeText}>{row.badgeText}</Text>
+                    </View>
+                  ) : null}
+                  <Text style={[styles.prText, row.muted && styles.mutedOutcomeText]} numberOfLines={2}>
+                    {row.text}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        ) : null}
+
+        {programProgress?.applied ? (
+          <Text style={styles.nextUpCaption}>
+            Next up: Day {programProgress.nextPosition + 1} of {programProgress.totalDays}
+            {nextDayLabel ? ` — ${nextDayLabel}` : ''}.
+          </Text>
+        ) : null}
+
         {prHits.length > 0 ? (
           <View style={styles.prList}>
             {prHits.map((hit, index) => (
@@ -288,6 +395,20 @@ const styles = StyleSheet.create({
     color: theme.colors.accent,
   },
   statLabel: {
+    ...theme.typography.caption,
+    color: theme.colors.textMuted,
+  },
+  programProgressSection: {
+    gap: theme.spacing.sm,
+  },
+  programProgressHeading: {
+    ...theme.typography.title,
+    color: theme.colors.text,
+  },
+  mutedOutcomeText: {
+    color: theme.colors.textMuted,
+  },
+  nextUpCaption: {
     ...theme.typography.caption,
     color: theme.colors.textMuted,
   },
