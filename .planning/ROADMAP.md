@@ -177,7 +177,7 @@ Plans:
 
 **Gap Closure** *(post-UAT — 04-UAT.md Test 2)*
 
-- [ ] 04-07-PLAN.md — Single-point chart fix: victory-native <Scatter> point mark over points.value + higher-emphasis sparse caption (STAT-01; UAT Gap: single dot invisible + caption low-contrast)
+- [x] 04-07-PLAN.md — Single-point chart fix: victory-native <Scatter> point mark over points.value + higher-emphasis sparse caption (STAT-01; UAT Gap: single dot invisible + caption low-contrast)
 
 ### Phase 5: Body Measurements
 
@@ -247,7 +247,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. Scaffold & Data Foundation | 6/6 | Complete   | 2026-07-21 |
 | 2. Core Logging (Active Workout) | 7/7 | Complete   | 2026-07-22 |
 | 3. Templates, Folders & Calculators | 8/8 | Complete   | 2026-07-22 |
-| 4. Stats & Charts | 6/6 | Complete   | 2026-07-22 |
+| 4. Stats & Charts | 7/7 | Complete   | 2026-07-23 |
 | 5. Body Measurements | 0/TBD | Not started | - |
 | 6. Programs & Progression | 0/TBD | Not started | - |
 | 7. Backup & Export | 0/TBD | Not started | - |

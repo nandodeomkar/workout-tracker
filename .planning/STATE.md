@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 04-06-PLAN.md (STAT-04 perf validation + device pass)
-last_updated: "2026-07-23T00:38:00.000Z"
-last_activity: 2026-07-23 -- Completed 04-06-PLAN.md (STAT-04 performance validation)
+status: planning
+stopped_at: Completed 04-07-PLAN.md (gap closure)
+last_updated: "2026-07-23T04:15:04.201Z"
+last_activity: "2026-07-23 -- Completed 04-07-PLAN.md (gap closure: chart Scatter point + sparse caption)"
 progress:
   total_phases: 8
-  completed_phases: 3
-  total_plans: 27
-  completed_plans: 27
-  percent: 38
+  completed_phases: 4
+  total_plans: 28
+  completed_plans: 28
+  percent: 50
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-19)
 
 **Core value:** Logging a strength workout in the gym must be fast, offline, and never lose data — free, with no clutter or upsell.
-**Current focus:** Phase 04 — stats-charts
+**Current focus:** Phase 05 — body-measurements (Phase 04 complete)
 
 ## Current Position
 
-Phase: 04 (stats-charts) — EXECUTING
-Plan: 6 of 6
-Status: All plans complete — pending phase verification
-Last activity: 2026-07-23 -- Completed 04-06-PLAN.md (STAT-04 performance validation)
+Phase: 04 (stats-charts) — COMPLETE (7/7 plans, incl. 04-07 gap closure)
+Plan: 7 of 7
+Status: Phase 04 complete; ready to plan Phase 5
+Last activity: 2026-07-23 -- Completed 04-07-PLAN.md (gap closure: chart Scatter point + sparse caption)
 
-Progress: [███░░░░░░░] 38% (3/8 phases)
+Progress: [█████░░░░░] 50% (4/8 phases)
 
 ## Performance Metrics
 
@@ -76,6 +76,7 @@ Progress: [███░░░░░░░] 38% (3/8 phases)
 | Phase 04-stats-charts P03 | 15min | 3 tasks | 7 files |
 | Phase 04-stats-charts P04 | 13min | 3 tasks | 6 files |
 | Phase 04-stats-charts P05 | 5min | 1 tasks | 1 files |
+| Phase 04-stats-charts P07 | 12min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -140,6 +141,7 @@ Recent decisions affecting current work:
 - [Phase ?]: computeExerciseRecordBoard derives exerciseId from its input's first row rather than a separate parameter, matching the RESEARCH.md single-exercise call shape
 - [Phase ?]: Section A's PR-feed card-list styling is duplicated locally in app/(tabs)/stats.tsx and app/stats/records.tsx rather than factored into a shared component, since the plan scoped files_modified to only those two files
 - [Phase 04-stats-charts]: Records view fetches loadAllHistorySets in the same useFocusEffect as the chart's existing loadExerciseChartSets call rather than a second effect or new query, keeping one live-recompute discipline for the whole /stats/[exerciseId] route (D-11/T-04-07)
+- [Phase 04-stats-charts]: 04-07 gap closure: added victory-native Scatter mark (radius=6) over points.value alongside Line so single-datum chart series paint a visible dot; Line alone draws a zero-length invisible path for one point
 
 ### Pending Todos
 
@@ -160,6 +162,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-22T18:27:19.019Z
-Stopped at: Completed 04-05-PLAN.md
+Last session: 2026-07-23T04:13:58.783Z
+Stopped at: Completed 04-07-PLAN.md (gap closure)
 Resume file: None
