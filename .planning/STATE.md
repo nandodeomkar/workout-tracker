@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 06-05-PLAN.md
-last_updated: "2026-07-23T18:55:03.398Z"
+status: verifying
+stopped_at: Completed 06-06-PLAN.md
+last_updated: "2026-07-23T19:08:14.525Z"
 last_activity: 2026-07-23 -- Phase 06 execution started
 progress:
   total_phases: 8
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 39
-  completed_plans: 38
-  percent: 63
+  completed_plans: 39
+  percent: 75
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-07-19)
 
 Phase: 06 (programs-progression) — EXECUTING
 Plan: 6 of 6
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-23 -- Phase 06 execution started
 
 Progress: [██████░░░░] 63% (5/8 phases)
@@ -87,6 +87,7 @@ Progress: [██████░░░░] 63% (5/8 phases)
 | Phase 06 P03 | 55min | 3 tasks | 10 files |
 | Phase 06 P04 | 8min | 2 tasks | 3 files |
 | Phase 06-programs-progression P05 | 16min | 3 tasks | 6 files |
+| Phase 06-programs-progression P06 | 20min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -174,6 +175,8 @@ Recent decisions affecting current work:
 - [Phase 06-programs-progression]: computePercentTmWeight params are unit-agnostic pass-throughs; db/programs.ts#computePrescribedWeightKg converts kg<->display unit via kgToDisplay/displayToKg before/after delegating, since sets.weight_kg is always canonical kg
 - [Phase 06-programs-progression]: TM bump lift-category (upper/lower) resolved via a new TM_BUMP_CATEGORY_BY_SEED_ID map keyed by exercises.seed_id, since no schema column carries lift category; unmapped exercises default to the smaller upper bump
 - [Phase 06-programs-progression]: training-maxes.tsx Compute-from-1RM helper is an inline expandable menu (not a separate route) offering both manual-1RM and best-logged-e1RM sources into the same editable TM field, scoped to a program via an explicit ?programId= query param
+- [Phase 06-programs-progression]: Linear-increment stepper stores display-unit-native state, converting to canonical kg only via displayToKg/kgToDisplay at save/hydrate boundaries (Measurements-phase precedent)
+- [Phase 06-programs-progression]: Custom program builder's %TM detection re-fetches loadTemplateDetail per distinct picked template id at save time rather than threading progression data through the picker's lightweight exercise-count projection
 
 ### Pending Todos
 
@@ -194,6 +197,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-23T18:55:03.382Z
-Stopped at: Completed 06-05-PLAN.md
+Last session: 2026-07-23T19:08:14.508Z
+Stopped at: Completed 06-06-PLAN.md
 Resume file: None
