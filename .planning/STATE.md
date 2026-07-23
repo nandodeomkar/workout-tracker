@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 06-04-PLAN.md
-last_updated: "2026-07-23T18:32:34.735Z"
+stopped_at: Completed 06-05-PLAN.md
+last_updated: "2026-07-23T18:55:03.398Z"
 last_activity: 2026-07-23 -- Phase 06 execution started
 progress:
   total_phases: 8
   completed_phases: 5
   total_plans: 39
-  completed_plans: 37
+  completed_plans: 38
   percent: 63
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-07-19)
 ## Current Position
 
 Phase: 06 (programs-progression) — EXECUTING
-Plan: 5 of 6
+Plan: 6 of 6
 Status: Ready to execute
 Last activity: 2026-07-23 -- Phase 06 execution started
 
@@ -86,6 +86,7 @@ Progress: [██████░░░░] 63% (5/8 phases)
 | Phase 06 P02 | 14min | 3 tasks | 11 files |
 | Phase 06 P03 | 55min | 3 tasks | 10 files |
 | Phase 06 P04 | 8min | 2 tasks | 3 files |
+| Phase 06-programs-progression P05 | 16min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -170,6 +171,9 @@ Recent decisions affecting current work:
 - [Phase 06]: Switch-active confirmation skipped when no program is currently active at all (nothing to switch from) -- only prompted when a DIFFERENT program is active
 - [Phase 06]: applyProgressionAndAdvance guards on workout.programId == null as the first check before any program-table query (Pitfall 1/7); malformed/negative progression JSON is validated and skipped per-exercise, never aborting the whole finish (T-06-01)
 - [Phase 06]: Deload outcome reports the fail-threshold count that fired the deload (not the post-reset 0 written to the DB) so the finish screen's copy shows the triggering miss count
+- [Phase 06-programs-progression]: computePercentTmWeight params are unit-agnostic pass-throughs; db/programs.ts#computePrescribedWeightKg converts kg<->display unit via kgToDisplay/displayToKg before/after delegating, since sets.weight_kg is always canonical kg
+- [Phase 06-programs-progression]: TM bump lift-category (upper/lower) resolved via a new TM_BUMP_CATEGORY_BY_SEED_ID map keyed by exercises.seed_id, since no schema column carries lift category; unmapped exercises default to the smaller upper bump
+- [Phase 06-programs-progression]: training-maxes.tsx Compute-from-1RM helper is an inline expandable menu (not a separate route) offering both manual-1RM and best-logged-e1RM sources into the same editable TM field, scoped to a program via an explicit ?programId= query param
 
 ### Pending Todos
 
@@ -190,6 +194,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-23T18:32:34.719Z
-Stopped at: Completed 06-04-PLAN.md
+Last session: 2026-07-23T18:55:03.382Z
+Stopped at: Completed 06-05-PLAN.md
 Resume file: None

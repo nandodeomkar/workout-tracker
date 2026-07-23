@@ -251,7 +251,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4)*
 
-- [ ] 06-05-PLAN.md — %TM engine: TM-setup sheet + prescribed-weight prefill + TM bump on cycle wrap + cycle-complete banner (PROG-03, D-10/D-11/D-12/D-13/D-16)
+- [x] 06-05-PLAN.md — %TM engine: TM-setup sheet + prescribed-weight prefill + TM bump on cycle wrap + cycle-complete banner (PROG-03, D-10/D-11/D-12/D-13/D-16)
 
 **Wave 6** *(blocked on Wave 5)*
 
@@ -298,7 +298,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 3. Templates, Folders & Calculators | 8/8 | Complete   | 2026-07-22 |
 | 4. Stats & Charts | 7/7 | Complete    | 2026-07-23 |
 | 5. Body Measurements | 5/5 | Complete   | 2026-07-23 |
-| 6. Programs & Progression | 4/6 | In Progress|  |
+| 6. Programs & Progression | 5/6 | In Progress|  |
 | 7. Backup & Export | 0/TBD | Not started | - |
 | 8. Polish & Beta Distribution | 0/TBD | Not started | - |
 
