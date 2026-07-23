@@ -124,7 +124,7 @@ export default function MeasurementsIndexScreen() {
   }
 
   function handleLogMeasurements() {
-    // TODO(05-04): open dated-session entry
+    router.push('/measurements/entry');
   }
 
   function renderMetricRow(def: MetricDefinition) {

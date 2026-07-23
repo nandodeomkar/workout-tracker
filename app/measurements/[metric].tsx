@@ -137,11 +137,11 @@ export default function MeasurementDetailScreen() {
   }, [rangeFilteredPoints, definition, units, lengthUnits]);
 
   function handleAddReading() {
-    // TODO(05-04): open dated-session entry scoped to this metric + today
+    router.push(`/measurements/entry?metric=${metricKey}`);
   }
 
-  function handleEditReading(_readingId: number) {
-    // TODO(05-04): open dated-session entry in edit mode, pre-filled
+  function handleEditReading(readingIdValue: number) {
+    router.push(`/measurements/entry?metric=${metricKey}&readingId=${readingIdValue}`);
   }
 
   function handleDeleteReading(readingId: number) {

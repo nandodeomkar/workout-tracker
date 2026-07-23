@@ -26,10 +26,12 @@ const BAR_WEIGHT_STEP_LB = 5;
 const MAX_BAR_WEIGHT = 500;
 
 type Unit = 'kg' | 'lb';
+type LengthUnit = 'cm' | 'in';
 
 export default function SettingsScreen() {
   const router = useRouter();
   const [units, setUnits] = useState<Unit>('kg');
+  const [lengthUnits, setLengthUnits] = useState<LengthUnit>('cm');
   const [defaultRestSeconds, setDefaultRestSeconds] = useState<number>(DEFAULT_REST_SECONDS);
   const [barWeightKg, setBarWeightKg] = useState<number>(DEFAULT_BAR_WEIGHT_KG);
   const [barWeightLb, setBarWeightLb] = useState<number>(DEFAULT_BAR_WEIGHT_LB);
@@ -42,8 +44,9 @@ export default function SettingsScreen() {
     useCallback(() => {
       let cancelled = false;
       (async () => {
-        const [unitsValue, restValue, barKgValue, barLbValue] = await Promise.all([
+        const [unitsValue, lengthUnitsValue, restValue, barKgValue, barLbValue] = await Promise.all([
           getSetting(db, 'units'),
+          getSetting(db, 'length_units'),
           getSetting(db, 'default_rest_seconds'),
           getSetting(db, 'bar_weight_kg'),
           getSetting(db, 'bar_weight_lb'),
@@ -52,6 +55,7 @@ export default function SettingsScreen() {
           return;
         }
         setUnits(unitsValue === 'lb' ? 'lb' : 'kg');
+        setLengthUnits(lengthUnitsValue === 'in' ? 'in' : 'cm');
         const parsedRest = Number(restValue ?? DEFAULT_REST_SECONDS);
         setDefaultRestSeconds(Number.isFinite(parsedRest) && parsedRest > 0 ? parsedRest : DEFAULT_REST_SECONDS);
         const parsedBarKg = Number(barKgValue ?? DEFAULT_BAR_WEIGHT_KG);
@@ -72,6 +76,16 @@ export default function SettingsScreen() {
     }
     setUnits(nextUnit);
     await setSetting(db, 'units', nextUnit);
+  }
+
+  // Independent of `units` (D-04) — a separate key so mixed preferences
+  // (e.g. lb + cm) are supported; never derived from or synced to `units`.
+  async function handleSelectLengthUnit(nextLengthUnit: LengthUnit) {
+    if (nextLengthUnit === lengthUnits) {
+      return;
+    }
+    setLengthUnits(nextLengthUnit);
+    await setSetting(db, 'length_units', nextLengthUnit);
   }
 
   async function handleStepRest(direction: 1 | -1) {
@@ -110,6 +124,14 @@ export default function SettingsScreen() {
         <View style={styles.unitRow}>
           <UnitPill label="kg" active={units === 'kg'} onPress={() => void handleSelectUnit('kg')} />
           <UnitPill label="lb" active={units === 'lb'} onPress={() => void handleSelectUnit('lb')} />
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.label}>Length units</Text>
+        <View style={styles.unitRow}>
+          <UnitPill label="cm" active={lengthUnits === 'cm'} onPress={() => void handleSelectLengthUnit('cm')} />
+          <UnitPill label="in" active={lengthUnits === 'in'} onPress={() => void handleSelectLengthUnit('in')} />
         </View>
       </View>
 
