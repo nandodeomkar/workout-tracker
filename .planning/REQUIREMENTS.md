@@ -34,10 +34,10 @@
 
 ### Programs & Progression
 
-- [ ] **PROG-01**: User can create a program as an ordered list of template days with a pointer to the next day
+- [x] **PROG-01**: User can create a program as an ordered list of template days with a pointer to the next day
 - [x] **PROG-02**: Program templates support linear progression rules (auto-increment weight on success)
 - [x] **PROG-03**: Program templates support percent-of-training-max progression (5/3/1-style waves) with per-exercise training maxes
-- [ ] **PROG-04**: App ships with a small set of bundled generic programs (public methodologies, no proprietary content)
+- [x] **PROG-04**: App ships with a small set of bundled generic programs (public methodologies, no proprietary content)
 
 ### Stats & PRs
 
@@ -117,10 +117,10 @@ Which phases cover which requirements. Filled by roadmap creation.
 | STAT-04 | Phase 4 | Complete |
 | MEAS-01 | Phase 5 | Complete |
 | MEAS-02 | Phase 5 | Complete |
-| PROG-01 | Phase 6 | Pending |
+| PROG-01 | Phase 6 | Complete |
 | PROG-02 | Phase 6 | Complete |
 | PROG-03 | Phase 6 | Complete |
-| PROG-04 | Phase 6 | Pending |
+| PROG-04 | Phase 6 | Complete |
 | BAK-01 | Phase 7 | Pending |
 | BAK-02 | Phase 7 | Pending |
 | BAK-03 | Phase 7 | Pending |

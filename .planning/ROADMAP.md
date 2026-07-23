@@ -239,7 +239,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1)*
 
-- [ ] 06-02-PLAN.md — Additive migration 0004 (origin marker + fail counter) + db/programs.ts data layer + two bundled-program JSON definitions (PROG-01/04)
+- [x] 06-02-PLAN.md — Additive migration 0004 (origin marker + fail counter) + db/programs.ts data layer + two bundled-program JSON definitions (PROG-01/04)
 
 **Wave 3** *(blocked on Wave 2 — first demoable slice)*
 
@@ -298,7 +298,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 3. Templates, Folders & Calculators | 8/8 | Complete   | 2026-07-22 |
 | 4. Stats & Charts | 7/7 | Complete    | 2026-07-23 |
 | 5. Body Measurements | 5/5 | Complete   | 2026-07-23 |
-| 6. Programs & Progression | 1/6 | In Progress|  |
+| 6. Programs & Progression | 2/6 | In Progress|  |
 | 7. Backup & Export | 0/TBD | Not started | - |
 | 8. Polish & Beta Distribution | 0/TBD | Not started | - |
 

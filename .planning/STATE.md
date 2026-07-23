@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 06-01-PLAN.md
-last_updated: "2026-07-23T17:45:37.204Z"
+stopped_at: Completed 06-02-PLAN.md
+last_updated: "2026-07-23T18:02:13.860Z"
 last_activity: 2026-07-23 -- Phase 06 execution started
 progress:
   total_phases: 8
   completed_phases: 5
   total_plans: 39
-  completed_plans: 34
+  completed_plans: 35
   percent: 63
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-07-19)
 ## Current Position
 
 Phase: 06 (programs-progression) — EXECUTING
-Plan: 2 of 6
+Plan: 3 of 6
 Status: Ready to execute
 Last activity: 2026-07-23 -- Phase 06 execution started
 
@@ -83,6 +83,7 @@ Progress: [██████░░░░] 63% (5/8 phases)
 | Phase 05-body-measurements P04 | 25min | 2 tasks | 5 files |
 | Phase 05-body-measurements P05 | 15min | 1 tasks | 2 files |
 | Phase 06 P01 | 10min | 2 tasks | 2 files |
+| Phase 06 P02 | 14min | 3 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -161,6 +162,8 @@ Recent decisions affecting current work:
 - [Phase 05-body-measurements]: metricKey derived client-side (lowercase/trim/collapse-non-alphanumeric/disambiguate) rather than relying on createCustomMetric's onConflictDoNothing alone, guaranteeing a same-named second custom metric always gets a distinct key instead of silently no-opping
 - [Phase ?]: computePercentTmWeight delegates to solvePlates (plate-loadable) instead of raw TM*pct, resolving 06-RESEARCH Open Question 1 / Assumption A2
 - [Phase ?]: resolveLinearProgression resets consecutive_fails to 0 in both the success and deload branches, preventing a repeated deload immediately after the first (Pitfall 8)
+- [Phase 06]: template_exercises.progression JSON stored camelCase matching lib/progression.ts's TS interfaces (incrementKg, sets), not the schema.ts doc comment's stale snake_case example — Avoids a translation layer between the stored JSON and the pure resolver types that consume it
+- [Phase 06]: materializeBundledProgram resolves every bundle exercise seed_id across ALL days up front, before any DB write — Guarantees a missing seed_id never leaves a partially-materialized program (Pitfall 6)
 
 ### Pending Todos
 
@@ -181,6 +184,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-23T17:45:37.191Z
-Stopped at: Completed 06-01-PLAN.md
+Last session: 2026-07-23T18:02:13.842Z
+Stopped at: Completed 06-02-PLAN.md
 Resume file: None
