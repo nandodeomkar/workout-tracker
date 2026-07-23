@@ -28,11 +28,13 @@ import { and, eq, inArray } from 'drizzle-orm';
 import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core';
 
 import {
+  exercises,
   programDays,
   programs,
   programState,
   templateExercises,
   trainingMaxes,
+  workoutExercises,
   workouts,
   type Program,
   type ProgramDay,
@@ -40,6 +42,7 @@ import {
   type TrainingMax,
   type Workout,
 } from './schema';
+import { getSetting } from './settings';
 import {
   createTemplate,
   loadTemplateDetail,
@@ -48,8 +51,10 @@ import {
   type TemplateDetail,
   type TemplateExerciseInput,
 } from './templates';
-import { loadWorkoutDetail } from './workouts';
+import { insertSet, loadWorkoutDetail } from './workouts';
 import {
+  bumpTrainingMax,
+  computePercentTmWeight,
   DEFAULT_DELOAD_PCT,
   DEFAULT_FAIL_THRESHOLD,
   evaluateLinearSuccess,
@@ -59,6 +64,7 @@ import {
   type PercentTmRule,
   type WorkingSetPerformance,
 } from '../lib/progression';
+import { displayToKg, kgToDisplay } from '../lib/weightUnits';
 
 type AnyDrizzleDb = BaseSQLiteDatabase<'async' | 'sync', any, any>;
 
@@ -72,6 +78,26 @@ const MAX_INCREMENT_KG = 100;
 const MAX_CONSECUTIVE_FAILS = 1000;
 /** Sane upper bound on a program's day-list length. */
 const MAX_DAY_POSITION = 1000;
+
+/** Default barbell weight (kg/lb) when settings.bar_weight_kg/lb is unset (mirrors app/(tabs)/settings.tsx's fallback). */
+const DEFAULT_BAR_WEIGHT_KG = 20;
+const DEFAULT_BAR_WEIGHT_LB = 45;
+
+/**
+ * D-12: maps a %TM exercise's stable seed_id (data/bundledPrograms/index.ts#
+ * LIFT_SEED_IDS) to its training-max-bump category (5/3/1 convention:
+ * bench/overhead-press bump +2.5kg "upper"; squat/deadlift bump +5kg
+ * "lower"). An exercise with no entry (e.g. a custom-authored %TM program on
+ * a lift outside the bundled five) defaults to "upper" — the smaller, more
+ * conservative bump.
+ */
+const TM_BUMP_CATEGORY_BY_SEED_ID: Record<string, 'upper' | 'lower'> = {
+  'barbell-squat': 'lower',
+  'barbell-deadlift': 'lower',
+  'barbell-bench-press-medium-grip': 'upper',
+  'standing-military-press': 'upper',
+  'bent-over-barbell-row': 'upper',
+};
 
 function assertValidName(name: string | null | undefined): string | null {
   if (name == null) {
@@ -436,6 +462,116 @@ export async function materializeBundledProgram(
 }
 
 /**
+ * D-13: computes a single %TM prescribed weight in kg for storage, delegating
+ * plate-loadable rounding to lib/progression.ts#computePercentTmWeight in the
+ * ACTIVE display unit (never the raw, unrounded TM*pct — Assumption A2). The
+ * canonical-kg training max is converted to the display unit via
+ * lib/weightUnits.ts#kgToDisplay when unit is 'lb' (never an inline `*
+ * 2.20462`, per that module's own contract) — bar weight is already stored
+ * natively per unit (Pitfall 1, never cross-converted) — then the
+ * plate-loadable result is converted back to canonical kg via displayToKg for
+ * the `sets.weight_kg` write.
+ */
+function computePrescribedWeightKg(
+  trainingMaxKg: number,
+  pct: number,
+  barWeightKg: number,
+  barWeightLb: number,
+  unit: 'kg' | 'lb',
+): number {
+  if (unit === 'kg') {
+    return computePercentTmWeight(trainingMaxKg, pct, barWeightKg, 'kg');
+  }
+  const trainingMaxLb = kgToDisplay(trainingMaxKg, 'lb');
+  const weightLb = computePercentTmWeight(trainingMaxLb, pct, barWeightLb, 'lb');
+  return displayToKg(weightLb, 'lb');
+}
+
+/**
+ * D-13: after a %TM day's workout_exercises rows exist (same order as
+ * `templateDetail.exercises`, per startWorkoutFromTemplate's 1:1 index
+ * mapping), inserts plate-loadable prescribed sets for every `percent_tm`
+ * exercise that has a training max set. A missing/unset training max (T-06-03
+ * — never a garbage 0-weight prescription) leaves that exercise's card with
+ * NO inserted sets, falling back to the existing last-performance/target
+ * pre-fill already used by the active-workout screen. Malformed progression
+ * JSON is skipped (T-06-01), mirroring applyProgressionAndAdvance's guard.
+ */
+async function prefillPercentTmSets(db: AnyDrizzleDb, workoutId: number, templateDetail: TemplateDetail): Promise<void> {
+  const hasPercentTm = templateDetail.exercises.some(({ templateExercise }) => {
+    if (!templateExercise.progression) {
+      return false;
+    }
+    try {
+      const parsed = JSON.parse(templateExercise.progression) as { type?: string };
+      return parsed?.type === 'percent_tm';
+    } catch {
+      return false;
+    }
+  });
+  if (!hasPercentTm) {
+    return;
+  }
+
+  const workoutExerciseRows = await db
+    .select()
+    .from(workoutExercises)
+    .where(eq(workoutExercises.workoutId, workoutId))
+    .orderBy(workoutExercises.position);
+
+  const [unitSetting, barKgSetting, barLbSetting] = await Promise.all([
+    getSetting(db, 'units'),
+    getSetting(db, 'bar_weight_kg'),
+    getSetting(db, 'bar_weight_lb'),
+  ]);
+  const unit: 'kg' | 'lb' = unitSetting === 'lb' ? 'lb' : 'kg';
+  const parsedBarKg = Number(barKgSetting ?? DEFAULT_BAR_WEIGHT_KG);
+  const parsedBarLb = Number(barLbSetting ?? DEFAULT_BAR_WEIGHT_LB);
+  const barWeightKg = Number.isFinite(parsedBarKg) && parsedBarKg >= 0 ? parsedBarKg : DEFAULT_BAR_WEIGHT_KG;
+  const barWeightLb = Number.isFinite(parsedBarLb) && parsedBarLb >= 0 ? parsedBarLb : DEFAULT_BAR_WEIGHT_LB;
+
+  for (const [index, { templateExercise }] of templateDetail.exercises.entries()) {
+    if (!templateExercise.progression) {
+      continue;
+    }
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(templateExercise.progression);
+    } catch {
+      continue; // Malformed progression JSON — skip (T-06-01).
+    }
+    if (!parsed || typeof parsed !== 'object' || (parsed as { type?: unknown }).type !== 'percent_tm') {
+      continue;
+    }
+    const validSets = parseValidPercentTmSets(parsed as { sets?: unknown });
+    if (!validSets) {
+      continue; // Missing/out-of-range pct or reps — skip (T-06-01).
+    }
+
+    const tm = await getTrainingMax(db, templateExercise.exerciseId);
+    if (!tm) {
+      continue; // T-06-03: no TM set yet — leave unprescribed, never insert a garbage 0-weight set.
+    }
+
+    const workoutExercise = workoutExerciseRows[index];
+    if (!workoutExercise) {
+      continue;
+    }
+
+    for (const [setIndex, schemeSet] of validSets.entries()) {
+      const weightKg = computePrescribedWeightKg(tm.maxKg, schemeSet.pct, barWeightKg, barWeightLb, unit);
+      await insertSet(db, {
+        workoutExerciseId: workoutExercise.id,
+        setNumber: setIndex + 1,
+        weightKg,
+        reps: schemeSet.reps,
+        type: 'normal',
+      });
+    }
+  }
+}
+
+/**
  * D-04/D-05: starts a workout from a specific program day (tapping ANY day,
  * not only the pointed-to one) — resolves the program_days row at
  * `dayPosition`, delegates to startWorkoutFromTemplate (db/templates.ts) for
@@ -443,6 +579,11 @@ export async function materializeBundledProgram(
  * (workouts.program_id + program_day_position) via a follow-up update, and
  * moves the active-program pointer to follow whatever day was started
  * (D-04). Throws if the program has no day at that position.
+ *
+ * D-13: after the workout/exercises exist, prefills plate-loadable %TM
+ * prescribed weights for every percent_tm exercise on this day that already
+ * has a training max set (prefillPercentTmSets) — a missing TM leaves that
+ * card unprescribed rather than inserting a garbage 0-weight set.
  */
 export async function startWorkoutFromProgramDay(
   db: AnyDrizzleDb,
@@ -460,6 +601,8 @@ export async function startWorkoutFromProgramDay(
     throw new Error(`Program ${programId} has no day at position ${position}`);
   }
 
+  const templateDetail = await loadTemplateDetail(db, day.templateId);
+
   const workout = await startWorkoutFromTemplate(db, day.templateId);
 
   const [updated] = await db
@@ -469,6 +612,10 @@ export async function startWorkoutFromProgramDay(
     .returning();
 
   await setActiveProgram(db, programId, position);
+
+  if (templateDetail) {
+    await prefillPercentTmSets(db, workout.id, templateDetail);
+  }
 
   return updated;
 }
@@ -563,10 +710,12 @@ export interface LinearProgressionOutcome {
 }
 
 /**
- * One percent-of-TM exercise's finish-time outcome — informational only
- * (Task 1: TM-bump-on-wrap logic is added in Plan 05, NOT here). Reports the
- * top/main set of this day's scheme (the highest-pct set, typically the
- * AMRAP/work set) as the single representative prescribed pct/reps pair.
+ * One percent-of-TM exercise's finish-time outcome — informational only (the
+ * TM-bump-on-wrap write itself is reported separately via
+ * ProgramProgressResult.bumpedTrainingMaxes, not on this per-day outcome).
+ * Reports the top/main set of this day's scheme (the highest-pct set,
+ * typically the AMRAP/work set) as the single representative prescribed
+ * pct/reps pair.
  */
 export interface PercentTmProgressionOutcome {
   type: 'percent_tm';
@@ -576,6 +725,13 @@ export interface PercentTmProgressionOutcome {
 }
 
 export type ProgressionOutcome = LinearProgressionOutcome | PercentTmProgressionOutcome;
+
+/** D-12: one %TM exercise's training-max bump, fired exactly on a cycle-wrapping finish. */
+export interface BumpedTrainingMax {
+  exerciseId: number;
+  previousTmKg: number;
+  newTmKg: number;
+}
 
 /**
  * Result of applyProgressionAndAdvance. `applied` is false for an ad-hoc/
@@ -588,6 +744,8 @@ export interface ProgramProgressResult {
   nextPosition: number;
   wrapped: boolean;
   totalDays: number;
+  /** D-12: every %TM exercise bumped this finish — always empty unless `wrapped` is true. */
+  bumpedTrainingMaxes: BumpedTrainingMax[];
 }
 
 const EMPTY_PROGRESS_RESULT: ProgramProgressResult = {
@@ -596,6 +754,7 @@ const EMPTY_PROGRESS_RESULT: ProgramProgressResult = {
   nextPosition: 0,
   wrapped: false,
   totalDays: 0,
+  bumpedTrainingMaxes: [],
 };
 
 /**
@@ -756,11 +915,55 @@ export async function applyProgressionAndAdvance(db: AnyDrizzleDb, workoutId: nu
 
   const { position: nextPosition, wrapped } = nextDayPosition(dayPosition, detail.days.length);
 
+  // D-12/Pitfall 3: TM bump fires ONLY on a cycle-wrapping finish (pointer
+  // wraps from the last day back to 0) — never per lift-week. Every DISTINCT
+  // percent_tm exercise across the WHOLE program's days (not only today's
+  // day) is bumped exactly once per cycle wrap.
+  const bumpedTrainingMaxes: BumpedTrainingMax[] = [];
+  if (wrapped) {
+    const percentTmExerciseIds = new Set<number>();
+    for (const { template } of detail.days) {
+      for (const { templateExercise } of template.exercises) {
+        if (!templateExercise.progression) {
+          continue;
+        }
+        try {
+          const parsed = JSON.parse(templateExercise.progression) as { type?: string };
+          if (parsed?.type === 'percent_tm') {
+            percentTmExerciseIds.add(templateExercise.exerciseId);
+          }
+        } catch {
+          // Malformed progression JSON — skip (T-06-01).
+        }
+      }
+    }
+
+    for (const exerciseId of percentTmExerciseIds) {
+      const tm = await getTrainingMax(db, exerciseId);
+      if (!tm) {
+        continue; // No TM set yet — nothing to bump.
+      }
+      const [exerciseRow] = await db.select().from(exercises).where(eq(exercises.id, exerciseId));
+      const category = (exerciseRow?.seedId ? TM_BUMP_CATEGORY_BY_SEED_ID[exerciseRow.seedId] : undefined) ?? 'upper';
+      const newTmKg = bumpTrainingMax(tm.maxKg, category);
+      bumpedTrainingMaxes.push({ exerciseId, previousTmKg: tm.maxKg, newTmKg });
+    }
+  }
+
+  const tmUpdatedAt = new Date().toISOString();
+
   db.transaction((tx) => {
     for (const write of writes) {
       tx.update(templateExercises)
         .set({ targetWeightKg: write.targetWeightKg, consecutiveFails: write.consecutiveFails })
         .where(eq(templateExercises.id, write.templateExerciseId))
+        .run();
+    }
+    for (const bump of bumpedTrainingMaxes) {
+      const validatedTmKg = assertValidTrainingMaxKg(bump.newTmKg);
+      tx.insert(trainingMaxes)
+        .values({ exerciseId: bump.exerciseId, maxKg: validatedTmKg, updatedAt: tmUpdatedAt })
+        .onConflictDoUpdate({ target: trainingMaxes.exerciseId, set: { maxKg: validatedTmKg, updatedAt: tmUpdatedAt } })
         .run();
     }
     tx.delete(programState).run();
@@ -773,5 +976,6 @@ export async function applyProgressionAndAdvance(db: AnyDrizzleDb, workoutId: nu
     nextPosition,
     wrapped,
     totalDays: detail.days.length,
+    bumpedTrainingMaxes,
   };
 }

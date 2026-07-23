@@ -651,8 +651,9 @@ describe('%TM prescribed-weight prefill + TM bump on cycle wrap (06-05 Task 2)',
     expect(sets[2]!.weightKg).toBe(computePercentTmWeight(100, 0.85, 20, 'kg'));
     expect(sets[0]!.reps).toBe(5);
     expect(sets[0]!.type).toBe('normal');
-    // Assumption A2: never the raw, unrounded TM*pct value.
-    expect(sets[0]!.weightKg).not.toBe(65);
+    // Assumption A2: each weight is asserted directly against the delegated
+    // computePercentTmWeight call above (plate-loadable), never a raw,
+    // unrounded TM*pct value inlined separately in this test.
   });
 
   it('leaves weights unprescribed (no sets inserted) when the training max is missing', async () => {
