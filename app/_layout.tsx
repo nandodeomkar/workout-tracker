@@ -66,6 +66,9 @@ export default function RootLayout() {
         {/* Templates builder group (TMPL-01/D-03) — pushed sibling route
             from Workout home, never a bottom tab. */}
         <Stack.Screen name="templates" />
+        {/* Body Measurements group (MEAS-01/MEAS-02, D-07/D-10) — pushed
+            sibling route from Settings/More, never a bottom tab. */}
+        <Stack.Screen name="measurements" />
       </Stack>
     </GestureHandlerRootView>
   );

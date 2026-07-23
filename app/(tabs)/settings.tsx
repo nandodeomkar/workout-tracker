@@ -160,6 +160,17 @@ export default function SettingsScreen() {
       </View>
 
       <View style={styles.section}>
+        <Pressable
+          onPress={() => router.push('/measurements')}
+          accessibilityRole="button"
+          style={[styles.toolRow, styles.navRow]}
+        >
+          <Text style={styles.toolRowText}>Body Measurements</Text>
+          <Text style={styles.navChevron}>›</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.section}>
         <Text style={styles.label}>Tools</Text>
         <Pressable
           onPress={() => router.push('/tools/plate-calculator')}
@@ -289,5 +300,14 @@ const styles = StyleSheet.create({
   toolRowText: {
     ...theme.typography.body,
     color: theme.colors.text,
+  },
+  navRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  navChevron: {
+    color: theme.colors.textMuted,
+    fontSize: 20,
   },
 });
