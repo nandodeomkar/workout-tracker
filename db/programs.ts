@@ -877,9 +877,21 @@ export async function applyProgressionAndAdvance(db: AnyDrizzleDb, workoutId: nu
         type: s.type,
       }));
 
-      const currentWeightKg = templateExercise.targetWeightKg ?? 0;
-      const success = evaluateLinearSuccess(setsForEval, currentWeightKg);
-      const result = resolveLinearProgression(currentWeightKg, linearRule, success, templateExercise.consecutiveFails);
+      // CR-01: anchor the linear "current weight" on the weight actually
+      // logged this session (the lightest working set), falling back to the
+      // stored target only when there are no working sets. Bundled AND custom
+      // programs seed target_weight_kg = null, so keying off the template row
+      // alone (`targetWeightKg ?? 0`) progressed from 0 kg on the first finish
+      // — prescribing 2.5 kg regardless of the real lift. Success is evaluated
+      // against the stored target when present (subsequent finishes), else
+      // against the logged anchor so reps alone decide the first session.
+      const workingSets = setsForEval.filter((s) => s.type !== 'warmup');
+      const loggedWeightKg =
+        workingSets.length > 0
+          ? Math.min(...workingSets.map((s) => s.weightKg))
+          : (templateExercise.targetWeightKg ?? 0);
+      const success = evaluateLinearSuccess(setsForEval, templateExercise.targetWeightKg ?? loggedWeightKg);
+      const result = resolveLinearProgression(loggedWeightKg, linearRule, success, templateExercise.consecutiveFails);
 
       writes.push({
         templateExerciseId: templateExercise.id,
