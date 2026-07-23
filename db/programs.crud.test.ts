@@ -31,6 +31,7 @@ import {
   type BundledProgramDefinition,
 } from './programs';
 import { linear5x5, percentWave, resolveExerciseSeedIds } from '../data/bundledPrograms';
+import { computePercentTmWeight } from '../lib/progression';
 
 type TestDb = ReturnType<typeof createTestDb>['db'];
 
@@ -584,5 +585,120 @@ describe('bundled program seed mapping (seed mapping)', () => {
     const waveProgram = await materializeBundledProgram(db, percentWave, waveSeedMap);
     const waveDayRows = await db.select().from(programDays).where(eq(programDays.programId, waveProgram.id));
     expect(waveDayRows).toHaveLength(16);
+  });
+});
+
+describe('%TM prescribed-weight prefill + TM bump on cycle wrap (06-05 Task 2)', () => {
+  let db: TestDb;
+
+  beforeEach(() => {
+    ({ db } = createTestDb());
+  });
+
+  const WAVE_SCHEME = {
+    type: 'percent_tm',
+    sets: [
+      { pct: 0.65, reps: 5 },
+      { pct: 0.75, reps: 5 },
+      { pct: 0.85, reps: 5, amrap: true },
+    ],
+  };
+
+  async function setupTwoDayPercentTmProgram() {
+    const squat = await seedExercise(db, 'Barbell Squat', 'barbell-squat'); // lower, +5
+    const bench = await seedExercise(db, 'Barbell Bench Press', 'barbell-bench-press-medium-grip'); // upper, +2.5
+
+    const templateA = await createTemplate(db, { name: 'Day A', position: 0 });
+    await setTemplateExercises(db, templateA.id, [
+      {
+        exerciseId: squat.id,
+        position: 0,
+        targetSets: 3,
+        targetReps: 5,
+        targetWeightKg: null,
+        progression: JSON.stringify(WAVE_SCHEME),
+      },
+    ]);
+    const templateB = await createTemplate(db, { name: 'Day B', position: 0 });
+    await setTemplateExercises(db, templateB.id, [
+      {
+        exerciseId: bench.id,
+        position: 0,
+        targetSets: 3,
+        targetReps: 5,
+        targetWeightKg: null,
+        progression: JSON.stringify(WAVE_SCHEME),
+      },
+    ]);
+
+    const program = await createProgram(db, { name: '%TM Test' });
+    await addProgramDay(db, { programId: program.id, position: 0, templateId: templateA.id });
+    await addProgramDay(db, { programId: program.id, position: 1, templateId: templateB.id });
+    return { program, squat, bench };
+  }
+
+  it('prefills prescribed set weights from the training max via computePercentTmWeight (plate-loadable, not raw TM*pct)', async () => {
+    const { program, squat } = await setupTwoDayPercentTmProgram();
+    await setTrainingMax(db, squat.id, 100);
+
+    const workout = await startWorkoutFromProgramDay(db, program.id, 0);
+    const detail = await loadWorkoutDetail(db, workout.id);
+    const sets = detail!.exercises[0]!.sets;
+
+    expect(sets).toHaveLength(3);
+    expect(sets[0]!.weightKg).toBe(computePercentTmWeight(100, 0.65, 20, 'kg'));
+    expect(sets[1]!.weightKg).toBe(computePercentTmWeight(100, 0.75, 20, 'kg'));
+    expect(sets[2]!.weightKg).toBe(computePercentTmWeight(100, 0.85, 20, 'kg'));
+    expect(sets[0]!.reps).toBe(5);
+    expect(sets[0]!.type).toBe('normal');
+    // Assumption A2: never the raw, unrounded TM*pct value.
+    expect(sets[0]!.weightKg).not.toBe(65);
+  });
+
+  it('leaves weights unprescribed (no sets inserted) when the training max is missing', async () => {
+    const { program } = await setupTwoDayPercentTmProgram();
+
+    const workout = await startWorkoutFromProgramDay(db, program.id, 0);
+    const detail = await loadWorkoutDetail(db, workout.id);
+    expect(detail!.exercises[0]!.sets).toHaveLength(0);
+  });
+
+  it('does not bump the training max on a non-wrapping finish (day 0 of 2)', async () => {
+    const { program, squat } = await setupTwoDayPercentTmProgram();
+    await setTrainingMax(db, squat.id, 100);
+
+    const workout = await startWorkoutFromProgramDay(db, program.id, 0);
+    await finishWorkout(db, workout.id);
+    const result = await applyProgressionAndAdvance(db, workout.id);
+
+    expect(result.wrapped).toBe(false);
+    expect(result.bumpedTrainingMaxes).toHaveLength(0);
+
+    const tm = await getTrainingMax(db, squat.id);
+    expect(tm?.maxKg).toBe(100);
+  });
+
+  it('bumps every distinct %TM exercise exactly once by its upper/lower amount on the cycle-wrapping finish', async () => {
+    const { program, squat, bench } = await setupTwoDayPercentTmProgram();
+    await setTrainingMax(db, squat.id, 100); // lower, +5
+    await setTrainingMax(db, bench.id, 80); // upper, +2.5
+
+    const workoutA = await startWorkoutFromProgramDay(db, program.id, 0);
+    await finishWorkout(db, workoutA.id);
+    const resultA = await applyProgressionAndAdvance(db, workoutA.id);
+    expect(resultA.wrapped).toBe(false);
+    expect(resultA.bumpedTrainingMaxes).toHaveLength(0);
+
+    const workoutB = await startWorkoutFromProgramDay(db, program.id, 1);
+    await finishWorkout(db, workoutB.id);
+    const resultB = await applyProgressionAndAdvance(db, workoutB.id);
+
+    expect(resultB.wrapped).toBe(true);
+    expect(resultB.bumpedTrainingMaxes).toHaveLength(2);
+
+    const squatTm = await getTrainingMax(db, squat.id);
+    const benchTm = await getTrainingMax(db, bench.id);
+    expect(squatTm?.maxKg).toBe(105); // lower +5
+    expect(benchTm?.maxKg).toBe(82.5); // upper +2.5
   });
 });
