@@ -26,6 +26,7 @@ import { CartesianChart, Line } from 'victory-native';
 import { useFont } from '@shopify/react-native-skia';
 
 import { MetricToggle } from '../../components/MetricToggle';
+import { CHART_X_TICK_COUNT, formatChartDateTick } from '../../constants/statsChart';
 import { db } from '../../db/client';
 import { loadExerciseById } from '../../db/exercises';
 import { getSetting } from '../../db/settings';
@@ -191,7 +192,12 @@ export default function ExerciseChartScreen() {
           ) : (
             <>
               <View style={styles.chartContainer}>
-                <CartesianChart data={displayPoints} xKey="date" yKeys={['value']} axisOptions={{ font }}>
+                <CartesianChart
+                  data={displayPoints}
+                  xKey="date"
+                  yKeys={['value']}
+                  axisOptions={{ font, tickCount: CHART_X_TICK_COUNT, formatXLabel: formatChartDateTick }}
+                >
                   {({ points }) => <Line points={points.value} color={theme.colors.accent} strokeWidth={3} />}
                 </CartesianChart>
               </View>

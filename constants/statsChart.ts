@@ -26,3 +26,28 @@ export const MUSCLE_GROUP_COLORS: readonly string[] = [
   '#E879F9', // Core
   '#6B7280', // Other — muted grey, always last (Pitfall 5)
 ];
+
+// Shared x-axis config for the stats time-series charts (per-exercise progress
+// line + weekly-volume stacked bar). victory-native XL passes the raw xKey
+// value to `formatXLabel` and thins ticks to `tickCount` via downsampleTicks,
+// so both charts use these to avoid rendering raw ISO strings on top of each
+// other on dense histories (the "All" range spans hundreds of sessions).
+
+/** Max x-axis ticks so date labels stay readable on phone-width charts. */
+export const CHART_X_TICK_COUNT = 5;
+
+/**
+ * Compact "Jul '26" x-axis tick from an ISO date or timestamp. Accepts full
+ * timestamps (per-exercise `startedAt`) and date-only `YYYY-MM-DD` strings
+ * (weekly `weekStart`). Falls back to the raw input if unparseable. Local-tz
+ * like the app's other date helpers (formatShortDate/formatRecordDate).
+ */
+export function formatChartDateTick(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) {
+    return String(iso);
+  }
+  const month = d.toLocaleDateString(undefined, { month: 'short' });
+  const year = String(d.getFullYear()).slice(-2);
+  return `${month} '${year}`;
+}

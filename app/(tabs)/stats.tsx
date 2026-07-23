@@ -17,7 +17,12 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { CartesianChart, StackedBar } from 'victory-native';
 import { useFont } from '@shopify/react-native-skia';
 
-import { MUSCLE_GROUP_COLORS, MUSCLE_GROUP_KEYS } from '../../constants/statsChart';
+import {
+  CHART_X_TICK_COUNT,
+  formatChartDateTick,
+  MUSCLE_GROUP_COLORS,
+  MUSCLE_GROUP_KEYS,
+} from '../../constants/statsChart';
 import { muscleIcon } from '../../constants/muscleIcons';
 import { db } from '../../db/client';
 import { loadAllExercises } from '../../db/exercises';
@@ -194,7 +199,7 @@ export default function StatsScreen() {
                 xKey="weekStart"
                 yKeys={[...MUSCLE_GROUP_KEYS]}
                 domainPadding={{ left: 30, right: 30, top: 20 }}
-                axisOptions={{ font }}
+                axisOptions={{ font, tickCount: CHART_X_TICK_COUNT, formatXLabel: formatChartDateTick }}
               >
                 {({ points, chartBounds }) => (
                   <StackedBar
