@@ -202,7 +202,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1)*
 
-- [ ] 05-02-PLAN.md — DB foundation: metric_definitions additive migration 0003 + built-in seed + guarded db/measurements.ts CRUD/history (MEAS-01/02)
+- [x] 05-02-PLAN.md — DB foundation: metric_definitions additive migration 0003 + built-in seed + guarded db/measurements.ts CRUD/history (MEAS-01/02)
 
 **Wave 3** *(blocked on Wave 2 — first demoable slice)*
 
@@ -271,7 +271,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 2. Core Logging (Active Workout) | 7/7 | Complete   | 2026-07-22 |
 | 3. Templates, Folders & Calculators | 8/8 | Complete   | 2026-07-22 |
 | 4. Stats & Charts | 7/7 | Complete    | 2026-07-23 |
-| 5. Body Measurements | 1/5 | In Progress|  |
+| 5. Body Measurements | 2/5 | In Progress|  |
 | 6. Programs & Progression | 0/TBD | Not started | - |
 | 7. Backup & Export | 0/TBD | Not started | - |
 | 8. Polish & Beta Distribution | 0/TBD | Not started | - |
