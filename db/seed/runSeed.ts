@@ -14,7 +14,8 @@
 import { eq } from 'drizzle-orm';
 import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core';
 
-import { exercises, settings } from '../schema';
+import { BUILT_IN_METRICS } from '../../lib/measurementMetrics';
+import { exercises, metricDefinitions, settings } from '../schema';
 import curatedExercises from './exercises.seed.json';
 import { CURRENT_SEED_VERSION } from './seedVersion';
 
@@ -44,6 +45,19 @@ export async function runSeedIfNeeded(db: AnyDrizzleDb): Promise<void> {
         archived: false,
       })
       .onConflictDoNothing({ target: exercises.seedId });
+  }
+
+  for (const metric of BUILT_IN_METRICS) {
+    await db
+      .insert(metricDefinitions)
+      .values({
+        metricKey: metric.metricKey,
+        label: metric.label,
+        unitType: metric.unitType,
+        isCustom: false,
+        position: metric.position,
+      })
+      .onConflictDoNothing({ target: metricDefinitions.metricKey });
   }
 
   await db

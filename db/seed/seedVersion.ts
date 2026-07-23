@@ -7,4 +7,7 @@
 // v3: GAP-1 — +19 supplemental machine/cable/free-weight staples missing
 //     from free-exercise-db (scripts/curate-exercises.ts SUPPLEMENTAL_EXERCISES),
 //     merged additively by seed_id so existing installs gain only the new rows.
-export const CURRENT_SEED_VERSION = 3;
+// v4: Phase 5 (MEAS-01/D-06) — seeds the 15 built-in body-measurement
+//     metrics from lib/measurementMetrics.ts#BUILT_IN_METRICS into the new
+//     metric_definitions table, merged additively by metric_key.
+export const CURRENT_SEED_VERSION = 4;
