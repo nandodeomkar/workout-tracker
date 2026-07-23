@@ -45,6 +45,13 @@ export const workouts = sqliteTable("workouts", {
   finishedAt: text("finished_at"),
   notes: text(),
   templateId: int("template_id").references(() => templates.id),
+  // Phase-6 addition (D-05, migration 0004): program-origin marker. Both
+  // null for empty/template-only/ad-hoc-history-repeat starts. Set together
+  // ONLY when a workout is started from an active program's day
+  // (startWorkoutFromProgramDay) — an ad-hoc reuse of the same template
+  // (templateId set, programId null) must never advance/progress a program.
+  programId: int("program_id").references(() => programs.id),
+  programDayPosition: int("program_day_position"),
 });
 
 export const workoutExercises = sqliteTable("workout_exercises", {
@@ -94,6 +101,10 @@ export const templateExercises = sqliteTable("template_exercises", {
   targetWeightKg: real("target_weight_kg"),
   // JSON: {type:"linear", increment_kg:2.5} or {type:"percent_tm", scheme:[...]}
   progression: text(),
+  // Phase-6 addition (D-08, migration 0004): consecutive linear-progression
+  // misses on this exercise. Reset to 0 on any success AND on a deload firing
+  // (Pitfall 8); incremented on a miss under the fail threshold.
+  consecutiveFails: int("consecutive_fails").notNull().default(0),
 });
 
 export const programs = sqliteTable("programs", {
