@@ -22,7 +22,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { CartesianChart, Line } from 'victory-native';
+import { CartesianChart, Line, Scatter } from 'victory-native';
 import { useFont } from '@shopify/react-native-skia';
 
 import { MetricToggle } from '../../components/MetricToggle';
@@ -192,7 +192,12 @@ export default function ExerciseChartScreen() {
             <>
               <View style={styles.chartContainer}>
                 <CartesianChart data={displayPoints} xKey="date" yKeys={['value']} axisOptions={{ font }}>
-                  {({ points }) => <Line points={points.value} color={theme.colors.accent} strokeWidth={3} />}
+                  {({ points }) => (
+                    <>
+                      <Line points={points.value} color={theme.colors.accent} strokeWidth={3} />
+                      <Scatter points={points.value} color={theme.colors.accent} radius={6} />
+                    </>
+                  )}
                 </CartesianChart>
               </View>
               {displayPoints.length === 1 ? (
@@ -302,8 +307,9 @@ const styles = StyleSheet.create({
     padding: theme.spacing.md,
   },
   sparseCaption: {
-    ...theme.typography.caption,
-    color: theme.colors.textMuted,
+    ...theme.typography.body,
+    color: theme.colors.text,
+    textAlign: 'center',
     paddingHorizontal: theme.spacing.lg,
     paddingTop: theme.spacing.sm,
   },
