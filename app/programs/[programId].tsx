@@ -94,36 +94,45 @@ export default function ProgramDetailScreen() {
   const [unit, setUnit] = useState<'kg' | 'lb'>('kg');
   const [trainingMaxes, setTrainingMaxes] = useState<TrainingMaxSummaryRow[]>([]);
 
-  const load = useCallback(async () => {
-    const [detailResult, active, tmEntries, unitSetting] = await Promise.all([
-      loadProgramDetail(db, programId),
-      loadActiveProgram(db),
-      listProgramTrainingMaxes(db, programId),
-      getSetting(db, 'units'),
-    ]);
-    setDetail(detailResult);
-    setActiveProgramState(active);
-    setUnit(unitSetting === 'lb' ? 'lb' : 'kg');
+  // IN-02: gate every setState behind the caller's cancelled predicate so a
+  // screen that loses focus mid-load does not set state after teardown. The
+  // focus effect passes `() => cancelled`; other callers (e.g. post-startDay
+  // refresh) use the default and always apply.
+  const load = useCallback(
+    async (isCancelled: () => boolean = () => false) => {
+      const [detailResult, active, tmEntries, unitSetting] = await Promise.all([
+        loadProgramDetail(db, programId),
+        loadActiveProgram(db),
+        listProgramTrainingMaxes(db, programId),
+        getSetting(db, 'units'),
+      ]);
+      if (isCancelled()) {
+        return;
+      }
+      setDetail(detailResult);
+      setActiveProgramState(active);
+      setUnit(unitSetting === 'lb' ? 'lb' : 'kg');
 
-    const tmRows: TrainingMaxSummaryRow[] = [];
-    for (const entry of tmEntries) {
-      const exercise = await loadExerciseById(db, entry.exerciseId);
-      tmRows.push({ exerciseId: entry.exerciseId, name: exercise?.name ?? 'Exercise', maxKg: entry.maxKg });
-    }
-    setTrainingMaxes(tmRows);
+      const tmRows: TrainingMaxSummaryRow[] = [];
+      for (const entry of tmEntries) {
+        const exercise = await loadExerciseById(db, entry.exerciseId);
+        tmRows.push({ exerciseId: entry.exerciseId, name: exercise?.name ?? 'Exercise', maxKg: entry.maxKg });
+      }
+      if (isCancelled()) {
+        return;
+      }
+      setTrainingMaxes(tmRows);
 
-    setLoading(false);
-  }, [programId]);
+      setLoading(false);
+    },
+    [programId],
+  );
 
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
       setLoading(true);
-      load().then(() => {
-        if (cancelled) {
-          return;
-        }
-      });
+      load(() => cancelled);
       return () => {
         cancelled = true;
       };

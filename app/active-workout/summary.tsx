@@ -174,8 +174,10 @@ export default function WorkoutSummaryScreen() {
                 muted: false,
               };
             }
-            // percent_tm — informational only (Plan 05 adds the TM-bump-on-wrap
-            // extension; this task never bumps training_maxes).
+            // percent_tm — the per-set prescription line. The TM-bump-on-wrap
+            // (Plan 05) IS implemented: applyProgressionAndAdvance bumps
+            // training_maxes on a cycle-wrapping finish, surfaced via the
+            // cycle-complete banner rows (cycleRows) built below.
             return {
               key: `${outcome.exerciseId}-${index}`,
               text: `${exerciseName} — prescribed ${Math.round(outcome.pct * 100)}% × ${outcome.reps}.`,
