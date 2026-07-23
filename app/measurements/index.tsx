@@ -9,14 +9,20 @@
 // deleted on the per-metric detail screen) is never stale on return.
 
 import { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useRouter } from 'expo-router';
 
 import { MetricRow } from '../../components/MetricRow';
+import { MetricToggle, type MetricToggleOption } from '../../components/MetricToggle';
 import { NumericKeypad } from '../../components/NumericKeypad';
 import { db } from '../../db/client';
-import { loadLatestPerMetric, loadMetricDefinitions, upsertReadingForDate } from '../../db/measurements';
+import {
+  createCustomMetric,
+  loadLatestPerMetric,
+  loadMetricDefinitions,
+  upsertReadingForDate,
+} from '../../db/measurements';
 import type { BodyMeasurement, MetricDefinition } from '../../db/schema';
 import { getSetting } from '../../db/settings';
 import { cmToDisplay } from '../../lib/lengthUnits';
@@ -26,6 +32,40 @@ import { theme } from '../../theme';
 
 type WeightUnit = 'kg' | 'lb';
 type LengthUnit = 'cm' | 'in';
+
+/** 3-way unit-type picker options for the "+ Add custom metric" form (05-UI-SPEC §1). */
+const CUSTOM_METRIC_UNIT_OPTIONS: MetricToggleOption<UnitType>[] = [
+  { value: 'weight', label: 'Weight' },
+  { value: 'length', label: 'Length' },
+  { value: 'percent', label: 'Percent' },
+];
+
+/**
+ * Derives a stable metric_key from a free-text label: lowercase, trim,
+ * non-alphanumeric runs collapsed to a single `_`, leading/trailing `_`
+ * stripped. Disambiguates against `existingKeys` (a collision with a
+ * built-in or another custom metric) by appending an incrementing numeric
+ * suffix, mirroring createCustomMetric's onConflictDoNothing safety net
+ * with a key that's actually distinct up front.
+ */
+function deriveMetricKey(label: string, existingKeys: Set<string>): string {
+  const base =
+    label
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '') || 'metric';
+  if (!existingKeys.has(base)) {
+    return base;
+  }
+  let suffix = 2;
+  let candidate = `${base}_${suffix}`;
+  while (existingKeys.has(candidate)) {
+    suffix += 1;
+    candidate = `${base}_${suffix}`;
+  }
+  return candidate;
+}
 
 /** Today's date in the same YYYY-MM-DD shape db/measurements.ts validates against. */
 function todayISO(): string {
@@ -70,6 +110,9 @@ export default function MeasurementsIndexScreen() {
   const [units, setUnits] = useState<WeightUnit>('kg');
   const [lengthUnits, setLengthUnits] = useState<LengthUnit>('cm');
   const [weighInOpen, setWeighInOpen] = useState(false);
+  const [customFormOpen, setCustomFormOpen] = useState(false);
+  const [customLabel, setCustomLabel] = useState('');
+  const [customUnitType, setCustomUnitType] = useState<UnitType>('weight');
 
   const load = useCallback(async () => {
     const [defs, latest, unitsValue, lengthUnitsValue] = await Promise.all([
@@ -109,10 +152,11 @@ export default function MeasurementsIndexScreen() {
 
   const weighInInitialValue = weightEntry ? kgToDisplay(weightEntry.value, units) : 0;
 
-  const { bodyWeightDefs, bodyMeasurementDefs } = useMemo(() => {
+  const { bodyWeightDefs, bodyMeasurementDefs, customDefs } = useMemo(() => {
     return {
-      bodyWeightDefs: definitions.filter((d) => d.position <= 1),
-      bodyMeasurementDefs: definitions.filter((d) => d.position >= 2),
+      bodyWeightDefs: definitions.filter((d) => !d.isCustom && d.position <= 1),
+      bodyMeasurementDefs: definitions.filter((d) => !d.isCustom && d.position >= 2),
+      customDefs: definitions.filter((d) => d.isCustom),
     };
   }, [definitions]);
 
@@ -125,6 +169,20 @@ export default function MeasurementsIndexScreen() {
 
   function handleLogMeasurements() {
     router.push('/measurements/entry');
+  }
+
+  async function handleSaveCustomMetric() {
+    const label = customLabel.trim();
+    if (!label) {
+      return;
+    }
+    const existingKeys = new Set(definitions.map((d) => d.metricKey));
+    const metricKey = deriveMetricKey(label, existingKeys);
+    await createCustomMetric(db, { metricKey, label, unitType: customUnitType });
+    setCustomLabel('');
+    setCustomUnitType('weight');
+    setCustomFormOpen(false);
+    await load();
   }
 
   function renderMetricRow(def: MetricDefinition) {
@@ -184,6 +242,42 @@ export default function MeasurementsIndexScreen() {
           <Text style={styles.sectionLabel}>Body Measurements</Text>
           {bodyMeasurementDefs.map(renderMetricRow)}
         </View>
+
+        {customDefs.length > 0 ? (
+          <View style={styles.listSection}>
+            <Text style={styles.sectionLabel}>Custom</Text>
+            {customDefs.map(renderMetricRow)}
+          </View>
+        ) : null}
+
+        {customFormOpen ? (
+          <View style={styles.customForm}>
+            <TextInput
+              style={styles.customInput}
+              placeholder="Metric name"
+              placeholderTextColor={theme.colors.textMuted}
+              value={customLabel}
+              onChangeText={setCustomLabel}
+              autoFocus
+            />
+            <MetricToggle options={CUSTOM_METRIC_UNIT_OPTIONS} value={customUnitType} onChange={setCustomUnitType} />
+            <Pressable
+              onPress={() => void handleSaveCustomMetric()}
+              accessibilityRole="button"
+              style={styles.customSaveButton}
+            >
+              <Text style={styles.customSaveButtonText}>Save</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <Pressable
+            onPress={() => setCustomFormOpen(true)}
+            accessibilityRole="button"
+            style={styles.addCustomLink}
+          >
+            <Text style={styles.addCustomLinkText}>+ Add custom metric</Text>
+          </Pressable>
+        )}
       </ScrollView>
 
       <NumericKeypad
@@ -274,5 +368,45 @@ const styles = StyleSheet.create({
     color: theme.colors.textMuted,
     fontWeight: '700',
     marginBottom: theme.spacing.sm,
+  },
+  addCustomLink: {
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: theme.spacing['2xl'],
+  },
+  addCustomLinkText: {
+    ...theme.typography.caption,
+    color: theme.colors.accent,
+    fontWeight: '700',
+  },
+  customForm: {
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.border,
+    padding: theme.spacing.lg,
+    marginTop: theme.spacing['2xl'],
+    gap: theme.spacing.md,
+  },
+  customInput: {
+    ...theme.typography.body,
+    color: theme.colors.text,
+    backgroundColor: theme.colors.surfaceAlt,
+    borderRadius: theme.radius.md,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    minHeight: 44,
+  },
+  customSaveButton: {
+    backgroundColor: theme.colors.accent,
+    borderRadius: theme.radius.md,
+    paddingVertical: theme.spacing.md,
+    alignItems: 'center',
+  },
+  customSaveButtonText: {
+    ...theme.typography.body,
+    color: theme.colors.background,
+    fontWeight: '700',
   },
 });

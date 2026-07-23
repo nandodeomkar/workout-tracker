@@ -166,10 +166,11 @@ export default function MeasurementEntryScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, isSingle, metricParam]);
 
-  const { bodyWeightDefs, bodyMeasurementDefs } = useMemo(() => {
+  const { bodyWeightDefs, bodyMeasurementDefs, customDefs } = useMemo(() => {
     return {
-      bodyWeightDefs: definitions.filter((d) => d.position <= 1),
-      bodyMeasurementDefs: definitions.filter((d) => d.position >= 2),
+      bodyWeightDefs: definitions.filter((d) => !d.isCustom && d.position <= 1),
+      bodyMeasurementDefs: definitions.filter((d) => !d.isCustom && d.position >= 2),
+      customDefs: definitions.filter((d) => d.isCustom),
     };
   }, [definitions]);
 
@@ -376,6 +377,12 @@ export default function MeasurementEntryScreen() {
               <Text style={styles.sectionLabel}>Body Measurements</Text>
               {bodyMeasurementDefs.map(renderMetricRow)}
             </View>
+            {customDefs.length > 0 ? (
+              <View style={styles.listSection}>
+                <Text style={styles.sectionLabel}>Custom</Text>
+                {customDefs.map(renderMetricRow)}
+              </View>
+            ) : null}
           </>
         ) : null}
 
