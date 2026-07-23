@@ -511,17 +511,19 @@ This phase's domain (linear progression and percent-of-training-max wave program
 
 **If this table is empty:** N/A — see entries above. Items NOT in this table (schema columns, existing lib/ function signatures, exercise seed_ids, package versions) were verified directly against the codebase this session and are tagged `[VERIFIED: <path>]` inline.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Should %TM weight rounding use `plateSolver.solvePlates` or `weightUnits.kgToDisplay`?**
    - What we know: CONTEXT.md D-13 names `lib/weightUnits.ts` explicitly ("same as the plate calculator"), but Phase 3's own Pitfall 2 established that `weightUnits.ts` is DISPLAY rounding (0.5kg/1lb), not plate-loadable rounding — that's what `plateSolver.ts` is for.
    - What's unclear: Whether D-13's author meant "the general rounding convention used throughout the app" loosely, or specifically intended the coarser display rounding for this one case (perhaps because %TM weights are shown as a plan/target, not a mandatory exact-plate load, so slight non-loadability might be acceptable at the prescription stage and resolved later via the existing inline plate calculator).
    - Recommendation: Use `plateSolver.solvePlates(rawTarget, barWeight, unit).achievableWeight` for the actual prescribed/pre-filled weight (true loadability, avoids repeating Pitfall 2), and reserve `weightUnits.kgToDisplay` only for kg↔lb display conversion elsewhere in the programs UI. Flag this as a one-line confirmation for the user/planner rather than silently picking one.
+   - **RESOLVED:** Use `plateSolver.solvePlates` (true plate-loadable rounding), NOT `weightUnits.kgToDisplay`. Locked in **06-01** — `computePercentTmWeight` delegates to `solvePlates` (Assumption A2) — and consumed by **06-05 Task 2**'s %TM prescribed-weight prefill; `weightUnits` is reserved for kg↔lb display conversion only.
 
 2. **Where exactly does `bar_weight_kg` come from for %TM prescribed-weight rounding?**
    - What we know: `settings` already stores a global bar weight (Phase 3 D-06), read via `getSetting(db, 'bar_weight_kg')` (or the lb equivalent).
    - What's unclear: Whether `computePercentTmWeight` should take `barWeightKg` as a parameter (pure, caller fetches the setting) or reach into `db/settings.ts` itself (impure). CONTEXT.md's "pure lib/ function, vitest" instruction (D-13) strongly implies the former.
    - Recommendation: Keep `computePercentTmWeight` pure — caller (`db/programs.ts` or the UI) fetches `bar_weight_kg` from settings once and passes it in, mirroring how `lib/warmupLadder.ts#buildWarmupSets` already takes `barWeight`/`unit` as parameters rather than querying settings itself.
+   - **RESOLVED:** `computePercentTmWeight` stays pure — `barWeightKg` is a plain parameter. The caller (`db/programs.ts` in **06-05 Task 2**) fetches `bar_weight_kg` / `bar_weight_lb` from settings once and passes it in (mirrors `lib/warmupLadder.ts#buildWarmupSets`). Locked across **06-01** (pure signature) and **06-05**.
 
 ## Environment Availability
 
