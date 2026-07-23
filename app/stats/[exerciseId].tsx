@@ -32,11 +32,11 @@ import { getSetting } from '../../db/settings';
 import type { Exercise } from '../../db/schema';
 import { loadAllHistorySets, loadExerciseChartSets } from '../../db/stats';
 import { buildChartSeries, type ChartMetric, type ChartSet } from '../../lib/chartSeries';
+import { rangeCutoffISO, type RangeOption } from '../../lib/dateRange';
 import { CURATED_REP_MAXES, computeExerciseRecordBoard, type HistoricalSet } from '../../lib/records';
 import { kgToDisplay } from '../../lib/weightUnits';
 import { theme } from '../../theme';
 
-type RangeOption = '3M' | '1Y' | 'All';
 type ScreenView = 'chart' | 'records';
 
 const METRIC_OPTIONS: { value: ChartMetric; label: string }[] = [
@@ -59,20 +59,6 @@ const VIEW_OPTIONS: { value: ScreenView; label: string }[] = [
 /** "Jul 20, 2026" style date for a record-board row's secondary line. */
 function formatRecordDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-/** Returns an ISO cutoff date for the given range, or `null` for 'All' (no filter). */
-function rangeCutoffISO(range: RangeOption): string | null {
-  if (range === 'All') {
-    return null;
-  }
-  const cutoff = new Date();
-  if (range === '3M') {
-    cutoff.setMonth(cutoff.getMonth() - 3);
-  } else {
-    cutoff.setFullYear(cutoff.getFullYear() - 1);
-  }
-  return cutoff.toISOString();
 }
 
 export default function ExerciseChartScreen() {
