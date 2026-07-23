@@ -190,8 +190,31 @@ Plans:
   1. User can log body weight and body-part measurements with a date
   2. User can view measurement history as trend graphs over time
 
-**Plans**: TBD
+**Plans**: 5 plans (5 waves) — MVP vertical slices
+**Mode:** mvp
 **UI hint**: yes
+
+Plans:
+
+**Wave 1** *(tested pure-logic substrate)*
+
+- [ ] 05-01-PLAN.md — Measurement pure libs: metric registry, cm/in converter, one-point-per-date series reducer, shared range-cutoff extraction (MEAS-01/02)
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 05-02-PLAN.md — DB foundation: metric_definitions additive migration 0003 + built-in seed + guarded db/measurements.ts CRUD/history (MEAS-01/02)
+
+**Wave 3** *(blocked on Wave 2 — first demoable slice)*
+
+- [ ] 05-03-PLAN.md — Weight slice: Measurements index + quick weigh-in + per-metric trend chart + history + delete + Settings nav row (MEAS-01/02, D-07/D-08a/D-09/D-10/D-11)
+
+**Wave 4** *(blocked on Wave 3)*
+
+- [ ] 05-04-PLAN.md — Dated-session + body-part slice: entry form (dated/single/edit) + back-date picker + independent cm/in length-unit setting (MEAS-01/02, D-04/D-08b/D-09)
+
+**Wave 5** *(blocked on Wave 4)*
+
+- [ ] 05-05-PLAN.md — Custom-metric slice: add-custom-metric form + per-metric unit-type persistence + custom rendering (MEAS-01, D-02/D-06)
 
 ### Phase 6: Programs & Progression
 
@@ -248,7 +271,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 2. Core Logging (Active Workout) | 7/7 | Complete   | 2026-07-22 |
 | 3. Templates, Folders & Calculators | 8/8 | Complete   | 2026-07-22 |
 | 4. Stats & Charts | 7/7 | Complete    | 2026-07-23 |
-| 5. Body Measurements | 0/TBD | Not started | - |
+| 5. Body Measurements | 0/5 | Not started | - |
 | 6. Programs & Progression | 0/TBD | Not started | - |
 | 7. Backup & Export | 0/TBD | Not started | - |
 | 8. Polish & Beta Distribution | 0/TBD | Not started | - |
