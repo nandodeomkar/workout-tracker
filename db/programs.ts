@@ -992,6 +992,16 @@ export async function applyProgressionAndAdvance(db: AnyDrizzleDb, workoutId: nu
     }
     tx.delete(programState).run();
     tx.insert(programState).values({ programId, currentDayPosition: nextPosition }).run();
+    // WR-01: make this operation idempotent. Clearing this workout's
+    // program-origin marker in the SAME transaction means a summary remount
+    // (React StrictMode double-invoke, fast-refresh, or any re-navigation to
+    // the summary screen for the same workoutId) re-enters
+    // applyProgressionAndAdvance and early-returns at the top guard
+    // (workout.programId == null) instead of advancing the pointer a second
+    // time and re-bumping every %TM training max. The first-render banner is
+    // unaffected — summary.tsx reads its program detail from a snapshot loaded
+    // BEFORE this call.
+    tx.update(workouts).set({ programId: null, programDayPosition: null }).where(eq(workouts.id, workoutId)).run();
   });
 
   return {
