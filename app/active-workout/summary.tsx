@@ -43,6 +43,14 @@ interface ProgramProgressRow {
   muted: boolean;
 }
 
+// Cycle-complete banner row (D-12, UI-SPEC screen 7) — one pre-rendered line
+// per %TM training-max bump, computed once in the load effect alongside
+// programProgressRows.
+interface CycleCompleteRow {
+  key: string;
+  text: string;
+}
+
 // Android-first transient feedback — copied verbatim from
 // exercises/[id].tsx (RESEARCH.md "Android-first transient feedback").
 function notify(message: string): void {
@@ -94,6 +102,7 @@ export default function WorkoutSummaryScreen() {
   // workout — Pitfall 7, zero layout change for the common case).
   const [programProgress, setProgramProgress] = useState<ProgramProgressResult | null>(null);
   const [programProgressRows, setProgramProgressRows] = useState<ProgramProgressRow[]>([]);
+  const [cycleCompleteRows, setCycleCompleteRows] = useState<CycleCompleteRow[]>([]);
   const [nextDayLabel, setNextDayLabel] = useState<string | null>(null);
 
   useEffect(() => {
@@ -133,6 +142,7 @@ export default function WorkoutSummaryScreen() {
       const resolvedUnit: 'kg' | 'lb' = unitSetting === 'lb' ? 'lb' : 'kg';
       let progressResult: ProgramProgressResult | null = null;
       let rows: ProgramProgressRow[] = [];
+      let cycleRows: CycleCompleteRow[] = [];
       let dayLabel: string | null = null;
       if (detail.workout.programId != null) {
         progressResult = await applyProgressionAndAdvance(db, workoutId);
@@ -177,6 +187,20 @@ export default function WorkoutSummaryScreen() {
           const programDetail = await loadProgramDetail(db, detail.workout.programId);
           const nextDay = programDetail?.days.find((d) => d.day.position === progressResult!.nextPosition);
           dayLabel = nextDay?.template.template.name ?? null;
+
+          // D-12/UI-SPEC screen 7: cycle-complete banner rows — one line per
+          // %TM training max bumped on THIS finish (only ever non-empty when
+          // progressResult.wrapped is true, per applyProgressionAndAdvance's
+          // own wrapped-only gate).
+          cycleRows = progressResult.bumpedTrainingMaxes.map((bump, index) => {
+            const exerciseName = exerciseMap.get(bump.exerciseId)?.name ?? 'Exercise';
+            const deltaDisplay = kgToDisplay(bump.newTmKg - bump.previousTmKg, resolvedUnit);
+            const newTmDisplay = kgToDisplay(bump.newTmKg, resolvedUnit);
+            return {
+              key: `${bump.exerciseId}-${index}`,
+              text: `${exerciseName} training max +${deltaDisplay}${resolvedUnit} → ${newTmDisplay}${resolvedUnit}`,
+            };
+          });
         }
       }
 
@@ -196,6 +220,7 @@ export default function WorkoutSummaryScreen() {
       );
       setProgramProgress(progressResult);
       setProgramProgressRows(rows);
+      setCycleCompleteRows(cycleRows);
       setNextDayLabel(dayLabel);
       setLoading(false);
     })();
@@ -289,12 +314,28 @@ export default function WorkoutSummaryScreen() {
           </View>
         </View>
 
+        {/* D-12/UI-SPEC screen 7: cycle-complete banner — a distinct
+            accent-bordered surface card (resumeCard treatment) ABOVE the
+            per-exercise Program-progress rows, rendered only on the
+            cycle-wrapping finish that actually bumped at least one %TM
+            training max. The one place an exclamation mark is allowed
+            (rare celebratory event, Copywriting Contract). */}
+        {programProgress?.wrapped && cycleCompleteRows.length > 0 ? (
+          <View style={styles.cycleCompleteCard}>
+            <Text style={styles.cycleCompleteHeading}>🎉 Cycle complete</Text>
+            {cycleCompleteRows.map((row) => (
+              <Text key={row.key} style={styles.cycleCompleteLine}>
+                {row.text}
+              </Text>
+            ))}
+          </View>
+        ) : null}
+
         {/* D-02: Program progress — only rendered for a program-origin finish
             (programProgress?.applied), zero layout change for ad-hoc/
-            template-only/empty finishes. Extension point (Plan 05): a
-            "🎉 Cycle complete" banner is added above this section when
-            programProgress.wrapped is true — not built here (Task 1's
-            percent_tm outcomes are informational-only, no TM bump yet). */}
+            template-only/empty finishes. %TM informational rows show no
+            badge (weight was prescribed, not earned) — the TM-bump write
+            itself is reported above via the cycle-complete banner, not here. */}
         {programProgress?.applied && programProgressRows.length > 0 ? (
           <View style={styles.programProgressSection}>
             <Text style={styles.programProgressHeading}>Program progress</Text>
@@ -397,6 +438,23 @@ const styles = StyleSheet.create({
   statLabel: {
     ...theme.typography.caption,
     color: theme.colors.textMuted,
+  },
+  cycleCompleteCard: {
+    backgroundColor: theme.colors.surfaceAlt,
+    borderRadius: theme.radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: theme.colors.accent,
+    padding: theme.spacing.lg,
+    gap: theme.spacing.xs,
+  },
+  cycleCompleteHeading: {
+    ...theme.typography.body,
+    color: theme.colors.accent,
+    fontWeight: '700',
+  },
+  cycleCompleteLine: {
+    ...theme.typography.caption,
+    color: theme.colors.text,
   },
   programProgressSection: {
     gap: theme.spacing.sm,
