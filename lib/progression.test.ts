@@ -144,8 +144,12 @@ describe('computeTrainingMaxFromOneRepMax', () => {
 
 describe('computePercentTmWeight', () => {
   it('equals solvePlates(TM * pct, barWeight, unit).achievableWeight for a concrete kg case', () => {
+    // 100 * 0.83 = 83 is NOT plate-loadable with a 20kg bar: per-side
+    // (83-20)/2 = 31.5, nearest 1.25 multiple = 31.25 -> achievable = 82.5.
+    // This distinguishes the plate-loadable result from the raw TM*pct value
+    // (Assumption A2 — must never be the raw, unrounded product).
     const trainingMaxKg = 100;
-    const pct = 0.85;
+    const pct = 0.83;
     const barWeightKg = 20;
     const expected = solvePlates(trainingMaxKg * pct, barWeightKg, 'kg').achievableWeight;
     const result = computePercentTmWeight(trainingMaxKg, pct, barWeightKg, 'kg');
