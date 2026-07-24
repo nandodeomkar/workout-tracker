@@ -593,6 +593,90 @@ async function prefillPercentTmSets(db: AnyDrizzleDb, workoutId: number, templat
 }
 
 /**
+ * Plan 06-08 (PROG-02 blocker close, defect A): after a linear day's
+ * workout_exercises rows exist (same 1:1 index mapping as templateDetail.exercises,
+ * mirroring prefillPercentTmSets), inserts `targetSets` straight sets (all at
+ * one weight — StrongLifts convention) for every `linear` exercise that has a
+ * per-lift working weight already anchored (program_exercise_progress,
+ * getProgramExerciseProgress). A missing/tampered row (T-08-02 — first run,
+ * or a null/non-finite/<=0 working weight) leaves that exercise's card with
+ * NO inserted sets, falling back to the existing last-performance/target
+ * pre-fill already used by the active-workout screen — same defensive
+ * fallback prefillPercentTmSets uses for a missing training max. The stored
+ * working weight is already a real, plate-loadable weight (anchored on what
+ * the user actually lifted, incremented by the rule) in canonical kg, so it
+ * is passed straight to insertSet — no unit conversion, no solvePlates
+ * (unlike %TM, which computes from a training max).
+ */
+async function prefillLinearSets(
+  db: AnyDrizzleDb,
+  workoutId: number,
+  programId: number,
+  templateDetail: TemplateDetail,
+): Promise<void> {
+  const hasLinear = templateDetail.exercises.some(({ templateExercise }) => {
+    if (!templateExercise.progression) {
+      return false;
+    }
+    try {
+      const parsed = JSON.parse(templateExercise.progression) as { type?: string };
+      return parsed?.type === 'linear';
+    } catch {
+      return false;
+    }
+  });
+  if (!hasLinear) {
+    return;
+  }
+
+  const workoutExerciseRows = await db
+    .select()
+    .from(workoutExercises)
+    .where(eq(workoutExercises.workoutId, workoutId))
+    .orderBy(workoutExercises.position);
+
+  for (const [index, { templateExercise }] of templateDetail.exercises.entries()) {
+    if (!templateExercise.progression) {
+      continue;
+    }
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(templateExercise.progression);
+    } catch {
+      continue; // Malformed progression JSON — skip (T-06-01).
+    }
+    if (!parsed || typeof parsed !== 'object' || (parsed as { type?: unknown }).type !== 'linear') {
+      continue;
+    }
+    const linearRule = parseValidLinearRule(parsed as { incrementKg?: unknown });
+    if (!linearRule) {
+      continue; // Negative/non-finite/missing incrementKg — skip (T-06-01).
+    }
+
+    const progress = await getProgramExerciseProgress(db, programId, templateExercise.exerciseId);
+    const workingWeightKg = progress?.workingWeightKg;
+    if (workingWeightKg == null || !Number.isFinite(workingWeightKg) || workingWeightKg <= 0) {
+      continue; // T-08-02: no anchored working weight yet — leave unprescribed, never a garbage 0-weight set.
+    }
+
+    const workoutExercise = workoutExerciseRows[index];
+    if (!workoutExercise) {
+      continue;
+    }
+
+    for (let setNumber = 1; setNumber <= templateExercise.targetSets; setNumber++) {
+      await insertSet(db, {
+        workoutExerciseId: workoutExercise.id,
+        setNumber,
+        weightKg: workingWeightKg,
+        reps: templateExercise.targetReps,
+        type: 'normal',
+      });
+    }
+  }
+}
+
+/**
  * D-04/D-05: starts a workout from a specific program day (tapping ANY day,
  * not only the pointed-to one) — resolves the program_days row at
  * `dayPosition`, delegates to startWorkoutFromTemplate (db/templates.ts) for
@@ -605,6 +689,10 @@ async function prefillPercentTmSets(db: AnyDrizzleDb, workoutId: number, templat
  * prescribed weights for every percent_tm exercise on this day that already
  * has a training max set (prefillPercentTmSets) — a missing TM leaves that
  * card unprescribed rather than inserting a garbage 0-weight set.
+ *
+ * Plan 06-08: also prescribes linear straight-sets from the lift's current
+ * per-lift working weight (prefillLinearSets) — a lift with no prior finish
+ * is left unprescribed, falling back to last-performance.
  */
 export async function startWorkoutFromProgramDay(
   db: AnyDrizzleDb,
@@ -636,6 +724,7 @@ export async function startWorkoutFromProgramDay(
 
   if (templateDetail) {
     await prefillPercentTmSets(db, workout.id, templateDetail);
+    await prefillLinearSets(db, workout.id, programId, templateDetail);
   }
 
   return updated;
