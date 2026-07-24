@@ -107,3 +107,7 @@ None - no external service configuration required; this plan only touches the DB
 ---
 *Phase: 06-programs-progression*
 *Completed: 2026-07-24*
+
+## Self-Check: PASSED
+
+All modified/created files exist on disk (db/programs.ts, db/programs.crud.test.ts, this SUMMARY.md); all five commit hashes (2750b25, dda73d6, d38dbae, 325f342, 5c6d259) verified present in git log.
