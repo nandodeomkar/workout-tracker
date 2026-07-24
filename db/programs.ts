@@ -1028,6 +1028,19 @@ export async function applyProgressionAndAdvance(db: AnyDrizzleDb, workoutId: nu
         workingSets.length > 0
           ? Math.min(...workingSets.map((s) => s.weightKg))
           : (prior?.workingWeightKg ?? templateExercise.targetWeightKg ?? 0);
+
+      // CR-01 (BLOCKER): with no valid anchor — no working sets, no prior
+      // per-lift weight, and a null template target (the default for bundled
+      // AND custom programs) — loggedWeightKg resolves to 0. A 0 kg write would
+      // hit assertValidWorkingWeightKg(0) INSIDE the finish transaction and
+      // throw, rolling back the whole finish so the pointer never advances and
+      // workouts.program_id never clears — every re-entry re-throws and the
+      // program is permanently wedged. Skip the lift instead (nothing to
+      // progress), mirroring the prefill read-path guard and the %TM branch.
+      if (!Number.isFinite(loggedWeightKg) || loggedWeightKg <= 0) {
+        continue;
+      }
+
       const successTarget = prior?.workingWeightKg ?? templateExercise.targetWeightKg ?? loggedWeightKg;
       const success = evaluateLinearSuccess(setsForEval, successTarget);
       const priorFails = prior?.consecutiveFails ?? 0;
