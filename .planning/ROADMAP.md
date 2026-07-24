@@ -259,7 +259,7 @@ Plans:
 
 **Gap closure** *(closes 06-UAT.md Test-3 BLOCKER: linear progression computed + badge-shown but never PRESCRIBED — approved per-lift shared progression)*
 
-- [ ] 06-07-PLAN.md — Per-lift progression storage model: program_exercise_progress table (program_id, exercise_id → working_weight_kg + consecutive_fails) + additive migration 0005 + migration-safety test (PROG-02)
+- [x] 06-07-PLAN.md — Per-lift progression storage model: program_exercise_progress table (program_id, exercise_id → working_weight_kg + consecutive_fails) + additive migration 0005 + migration-safety test (PROG-02)
 - [ ] 06-08-PLAN.md — Per-lift shared linear progression: applyProgressionAndAdvance reads/writes per-lift state + linear day-start prefill (prescribe sets from the lift's progressed weight) so a Day-A Squat bump reaches Day B (PROG-02)
 
 ### Phase 7: Backup & Export
@@ -303,7 +303,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 3. Templates, Folders & Calculators | 8/8 | Complete   | 2026-07-22 |
 | 4. Stats & Charts | 7/7 | Complete    | 2026-07-23 |
 | 5. Body Measurements | 5/5 | Complete   | 2026-07-23 |
-| 6. Programs & Progression | 6/8 | Gap closure | - |
+| 6. Programs & Progression | 7/8 | In Progress|  |
 | 7. Backup & Export | 0/TBD | Not started | - |
 | 8. Polish & Beta Distribution | 0/TBD | Not started | - |
 
