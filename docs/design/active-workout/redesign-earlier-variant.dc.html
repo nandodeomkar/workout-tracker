@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/modernist-6a982212-2057-4627-b4c8-7c6a7a8845d0/styles.css">
+<script src="_ds/modernist-6a982212-2057-4627-b4c8-7c6a7a8845d0/_ds_bundle.js"></script>
+<style>
+  body{margin:0;background:#e7e5e2;color:#201e1d;font-family:"Archivo",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .dv-turn{padding:44px 48px 40px;border-bottom:2px solid rgba(32,30,29,.14);scroll-margin-top:16px}
+  .dv-thd{display:flex;align-items:baseline;gap:12px;margin:0 0 26px}
+  .dv-tid{font:800 11px "Archivo",monospace;padding:4px 9px;background:#201e1d;color:#f3f2f2;text-decoration:none;letter-spacing:.04em}
+  .dv-tname{font:800 15px/1.2 "Archivo",sans-serif;color:#201e1d;letter-spacing:-.01em}
+  .dv-opts{display:flex;flex-wrap:wrap;gap:40px;align-items:flex-start}
+  .dv-opt{flex:none;display:flex;flex-direction:column;gap:0;scroll-margin-top:16px}
+  .dv-oid{font:800 11px "Archivo",monospace;padding:4px 8px;background:rgba(32,30,29,.1);color:#201e1d;text-decoration:none;letter-spacing:.04em}
+  .dv-olabel{display:flex;align-items:baseline;gap:9px;font:400 12px/1.3 "Archivo",sans-serif;color:rgba(32,30,29,.6);margin-bottom:14px}
+  .dv-opt:target .dv-oid{background:#ec3013;color:#fff}
+  .dv-next{margin:26px 0 0;font:400 13px/1.6 "Archivo",sans-serif;color:rgba(32,30,29,.55)}
+  .dv-intro{padding:44px 48px 4px}
+  a.dv-oid:hover{background:#ec3013;color:#fff}
+  @keyframes restpulse{0%,100%{opacity:1}50%{opacity:.55}}
+  @keyframes volgrow{from{transform:scaleX(.4)}to{transform:scaleX(1)}}
+  @keyframes prflash{0%,100%{opacity:.9}50%{opacity:.35}}
+</style>
+</helmet>
+
+<section class="dv-intro">
+  <div style="max-width:920px">
+    <div style="font:800 10px 'Archivo';letter-spacing:.14em;color:#ec3013;text-transform:uppercase">Workout Tracker · Design exploration</div>
+    <h1 style="font:800 40px/1.05 'Archivo';letter-spacing:-.02em;margin:10px 0 14px;color:#201e1d">Active&nbsp;Workout, redesigned</h1>
+    <p style="font:400 15px/1.6 'Archivo';color:#3a3735;max-width:680px;margin:0 0 22px">The core logging loop, rebuilt on the <strong>Modernist</strong> system in a <strong>dark register</strong>: flat surfaces, zero rounded bulk, hairline rules, Archivo type, and one deliberate red instead of the arbitrary blue. Below: a faithful recreation of what you have now, then three directions that keep this one visual language but diverge on layout, flow, data-viz, motion and the set-logging interaction itself. Pick one and I'll build it into the full clickable prototype.</p>
+    <div style="display:flex;gap:22px;flex-wrap:wrap;align-items:center">
+      <div style="display:flex;align-items:center;gap:9px"><span style="width:22px;height:22px;background:#131211;border:1px solid rgba(32,30,29,.2)"></span><span style="font:400 12px 'Archivo';color:#605d5d">Ground&nbsp;<span style="color:#201e1d;font-weight:600">#131211</span></span></div>
+      <div style="display:flex;align-items:center;gap:9px"><span style="width:22px;height:22px;background:#f5f2ef;border:1px solid rgba(32,30,29,.2)"></span><span style="font:400 12px 'Archivo';color:#605d5d">Ink&nbsp;<span style="color:#201e1d;font-weight:600">#f5f2ef</span></span></div>
+      <div style="display:flex;align-items:center;gap:9px"><span style="width:22px;height:22px;background:#ec3013"></span><span style="font:400 12px 'Archivo';color:#605d5d">Accent&nbsp;<span style="color:#201e1d;font-weight:600">#ec3013</span></span></div>
+      <div style="display:flex;align-items:center;gap:9px"><span style="font:800 14px 'Archivo';color:#201e1d">Aa</span><span style="font:400 12px 'Archivo';color:#605d5d">Archivo · tabular numerals</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="dv-turn" id="t1">
+  <div class="dv-thd"><a class="dv-tid" href="#t1">1</a><span class="dv-tname">Recreation + three redesign directions</span></div>
+  <div class="dv-opts">
+
+    <!-- ============ 1a · CURRENT (recreation) ============ -->
+    <div class="dv-opt" id="1a">
+      <div class="dv-olabel"><a class="dv-oid" href="#1a">1a</a><span>Current build — faithful recreation (the "before")</span></div>
+      <div style="width:360px;background:#050505;padding:6px;border-radius:34px;box-shadow:0 18px 44px rgba(20,17,15,.26),0 3px 10px rgba(20,17,15,.18)">
+        <div style="border-radius:28px;overflow:hidden;height:748px;display:flex;flex-direction:column;background:#0B0E11">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 18px 4px;color:#F5F7FA;font:600 13px/1 system-ui">
+            <span style="font-variant-numeric:tabular-nums">9:41</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <svg width="16" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="2" width="3" height="10" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1" opacity=".4"/></svg>
+              <svg width="15" height="12" viewBox="0 0 16 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1 4.2a11 11 0 0 1 14 0"/><path d="M3.5 6.7a7 7 0 0 1 9 0"/><path d="M6 9.2a3 3 0 0 1 4 0"/></svg>
+              <svg width="22" height="12" viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="1" width="20" height="10" rx="2.5"/><rect x="3" y="3" width="14" height="6" rx="1" fill="currentColor" stroke="none"/><rect x="22" y="4" width="2" height="4" rx="1" fill="currentColor" stroke="none"/></svg>
+            </div>
+          </div>
+          <!-- appbar -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px 12px;border-bottom:1px solid #262C34">
+            <span style="font:700 16px system-ui;color:#EF4444">Discard</span>
+            <div style="display:flex;flex-direction:column;align-items:center">
+              <span style="font:700 20px system-ui;color:#F5F7FA">Push Day</span>
+              <span style="font:400 13px system-ui;color:#8B94A3">32:41</span>
+            </div>
+            <span style="font:700 13px system-ui;color:#0B0E11;background:#4F8EF7;padding:9px 12px;border-radius:10px">Finish workout</span>
+          </div>
+          <!-- body -->
+          <div style="flex:1;overflow:hidden;padding:16px;display:flex;flex-direction:column;gap:12px">
+            <!-- card 1 -->
+            <div style="background:#161A1F;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="color:#8B94A3;font-size:16px">≡</span>
+                <span style="font-size:18px">🫁</span>
+                <span style="font:700 20px system-ui;color:#F5F7FA;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Bench Press</span>
+                <span style="font:400 15px system-ui;color:#8B94A3">⚖</span>
+                <span style="font:400 13px system-ui;color:#8B94A3">1RM</span>
+                <span style="font-size:14px">🔥</span>
+                <span style="font:400 13px system-ui;color:#8B94A3;background:#1E232A;padding:6px 8px;border-radius:6px">⏱ 90s ›</span>
+                <span style="font:700 20px system-ui;color:#8B94A3">⋯</span>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;align-items:center;gap:4px;background:#1E232A;border-radius:10px;min-height:56px;padding:6px 8px">
+                  <span style="width:28px;text-align:center;font:700 13px system-ui;color:#0B0E11;background:#F59E0B;border-radius:6px;padding:5px 0">W</span>
+                  <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:2px"><span style="color:#8B94A3;font-size:20px">-</span><span style="font:700 16px system-ui;color:#F5F7FA">40<span style="font-size:13px;color:#8B94A3;font-weight:400"> kg</span></span><span style="color:#8B94A3;font-size:20px">+</span></div>
+                  <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:2px"><span style="color:#8B94A3;font-size:20px">-</span><span style="font:700 16px system-ui;color:#F5F7FA">10</span><span style="color:#8B94A3;font-size:20px">+</span></div>
+                  <span style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:#4F8EF7;border-radius:10px;color:#0B0E11;font-weight:700">✓</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:4px;background:#1E232A;border-radius:10px;min-height:56px;padding:6px 8px">
+                  <span style="width:28px;text-align:center;font:700 13px system-ui;color:#8B94A3">1</span>
+                  <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:2px"><span style="color:#8B94A3;font-size:20px">-</span><span style="font:700 16px system-ui;color:#F5F7FA">80<span style="font-size:13px;color:#8B94A3;font-weight:400"> kg</span></span><span style="color:#8B94A3;font-size:20px">+</span></div>
+                  <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:2px"><span style="color:#8B94A3;font-size:20px">-</span><span style="font:700 16px system-ui;color:#F5F7FA">8</span><span style="color:#8B94A3;font-size:20px">+</span></div>
+                  <span style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:#4F8EF7;border-radius:10px;color:#0B0E11;font-weight:700">✓</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:4px;background:#1E232A;border-radius:10px;min-height:56px;padding:6px 8px">
+                  <span style="width:28px;text-align:center;font:700 13px system-ui;color:#8B94A3">2</span>
+                  <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:2px"><span style="color:#8B94A3;font-size:20px">-</span><span style="font:700 16px system-ui;color:#F5F7FA">80<span style="font-size:13px;color:#8B94A3;font-weight:400"> kg</span></span><span style="color:#8B94A3;font-size:20px">+</span></div>
+                  <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:2px"><span style="color:#8B94A3;font-size:20px">-</span><span style="font:700 16px system-ui;color:#F5F7FA">8</span><span style="color:#8B94A3;font-size:20px">+</span></div>
+                  <span style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:1px solid #4F8EF7;border-radius:10px;color:#4F8EF7;font-weight:700">✓</span>
+                </div>
+              </div>
+              <div style="border:1px dashed #262C34;border-radius:10px;padding:12px;text-align:center;font:400 16px system-ui;color:#8B94A3">+ Add set</div>
+            </div>
+            <!-- card 2 (partial) -->
+            <div style="background:#161A1F;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span style="color:#8B94A3;font-size:16px">≡</span>
+                <span style="font-size:18px">🫁</span>
+                <span style="font:700 20px system-ui;color:#F5F7FA;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Incline DB Press</span>
+                <span style="font:400 13px system-ui;color:#8B94A3;background:#1E232A;padding:6px 8px;border-radius:6px">⏱ 90s ›</span>
+                <span style="font:700 20px system-ui;color:#8B94A3">⋯</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:4px;background:#1E232A;border-radius:10px;min-height:56px;padding:6px 8px">
+                <span style="width:28px;text-align:center;font:700 13px system-ui;color:#8B94A3">1</span>
+                <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:2px"><span style="color:#8B94A3;font-size:20px">-</span><span style="font:700 16px system-ui;color:#F5F7FA">30<span style="font-size:13px;color:#8B94A3;font-weight:400"> kg</span></span><span style="color:#8B94A3;font-size:20px">+</span></div>
+                <div style="flex:1;display:flex;align-items:center;justify-content:center;gap:2px"><span style="color:#8B94A3;font-size:20px">-</span><span style="font:700 16px system-ui;color:#F5F7FA">10</span><span style="color:#8B94A3;font-size:20px">+</span></div>
+                <span style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;border:1px solid #4F8EF7;border-radius:10px;color:#4F8EF7;font-weight:700">✓</span>
+              </div>
+            </div>
+          </div>
+          <!-- rest bar -->
+          <div style="background:#161A1F;border-top-left-radius:16px;border-top-right-radius:16px;padding:16px;position:relative">
+            <div style="position:absolute;top:0;left:0;right:0;height:3px;background:#262C34"><div style="width:42%;height:3px;background:#4F8EF7"></div></div>
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="font:400 16px system-ui;color:#8B94A3">-15s</span>
+              <span style="font:700 32px system-ui;color:#4F8EF7;font-variant-numeric:tabular-nums">1:24</span>
+              <div style="display:flex;align-items:center;gap:8px"><span style="font:400 16px system-ui;color:#8B94A3">+15s</span><span style="font:700 16px system-ui;color:#4F8EF7">Skip</span></div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;padding:8px 0 10px;background:#0B0E11"><div style="width:128px;height:5px;border-radius:3px;background:rgba(245,247,250,.25)"></div></div>
+        </div>
+      </div>
+      <div style="width:360px;margin-top:16px">
+        <div style="font:400 12px/1.6 'Archivo';color:#605d5d">What you have now: rounded surface-on-surface cards, ±steppers on every field, emoji affordances, and the AI-picked blue. Competent, but bulky and generic — every value fights for the same weight.</div>
+      </div>
+    </div>
+
+    <!-- ============ 1b · LEDGER ============ -->
+    <div class="dv-opt" id="1b">
+      <div class="dv-olabel"><a class="dv-oid" href="#1b">1b</a><span>Direction A — “Ledger”: flat &amp; dense</span></div>
+      <div style="width:360px;background:#050505;padding:6px;border-radius:34px;box-shadow:0 18px 44px rgba(20,17,15,.26),0 3px 10px rgba(20,17,15,.18)">
+        <div style="border-radius:28px;overflow:hidden;height:748px;display:flex;flex-direction:column;background:#131211;color:#f5f2ef">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 18px 4px;color:#f5f2ef;font:600 13px/1 'Archivo'">
+            <span style="font-variant-numeric:tabular-nums">9:41</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <svg width="16" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="2" width="3" height="10" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1" opacity=".4"/></svg>
+              <svg width="15" height="12" viewBox="0 0 16 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1 4.2a11 11 0 0 1 14 0"/><path d="M3.5 6.7a7 7 0 0 1 9 0"/><path d="M6 9.2a3 3 0 0 1 4 0"/></svg>
+              <svg width="22" height="12" viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="1" width="20" height="10" rx="2.5"/><rect x="3" y="3" width="14" height="6" rx="1" fill="currentColor" stroke="none"/><rect x="22" y="4" width="2" height="4" rx="1" fill="currentColor" stroke="none"/></svg>
+            </div>
+          </div>
+          <!-- header -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px 12px;border-bottom:2px solid rgba(245,242,239,.2)">
+            <span style="font:600 11px 'Archivo';letter-spacing:.08em;text-transform:uppercase;color:#9b9797">Discard</span>
+            <div style="display:flex;flex-direction:column;align-items:center;line-height:1.15">
+              <span style="font:800 13px 'Archivo';letter-spacing:.06em;text-transform:uppercase">Push Day</span>
+              <span style="font:600 11px 'Archivo';color:#9b9797;font-variant-numeric:tabular-nums">00:32:41</span>
+            </div>
+            <span style="display:flex;align-items:center;gap:5px;font:800 12px 'Archivo';letter-spacing:.06em;text-transform:uppercase;color:#ec3013">Finish
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </span>
+          </div>
+          <!-- body ledger -->
+          <div style="flex:1;overflow:hidden;padding:0 18px">
+            <!-- exercise 1 -->
+            <div style="display:flex;align-items:center;gap:10px;padding:16px 0 9px">
+              <span style="font:600 12px 'Archivo';color:#605d5d;font-variant-numeric:tabular-nums">01</span>
+              <span style="font:800 18px 'Archivo';letter-spacing:-.01em;flex:1">Bench Press</span>
+              <span style="font:400 10px 'Archivo';letter-spacing:.06em;text-transform:uppercase;color:#9b9797;border:1px solid rgba(245,242,239,.22);padding:2px 6px">Chest</span>
+              <span style="font:600 11px 'Archivo';color:#9b9797;font-variant-numeric:tabular-nums">90s</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#9b9797"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+            </div>
+            <div style="display:grid;grid-template-columns:34px 1fr 1fr 40px;gap:8px;padding:0 0 6px;border-bottom:2px solid rgba(245,242,239,.14);font:600 9.5px 'Archivo';letter-spacing:.1em;text-transform:uppercase;color:#7d7979">
+              <span>Set</span><span>Kg</span><span>Reps</span><span></span>
+            </div>
+            <!-- warmup row -->
+            <div style="display:grid;grid-template-columns:34px 1fr 1fr 40px;gap:8px;align-items:center;min-height:44px;border-bottom:1px solid rgba(245,242,239,.09)">
+              <span style="font:700 11px 'Archivo';color:#9b9797;border:1px solid rgba(245,242,239,.22);width:20px;text-align:center;padding:1px 0">W</span>
+              <span style="font:800 18px 'Archivo';color:rgba(245,242,239,.7);font-variant-numeric:tabular-nums">40<span style="font:400 11px 'Archivo';color:#7d7979"> kg</span></span>
+              <span style="font:800 18px 'Archivo';color:rgba(245,242,239,.7);font-variant-numeric:tabular-nums">10</span>
+              <span style="justify-self:end;width:22px;height:22px;display:flex;align-items:center;justify-content:center;background:#ec3013;color:#fff"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+            </div>
+            <!-- set 1 done -->
+            <div style="display:grid;grid-template-columns:34px 1fr 1fr 40px;gap:8px;align-items:center;min-height:46px;border-bottom:1px solid rgba(245,242,239,.09)">
+              <span style="font:700 13px 'Archivo';color:#9b9797;font-variant-numeric:tabular-nums;padding-left:5px">1</span>
+              <span style="font:800 19px 'Archivo';font-variant-numeric:tabular-nums">80<span style="font:400 11px 'Archivo';color:#7d7979"> kg</span></span>
+              <span style="font:800 19px 'Archivo';font-variant-numeric:tabular-nums">8</span>
+              <span style="justify-self:end;width:22px;height:22px;display:flex;align-items:center;justify-content:center;background:#ec3013;color:#fff"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+            </div>
+            <!-- set 2 done -->
+            <div style="display:grid;grid-template-columns:34px 1fr 1fr 40px;gap:8px;align-items:center;min-height:46px;border-bottom:1px solid rgba(245,242,239,.09)">
+              <span style="font:700 13px 'Archivo';color:#9b9797;font-variant-numeric:tabular-nums;padding-left:5px">2</span>
+              <span style="font:800 19px 'Archivo';font-variant-numeric:tabular-nums">80<span style="font:400 11px 'Archivo';color:#7d7979"> kg</span></span>
+              <span style="font:800 19px 'Archivo';font-variant-numeric:tabular-nums">8</span>
+              <span style="justify-self:end;width:22px;height:22px;display:flex;align-items:center;justify-content:center;background:#ec3013;color:#fff"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+            </div>
+            <!-- set 3 current -->
+            <div style="display:grid;grid-template-columns:34px 1fr 1fr 40px;gap:8px;align-items:center;min-height:48px;border-bottom:1px solid rgba(245,242,239,.09);box-shadow:inset 3px 0 0 #ec3013;padding-left:3px;margin-left:-3px">
+              <span style="font:700 13px 'Archivo';color:#f5f2ef;font-variant-numeric:tabular-nums;padding-left:5px">3</span>
+              <span style="font:800 19px 'Archivo';font-variant-numeric:tabular-nums">80<span style="font:400 11px 'Archivo';color:#7d7979"> kg</span></span>
+              <span style="font:800 19px 'Archivo';font-variant-numeric:tabular-nums">8</span>
+              <span style="justify-self:end;width:22px;height:22px;display:flex;align-items:center;justify-content:center;border:1.5px solid #ec3013;color:#ec3013"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;padding:11px 0 4px;font:800 11px 'Archivo';letter-spacing:.06em;text-transform:uppercase;color:#ec3013">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Add set
+            </div>
+            <!-- exercise 2 -->
+            <div style="display:flex;align-items:center;gap:10px;padding:14px 0 9px;border-top:2px solid rgba(245,242,239,.2);margin-top:6px">
+              <span style="font:600 12px 'Archivo';color:#605d5d;font-variant-numeric:tabular-nums">02</span>
+              <span style="font:800 18px 'Archivo';letter-spacing:-.01em;flex:1">Incline DB Press</span>
+              <span style="font:400 10px 'Archivo';letter-spacing:.06em;text-transform:uppercase;color:#9b9797;border:1px solid rgba(245,242,239,.22);padding:2px 6px">Chest</span>
+              <span style="font:600 11px 'Archivo';color:#9b9797;font-variant-numeric:tabular-nums">90s</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="#9b9797"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
+            </div>
+            <div style="display:grid;grid-template-columns:34px 1fr 1fr 40px;gap:8px;padding:0 0 6px;border-bottom:2px solid rgba(245,242,239,.14);font:600 9.5px 'Archivo';letter-spacing:.1em;text-transform:uppercase;color:#7d7979">
+              <span>Set</span><span>Kg</span><span>Reps</span><span></span>
+            </div>
+            <div style="display:grid;grid-template-columns:34px 1fr 1fr 40px;gap:8px;align-items:center;min-height:48px;border-bottom:1px solid rgba(245,242,239,.09);box-shadow:inset 3px 0 0 #ec3013;padding-left:3px;margin-left:-3px">
+              <span style="font:700 13px 'Archivo';color:#f5f2ef;font-variant-numeric:tabular-nums;padding-left:5px">1</span>
+              <span style="font:800 19px 'Archivo';font-variant-numeric:tabular-nums">30<span style="font:400 11px 'Archivo';color:#7d7979"> kg</span></span>
+              <span style="font:800 19px 'Archivo';font-variant-numeric:tabular-nums">10</span>
+              <span style="justify-self:end;width:22px;height:22px;display:flex;align-items:center;justify-content:center;border:1.5px solid #ec3013;color:#ec3013"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+            </div>
+          </div>
+          <!-- rest strip -->
+          <div style="background:#1b1a18;border-top:1px solid rgba(245,242,239,.12);position:relative">
+            <div style="position:absolute;top:0;left:0;right:0;height:2px;background:rgba(245,242,239,.12)"><div style="width:42%;height:2px;background:#ec3013"></div></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 18px">
+              <div style="display:flex;align-items:baseline;gap:9px"><span style="font:600 10px 'Archivo';letter-spacing:.1em;text-transform:uppercase;color:#9b9797">Rest</span><span style="font:800 20px 'Archivo';font-variant-numeric:tabular-nums;color:#ec3013;animation:restpulse 2s ease-in-out infinite">01:24</span></div>
+              <div style="display:flex;align-items:center;gap:16px;font:800 11px 'Archivo';letter-spacing:.04em;text-transform:uppercase;color:#9b9797"><span>−15</span><span>+15</span><span style="color:#f5f2ef">Skip</span></div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;padding:8px 0 10px;background:#131211"><div style="width:128px;height:5px;border-radius:3px;background:rgba(245,242,239,.28)"></div></div>
+        </div>
+      </div>
+      <div style="width:360px;margin-top:16px;display:flex;flex-direction:column;gap:7px">
+        <div style="font:400 12px/1.6 'Archivo';color:#605d5d">The whole session as one continuous ruled ledger — no card containers, just hairline rows. Kills the bulk; every set reads like a line in a logbook.</div>
+        <div style="display:flex;align-items:baseline;gap:8px;font:400 11.5px/1.4 'Archivo';color:#605d5d"><span style="color:#ec3013;font-weight:800">·</span>Steppers gone — tap a number for a big keypad</div>
+        <div style="display:flex;align-items:baseline;gap:8px;font:400 11.5px/1.4 'Archivo';color:#605d5d"><span style="color:#ec3013;font-weight:800">·</span>Red left-tick marks the set you're on</div>
+        <div style="display:flex;align-items:baseline;gap:8px;font:400 11.5px/1.4 'Archivo';color:#605d5d"><span style="color:#ec3013;font-weight:800">·</span>Densest option: more exercises per screen</div>
+      </div>
+    </div>
+
+    <!-- ============ 1c · FOCUS ============ -->
+    <div class="dv-opt" id="1c">
+      <div class="dv-olabel"><a class="dv-oid" href="#1c">1c</a><span>Direction B — “Focus”: one exercise, thumb-first</span></div>
+      <div style="width:360px;background:#050505;padding:6px;border-radius:34px;box-shadow:0 18px 44px rgba(20,17,15,.26),0 3px 10px rgba(20,17,15,.18)">
+        <div style="border-radius:28px;overflow:hidden;height:748px;display:flex;flex-direction:column;background:#131211;color:#f5f2ef">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 18px 4px;color:#f5f2ef;font:600 13px/1 'Archivo'">
+            <span style="font-variant-numeric:tabular-nums">9:41</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <svg width="16" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="2" width="3" height="10" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1" opacity=".4"/></svg>
+              <svg width="15" height="12" viewBox="0 0 16 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1 4.2a11 11 0 0 1 14 0"/><path d="M3.5 6.7a7 7 0 0 1 9 0"/><path d="M6 9.2a3 3 0 0 1 4 0"/></svg>
+              <svg width="22" height="12" viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="1" width="20" height="10" rx="2.5"/><rect x="3" y="3" width="14" height="6" rx="1" fill="currentColor" stroke="none"/><rect x="22" y="4" width="2" height="4" rx="1" fill="currentColor" stroke="none"/></svg>
+            </div>
+          </div>
+          <!-- header -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px 14px">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#9b9797" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+            <span style="font:600 11px 'Archivo';letter-spacing:.06em;text-transform:uppercase;color:#9b9797;font-variant-numeric:tabular-nums">Push Day · 00:32:41</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="#9b9797"><circle cx="12" cy="5" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="12" cy="19" r="1.7"/></svg>
+          </div>
+          <!-- progress segments -->
+          <div style="display:flex;align-items:center;gap:6px;padding:0 18px 20px">
+            <span style="font:600 10px 'Archivo';letter-spacing:.08em;text-transform:uppercase;color:#7d7979;margin-right:4px">1/3</span>
+            <span style="flex:1;height:3px;background:#ec3013"></span>
+            <span style="flex:1;height:3px;background:rgba(245,242,239,.16)"></span>
+            <span style="flex:1;height:3px;background:rgba(245,242,239,.16)"></span>
+          </div>
+          <!-- hero -->
+          <div style="padding:0 22px">
+            <div style="font:600 10px 'Archivo';letter-spacing:.12em;text-transform:uppercase;color:#ec3013;margin-bottom:8px">Chest · Barbell</div>
+            <div style="font:800 30px/1.02 'Archivo';letter-spacing:-.02em;margin-bottom:16px">Bench<br>Press</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:22px">
+              <span style="font:800 12px 'Archivo';letter-spacing:.04em;text-transform:uppercase;color:#9b9797">Set 3 / 4</span>
+              <span style="flex:1;display:flex;gap:5px">
+                <span style="flex:1;height:6px;background:#ec3013"></span>
+                <span style="flex:1;height:6px;background:#ec3013"></span>
+                <span style="flex:1;height:6px;background:#ec3013;box-shadow:0 0 0 1.5px #131211,0 0 0 3px #ec3013"></span>
+                <span style="flex:1;height:6px;background:rgba(245,242,239,.16)"></span>
+              </span>
+            </div>
+          </div>
+          <!-- big fields -->
+          <div style="margin:0 22px;display:flex;border-top:2px solid rgba(245,242,239,.16);border-bottom:2px solid rgba(245,242,239,.16)">
+            <div style="flex:1;padding:18px 6px 18px 0">
+              <div style="font:600 10px 'Archivo';letter-spacing:.1em;text-transform:uppercase;color:#7d7979;margin-bottom:6px">Weight</div>
+              <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:14px"><span style="font:800 46px/0.9 'Archivo';font-variant-numeric:tabular-nums">80</span><span style="font:600 13px 'Archivo';color:#9b9797">kg</span></div>
+              <div style="display:flex;gap:8px">
+                <span style="width:44px;height:40px;display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(245,242,239,.24);color:#f5f2ef"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg></span>
+                <span style="width:44px;height:40px;display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(245,242,239,.24);color:#f5f2ef"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span>
+              </div>
+            </div>
+            <div style="width:2px;background:rgba(245,242,239,.16)"></div>
+            <div style="flex:1;padding:18px 0 18px 18px">
+              <div style="font:600 10px 'Archivo';letter-spacing:.1em;text-transform:uppercase;color:#7d7979;margin-bottom:6px">Reps</div>
+              <div style="display:flex;align-items:baseline;gap:4px;margin-bottom:14px"><span style="font:800 46px/0.9 'Archivo';font-variant-numeric:tabular-nums">8</span></div>
+              <div style="display:flex;gap:8px">
+                <span style="width:44px;height:40px;display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(245,242,239,.24);color:#f5f2ef"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/></svg></span>
+                <span style="width:44px;height:40px;display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(245,242,239,.24);color:#f5f2ef"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></span>
+              </div>
+            </div>
+          </div>
+          <div style="font:400 11px 'Archivo';color:#7d7979;padding:12px 22px 0;font-variant-numeric:tabular-nums">Last · 80×8 · 80×8 · 80×7</div>
+          <!-- log button -->
+          <div style="padding:16px 22px 0">
+            <div style="background:#ec3013;color:#fff;height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 22px">
+              <span style="font:800 15px 'Archivo';letter-spacing:.06em;text-transform:uppercase">Log set</span>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+            </div>
+          </div>
+          <div style="flex:1"></div>
+          <!-- bottom rail with rest -->
+          <div style="border-top:1px solid rgba(245,242,239,.12);background:#1b1a18;padding:12px 18px 12px;display:flex;align-items:center;gap:14px">
+            <div style="display:flex;gap:16px;flex:1;overflow:hidden">
+              <span style="font:800 12px 'Archivo';white-space:nowrap;border-bottom:2px solid #ec3013;padding-bottom:3px">Bench Press</span>
+              <span style="font:600 12px 'Archivo';white-space:nowrap;color:#7d7979;padding-bottom:3px">Incline DB</span>
+              <span style="font:600 12px 'Archivo';white-space:nowrap;color:#7d7979;padding-bottom:3px">Cable Fly</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:7px;border:1px solid rgba(245,242,239,.2);padding:5px 9px">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ec3013" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2"/><path d="M10 2h4"/></svg>
+              <span style="font:800 14px 'Archivo';color:#ec3013;font-variant-numeric:tabular-nums;animation:restpulse 2s ease-in-out infinite">01:24</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;padding:8px 0 10px;background:#131211"><div style="width:128px;height:5px;border-radius:3px;background:rgba(245,242,239,.28)"></div></div>
+        </div>
+      </div>
+      <div style="width:360px;margin-top:16px;display:flex;flex-direction:column;gap:7px">
+        <div style="font:400 12px/1.6 'Archivo';color:#605d5d">One exercise fills the screen. Big weight/reps and a full-width Log — one-thumb, minimal thinking mid-set. Swipe or tap the rail to move between exercises.</div>
+        <div style="display:flex;align-items:baseline;gap:8px;font:400 11.5px/1.4 'Archivo';color:#605d5d"><span style="color:#ec3013;font-weight:800">·</span>Calmest in a busy gym — least to parse</div>
+        <div style="display:flex;align-items:baseline;gap:8px;font:400 11.5px/1.4 'Archivo';color:#605d5d"><span style="color:#ec3013;font-weight:800">·</span>Reinvents set-logging: huge targets, big keypad</div>
+        <div style="display:flex;align-items:baseline;gap:8px;font:400 11.5px/1.4 'Archivo';color:#605d5d"><span style="color:#ec3013;font-weight:800">·</span>Rest becomes the focus when it's running</div>
+      </div>
+    </div>
+
+    <!-- ============ 1d · INSTRUMENT ============ -->
+    <div class="dv-opt" id="1d">
+      <div class="dv-olabel"><a class="dv-oid" href="#1d">1d</a><span>Direction C — “Instrument”: data-viz forward</span></div>
+      <div style="width:360px;background:#050505;padding:6px;border-radius:34px;box-shadow:0 18px 44px rgba(20,17,15,.26),0 3px 10px rgba(20,17,15,.18)">
+        <div style="border-radius:28px;overflow:hidden;height:748px;display:flex;flex-direction:column;background:#131211;color:#f5f2ef">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 18px 4px;color:#f5f2ef;font:600 13px/1 'Archivo'">
+            <span style="font-variant-numeric:tabular-nums">9:41</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <svg width="16" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="2" width="3" height="10" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1" opacity=".4"/></svg>
+              <svg width="15" height="12" viewBox="0 0 16 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1 4.2a11 11 0 0 1 14 0"/><path d="M3.5 6.7a7 7 0 0 1 9 0"/><path d="M6 9.2a3 3 0 0 1 4 0"/></svg>
+              <svg width="22" height="12" viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="1" width="20" height="10" rx="2.5"/><rect x="3" y="3" width="14" height="6" rx="1" fill="currentColor" stroke="none"/><rect x="22" y="4" width="2" height="4" rx="1" fill="currentColor" stroke="none"/></svg>
+            </div>
+          </div>
+          <!-- header -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 18px 12px">
+            <span style="font:600 11px 'Archivo';letter-spacing:.08em;text-transform:uppercase;color:#9b9797">Discard</span>
+            <span style="font:800 13px 'Archivo';letter-spacing:.06em;text-transform:uppercase">Push Day</span>
+            <span style="font:800 12px 'Archivo';letter-spacing:.06em;text-transform:uppercase;color:#ec3013">Finish</span>
+          </div>
+          <!-- session volume strip -->
+          <div style="padding:6px 18px 14px;border-bottom:2px solid rgba(245,242,239,.2)">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:7px">
+              <span style="font:600 9.5px 'Archivo';letter-spacing:.1em;text-transform:uppercase;color:#7d7979">Session volume</span>
+              <span style="font:800 15px 'Archivo';font-variant-numeric:tabular-nums">4,280<span style="font:400 10px 'Archivo';color:#7d7979"> kg</span></span>
+            </div>
+            <div style="height:6px;background:rgba(245,242,239,.1);position:relative;overflow:hidden">
+              <div style="width:62%;height:6px;background:#ec3013;transform-origin:left;animation:volgrow 1.1s ease-out"></div>
+              <div style="position:absolute;top:0;left:25%;width:1px;height:6px;background:#131211"></div>
+              <div style="position:absolute;top:0;left:50%;width:1px;height:6px;background:#131211"></div>
+              <div style="position:absolute;top:0;left:75%;width:1px;height:6px;background:#131211"></div>
+            </div>
+          </div>
+          <!-- body -->
+          <div style="flex:1;overflow:hidden;padding:0 18px">
+            <!-- exercise head with sparkline -->
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:15px 0 12px">
+              <div>
+                <div style="font:800 18px 'Archivo';letter-spacing:-.01em">Bench Press</div>
+                <div style="font:400 10px 'Archivo';letter-spacing:.06em;text-transform:uppercase;color:#9b9797;margin-top:3px">Chest · Barbell</div>
+              </div>
+              <div style="text-align:right">
+                <svg width="76" height="26" viewBox="0 0 76 26" fill="none" style="display:block">
+                  <polyline points="0,20 15,17 30,18 45,11 60,9 74,4" stroke="#ec3013" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle cx="74" cy="4" r="2.6" fill="#ec3013"/>
+                  <polyline points="0,24 76,24" stroke="rgba(245,242,239,.14)" stroke-width="1"/>
+                </svg>
+                <div style="font:700 10px 'Archivo';color:#ec3013;margin-top:3px">e1RM ↗ +2.5%</div>
+              </div>
+            </div>
+            <!-- set rows with volume bars -->
+            <!-- set 1 done + PR -->
+            <div style="position:relative;min-height:46px;border-bottom:1px solid rgba(245,242,239,.09);display:flex;align-items:center">
+              <div style="position:absolute;left:0;top:0;bottom:1px;width:70%;background:rgba(236,48,19,.09)"></div>
+              <div style="position:relative;display:grid;grid-template-columns:30px 1fr 1fr 46px;gap:8px;align-items:center;width:100%">
+                <span style="font:700 13px 'Archivo';color:#9b9797;font-variant-numeric:tabular-nums;padding-left:4px">1</span>
+                <span style="font:800 19px 'Archivo';font-variant-numeric:tabular-nums">80<span style="font:400 11px 'Archivo';color:#7d7979"> kg</span></span>
+                <span style="font:800 19px 'Archivo';font-variant-numeric:tabular-nums">8</span>
+                <span style="justify-self:end;display:flex;align-items:center;gap:6px">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="#ec3013" style="animation:prflash 1.6s ease-in-out infinite"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/></svg>
+                  <span style="width:22px;height:22px;display:flex;align-items:center;justify-content:center;background:#ec3013;color:#fff"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+                </span>
+              </div>
+            </div>
+            <!-- set 2 done -->
+            <div style="position:relative;min-height:46px;border-bottom:1px solid rgba(245,242,239,.09);display:flex;align-items:center">
+              <div style="position:absolute;left:0;top:0;bottom:1px;width:70%;background:rgba(236,48,19,.09)"></div>
+              <div style="position:relative;display:grid;grid-template-columns:30px 1fr 1fr 46px;gap:8px;align-items:center;width:100%">
+                <span style="font:700 13px 'Archivo';color:#9b9797;font-variant-numeric:tabular-nums;padding-left:4px">2</span>
+                <span style="font:800 19px 'Archivo';font-variant-numeric:tabular-nums">80<span style="font:400 11px 'Archivo';color:#7d7979"> kg</span></span>
+                <span style="font:800 19px 'Archivo';font-variant-numeric:tabular-nums">8</span>
+                <span style="justify-self:end;width:22px;height:22px;display:flex;align-items:center;justify-content:center;background:#ec3013;color:#fff"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+              </div>
+            </div>
+            <!-- set 3 current -->
+            <div style="position:relative;min-height:48px;border-bottom:1px solid rgba(245,242,239,.09);display:flex;align-items:center;box-shadow:inset 3px 0 0 #ec3013">
+              <div style="position:absolute;left:0;top:0;bottom:1px;width:62%;background:rgba(236,48,19,.05)"></div>
+              <div style="position:relative;display:grid;grid-template-columns:30px 1fr 1fr 46px;gap:8px;align-items:center;width:100%">
+                <span style="font:700 13px 'Archivo';color:#f5f2ef;font-variant-numeric:tabular-nums;padding-left:8px">3</span>
+                <span style="font:800 19px 'Archivo';font-variant-numeric:tabular-nums">80<span style="font:400 11px 'Archivo';color:#7d7979"> kg</span></span>
+                <span style="font:800 19px 'Archivo';font-variant-numeric:tabular-nums">8</span>
+                <span style="justify-self:end;width:22px;height:22px;display:flex;align-items:center;justify-content:center;border:1.5px solid #ec3013;color:#ec3013"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;padding:11px 0 4px;font:800 11px 'Archivo';letter-spacing:.06em;text-transform:uppercase;color:#ec3013">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Add set
+            </div>
+            <!-- exercise 2 head -->
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;padding:13px 0 6px;border-top:2px solid rgba(245,242,239,.2);margin-top:6px">
+              <div>
+                <div style="font:800 18px 'Archivo';letter-spacing:-.01em">Incline DB Press</div>
+                <div style="font:400 10px 'Archivo';letter-spacing:.06em;text-transform:uppercase;color:#9b9797;margin-top:3px">Chest · Dumbbell</div>
+              </div>
+              <div style="text-align:right">
+                <svg width="76" height="26" viewBox="0 0 76 26" fill="none" style="display:block">
+                  <polyline points="0,14 15,15 30,11 45,13 60,10 74,12" stroke="#9b9797" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle cx="74" cy="12" r="2.6" fill="#9b9797"/>
+                  <polyline points="0,24 76,24" stroke="rgba(245,242,239,.14)" stroke-width="1"/>
+                </svg>
+                <div style="font:700 10px 'Archivo';color:#7d7979;margin-top:3px">e1RM → 0%</div>
+              </div>
+            </div>
+          </div>
+          <!-- rest gauge -->
+          <div style="background:#1b1a18;border-top:1px solid rgba(245,242,239,.12);padding:12px 18px">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px">
+              <span style="font:600 9.5px 'Archivo';letter-spacing:.1em;text-transform:uppercase;color:#9b9797">Rest remaining</span>
+              <span style="font:800 18px 'Archivo';color:#ec3013;font-variant-numeric:tabular-nums">01:24</span>
+            </div>
+            <div style="position:relative;height:14px;display:flex;align-items:center">
+              <div style="position:absolute;left:0;right:0;top:6px;height:2px;background:rgba(245,242,239,.14)"></div>
+              <div style="position:absolute;left:0;top:6px;height:2px;width:42%;background:#ec3013"></div>
+              <div style="position:absolute;left:0;right:0;top:2px;display:flex;justify-content:space-between">
+                <span style="width:1px;height:10px;background:rgba(245,242,239,.22)"></span><span style="width:1px;height:6px;background:rgba(245,242,239,.16)"></span><span style="width:1px;height:6px;background:rgba(245,242,239,.16)"></span><span style="width:1px;height:6px;background:rgba(245,242,239,.16)"></span><span style="width:1px;height:10px;background:rgba(245,242,239,.22)"></span><span style="width:1px;height:6px;background:rgba(245,242,239,.16)"></span><span style="width:1px;height:6px;background:rgba(245,242,239,.16)"></span><span style="width:1px;height:6px;background:rgba(245,242,239,.16)"></span><span style="width:1px;height:10px;background:rgba(245,242,239,.22)"></span>
+              </div>
+              <div style="position:absolute;left:42%;top:0;width:2px;height:14px;background:#ec3013"></div>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:center;padding:8px 0 10px;background:#131211"><div style="width:128px;height:5px;border-radius:3px;background:rgba(245,242,239,.28)"></div></div>
+        </div>
+      </div>
+      <div style="width:360px;margin-top:16px;display:flex;flex-direction:column;gap:7px">
+        <div style="font:400 12px/1.6 'Archivo';color:#605d5d">The ledger plus live context: a session-volume bar that grows as you log, per-exercise e1RM sparklines, PR stars, and a ticked rest gauge. Progress is legible without leaving the screen.</div>
+        <div style="display:flex;align-items:baseline;gap:8px;font:400 11.5px/1.4 'Archivo';color:#605d5d"><span style="color:#ec3013;font-weight:800">·</span>Answers your data-viz goal directly</div>
+        <div style="display:flex;align-items:baseline;gap:8px;font:400 11.5px/1.4 'Archivo';color:#605d5d"><span style="color:#ec3013;font-weight:800">·</span>Motion carries meaning (volume grows, PR flashes)</div>
+        <div style="display:flex;align-items:baseline;gap:8px;font:400 11.5px/1.4 'Archivo';color:#605d5d"><span style="color:#ec3013;font-weight:800">·</span>Most information-dense of the three</div>
+      </div>
+    </div>
+
+  </div>
+  <p class="dv-next">Try next: “build <a class="dv-oid" href="#1b">1b</a> into the clickable prototype” · “blend <a class="dv-oid" href="#1c">1c</a>’s big log button into <a class="dv-oid" href="#1b">1b</a>” · “show <a class="dv-oid" href="#1d">1d</a> with the rest timer finished” · “new directions”</p>
+</section>
+</x-dc>
+</body>
+</html>

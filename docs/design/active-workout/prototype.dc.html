@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/modernist-6a982212-2057-4627-b4c8-7c6a7a8845d0/styles.css">
+<script src="_ds/modernist-6a982212-2057-4627-b4c8-7c6a7a8845d0/_ds_bundle.js"></script>
+<style>
+  body{margin:0;background:#e7e5e2;color:#201e1d;font-family:"Archivo",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .noscb::-webkit-scrollbar{display:none}
+  @keyframes restpulse{0%,100%{opacity:1}50%{opacity:.5}}
+  @keyframes prflash{0%,100%{opacity:.95}50%{opacity:.4}}
+  @keyframes sheetup{from{transform:translateY(30px);opacity:.4}to{transform:translateY(0);opacity:1}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:34px 20px 64px;gap:22px">
+  <div style="width:380px;max-width:100%">
+    <div style="font:800 10px 'Archivo';letter-spacing:.14em;text-transform:uppercase;color:#ec3013">Workout Tracker · Interactive prototype</div>
+    <h1 style="font:800 30px/1.05 'Archivo';letter-spacing:-.02em;margin:8px 0 10px;color:#201e1d">Workout Tracker — Prototype</h1>
+    <div style="display:flex;flex-wrap:wrap;gap:7px">
+      <span style="font:600 10px 'Archivo';letter-spacing:.03em;text-transform:uppercase;color:#605d5d;border:1px solid rgba(32,30,29,.2);padding:4px 8px">Home: resume / start / templates</span>
+      <span style="font:600 10px 'Archivo';letter-spacing:.03em;text-transform:uppercase;color:#605d5d;border:1px solid rgba(32,30,29,.2);padding:4px 8px">Active: Instrument + Focus</span>
+      <span style="font:600 10px 'Archivo';letter-spacing:.03em;text-transform:uppercase;color:#605d5d;border:1px solid rgba(32,30,29,.2);padding:4px 8px">Tap the title to minimise</span>
+    </div>
+  </div>
+
+  <div style="width:392px;background:#050505;padding:6px;border-radius:38px;box-shadow:0 22px 54px rgba(20,17,15,.28),0 4px 12px rgba(20,17,15,.2)">
+    <div style="position:relative;border-radius:32px;overflow:hidden;height:812px;display:flex;flex-direction:column;background:#131211;color:#f5f2ef">
+
+      <!-- status bar -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px 4px;color:#f5f2ef;font:600 13px/1 'Archivo'">
+        <span style="font-variant-numeric:tabular-nums">9:41</span>
+        <div style="display:flex;align-items:center;gap:6px">
+          <svg width="16" height="12" viewBox="0 0 18 12" fill="currentColor"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="2" width="3" height="10" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1" opacity=".4"/></svg>
+          <svg width="15" height="12" viewBox="0 0 16 12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M1 4.2a11 11 0 0 1 14 0"/><path d="M3.5 6.7a7 7 0 0 1 9 0"/><path d="M6 9.2a3 3 0 0 1 4 0"/></svg>
+          <svg width="22" height="12" viewBox="0 0 24 12" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="1" width="20" height="10" rx="2.5"/><rect x="3" y="3" width="14" height="6" rx="1" fill="currentColor" stroke="none"/><rect x="22" y="4" width="2" height="4" rx="1" fill="currentColor" stroke="none"/></svg>
+        </div>
+      </div>
+
+      <!-- ══ HOME SCREEN ══ -->
+      <sc-if value="{{ isHomeScreen }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+        <div class="noscb" style="flex:1;overflow-y:auto;scrollbar-width:none">
+          <sc-if value="{{ isHomeTabWorkout }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <div style="padding:16px 22px 0">
+              <div style="font:600 10px 'Archivo';letter-spacing:.14em;text-transform:uppercase;color:#7d7979">{{ todayLabel }}</div>
+              <div style="font:800 30px/1.02 'Archivo';letter-spacing:-.02em;margin-top:4px">Workout</div>
+            </div>
+            <div style="margin:16px 22px 0;border-top:2px solid rgba(245,242,239,.2);padding-top:14px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px">
+                <span style="font:600 9.5px 'Archivo';letter-spacing:.1em;text-transform:uppercase;color:#7d7979">This week</span>
+                <span style="font:800 12px 'Archivo';font-variant-numeric:tabular-nums">3 workouts · 12,480 kg</span>
+              </div>
+              <div style="display:flex;gap:7px;align-items:flex-end">
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:34px;display:flex;align-items:flex-end"><div style="width:100%;height:26px;background:#ec3013"></div></div><span style="font:600 9px 'Archivo';color:#7d7979">M</span></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:34px;display:flex;align-items:flex-end"><div style="width:100%;height:7px;background:rgba(245,242,239,.16)"></div></div><span style="font:600 9px 'Archivo';color:#7d7979">T</span></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:34px;display:flex;align-items:flex-end"><div style="width:100%;height:34px;background:#ec3013"></div></div><span style="font:600 9px 'Archivo';color:#7d7979">W</span></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:34px;display:flex;align-items:flex-end"><div style="width:100%;height:20px;background:#ec3013"></div></div><span style="font:800 9px 'Archivo';color:#ec3013">T</span></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:34px;display:flex;align-items:flex-end"><div style="width:100%;height:7px;background:rgba(245,242,239,.16)"></div></div><span style="font:600 9px 'Archivo';color:#7d7979">F</span></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:34px;display:flex;align-items:flex-end"><div style="width:100%;height:7px;background:rgba(245,242,239,.16)"></div></div><span style="font:600 9px 'Archivo';color:#7d7979">S</span></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:7px"><div style="width:100%;height:34px;display:flex;align-items:flex-end"><div style="width:100%;height:7px;background:rgba(245,242,239,.16)"></div></div><span style="font:600 9px 'Archivo';color:#7d7979">S</span></div>
+              </div>
+            </div>
+            <sc-if value="{{ sessionLive }}" hint-placeholder-val="{{ true }}">
+            <div onClick="{{ onResume }}" style="cursor:pointer;margin:20px 22px 0;border:2px solid #ec3013;padding:15px 18px;display:flex;align-items:center;justify-content:space-between" style-hover="background:rgba(236,48,19,.08)">
+              <div>
+                <div style="font:600 9.5px 'Archivo';letter-spacing:.12em;text-transform:uppercase;color:#ec3013;margin-bottom:6px">In progress</div>
+                <div style="font:800 20px 'Archivo';letter-spacing:-.01em">{{ workoutName }}</div>
+                <div style="font:400 11px 'Archivo';color:#9b9797;margin-top:4px">{{ resumeMeta }}</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;font:800 11px 'Archivo';letter-spacing:.06em;text-transform:uppercase;color:#ec3013;white-space:nowrap">Resume<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></div>
+            </div>
+            </sc-if>
+            <sc-if value="{{ noSession }}" hint-placeholder-val="{{ false }}">
+            <div style="margin:20px 22px 0;display:flex;flex-direction:column;gap:10px">
+              <div onClick="{{ onStartEmpty }}" style="cursor:pointer;background:#ec3013;color:#fff;height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px" style-hover="background:#ff563c">
+                <span style="font:800 14px 'Archivo';letter-spacing:.06em;text-transform:uppercase">Start empty workout</span>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+              </div>
+              <div onClick="{{ onStartHistory }}" style="cursor:pointer;height:52px;border:1px solid rgba(245,242,239,.24);display:flex;align-items:center;justify-content:space-between;padding:0 20px;color:#f5f2ef" style-hover="border-color:#ec3013;color:#ec3013">
+                <span style="font:800 13px 'Archivo';letter-spacing:.06em;text-transform:uppercase">Repeat last workout</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v6h6"></path><path d="M21 12A9 9 0 1 1 6 5.3L3 8"></path></svg>
+              </div>
+            </div>
+            </sc-if>
+            <div style="margin:22px 22px 0;border-top:2px solid rgba(245,242,239,.2);padding-top:16px">
+              <div style="font:600 9.5px 'Archivo';letter-spacing:.1em;text-transform:uppercase;color:#7d7979;margin-bottom:10px">Your program</div>
+              <div onClick="{{ onStartProgram }}" style="cursor:pointer;border:1px solid rgba(245,242,239,.2);padding:14px 16px;display:flex;align-items:center;justify-content:space-between" style-hover="border-color:rgba(245,242,239,.4)">
+                <div>
+                  <div style="font:800 15px 'Archivo'">Push · Pull · Legs</div>
+                  <div style="font:400 11px 'Archivo';color:#9b9797;margin-top:3px">Day 3 of 6 · Push Day</div>
+                </div>
+                <span style="font:800 9px 'Archivo';letter-spacing:.08em;text-transform:uppercase;color:#fff;background:#ec3013;padding:5px 8px">Next</span>
+              </div>
+            </div>
+            <div style="margin:22px 22px 0;border-top:2px solid rgba(245,242,239,.2);padding-top:14px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+                <span style="font:600 9.5px 'Archivo';letter-spacing:.1em;text-transform:uppercase;color:#7d7979">Templates</span>
+                <span style="font:800 10px 'Archivo';letter-spacing:.06em;text-transform:uppercase;color:#ec3013;cursor:pointer">+ New</span>
+              </div>
+              <sc-for list="{{ templates }}" as="t" hint-placeholder-count="3">
+                <div onClick="{{ t.on }}" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid rgba(245,242,239,.1)" style-hover="padding-left:4px">
+                  <div>
+                    <div style="font:700 15px 'Archivo'">{{ t.name }}</div>
+                    <div style="font:400 10px 'Archivo';letter-spacing:.04em;text-transform:uppercase;color:#9b9797;margin-top:3px">{{ t.meta }}</div>
+                  </div>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#7d7979" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg>
+                </div>
+              </sc-for>
+            </div>
+            <div style="height:22px"></div>
+          </div>
+          </sc-if>
+          <sc-if value="{{ isHomeTabStub }}" hint-placeholder-val="{{ false }}">
+          <div style="height:600px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:0 44px;text-align:center">
+            <div style="width:56px;height:56px;border:2px solid rgba(245,242,239,.2);display:flex;align-items:center;justify-content:center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#9b9797" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 9 5-9 5-9-5 9-5Z"></path><path d="m3 12 9 5 9-5"></path><path d="m3 17 9 5 9-5"></path></svg></div>
+            <div style="font:800 22px 'Archivo';letter-spacing:-.01em">{{ stubLabel }}</div>
+            <div style="font:400 12px/1.5 'Archivo';color:#7d7979">Coming next in this prototype — we're building the app screen by screen.</div>
+          </div>
+          </sc-if>
+        </div>
+        <div style="display:flex;border-top:2px solid rgba(245,242,239,.2);background:#131211">
+          <div onClick="{{ onTabWorkout }}" style="{{ tabWorkoutStyle }}"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.4 14.4 9.6 9.6"></path><path d="M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z"></path><path d="m21.5 21.5-1.4-1.4"></path><path d="M3.9 3.9 2.5 2.5"></path><path d="M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z"></path></svg><span style="font:700 8.5px 'Archivo';letter-spacing:.06em;text-transform:uppercase">Workout</span></div>
+          <div onClick="{{ onTabHistory }}" style="{{ tabHistoryStyle }}"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18"></rect><path d="M3 10h18"></path><path d="M8 2v4"></path><path d="M16 2v4"></path></svg><span style="font:700 8.5px 'Archivo';letter-spacing:.06em;text-transform:uppercase">History</span></div>
+          <div onClick="{{ onTabExercises }}" style="{{ tabExercisesStyle }}"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13"></path><path d="M8 12h13"></path><path d="M8 18h13"></path><path d="M3 6h.01"></path><path d="M3 12h.01"></path><path d="M3 18h.01"></path></svg><span style="font:700 8.5px 'Archivo';letter-spacing:.06em;text-transform:uppercase">Exercises</span></div>
+          <div onClick="{{ onTabStats }}" style="{{ tabStatsStyle }}"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"></path><path d="m19 9-5 5-4-4-3 3"></path></svg><span style="font:700 8.5px 'Archivo';letter-spacing:.06em;text-transform:uppercase">Stats</span></div>
+          <div onClick="{{ onTabMore }}" style="{{ tabMoreStyle }}"><svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="12" cy="12" r="1.6"></circle><circle cx="19" cy="12" r="1.6"></circle><circle cx="5" cy="12" r="1.6"></circle></svg><span style="font:700 8.5px 'Archivo';letter-spacing:.06em;text-transform:uppercase">More</span></div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:center;padding:8px 0 10px;background:#131211"><div style="width:132px;height:5px;border-radius:3px;background:rgba(245,242,239,.28)"></div></div>
+      </div>
+      </sc-if>
+
+      <!-- ══ ACTIVE WORKOUT SCREEN ══ -->
+      <sc-if value="{{ isActiveScreen }}" hint-placeholder-val="{{ true }}">
+      <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+
+      <!-- header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 20px 12px">
+        <div onClick="{{ onDiscard }}" style="cursor:pointer;font:600 11px 'Archivo';letter-spacing:.08em;text-transform:uppercase;color:#9b9797" style-hover="color:#ec3013">Discard</div>
+        <div onClick="{{ onMinimize }}" style="cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.15">
+          <span style="display:flex;align-items:center;gap:4px;font:800 13px 'Archivo';letter-spacing:.06em;text-transform:uppercase">{{ workoutName }}<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#9b9797" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg></span>
+          <span style="font:600 11px 'Archivo';color:#9b9797;font-variant-numeric:tabular-nums">{{ elapsedLabel }}</span>
+        </div>
+        <div onClick="{{ onFinish }}" style="cursor:pointer;display:flex;align-items:center;gap:5px;font:800 12px 'Archivo';letter-spacing:.06em;text-transform:uppercase;color:#ec3013" style-hover="color:#ff563c">Finish
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </div>
+      </div>
+
+      <!-- mode toggle -->
+      <div style="display:flex;border-bottom:2px solid rgba(245,242,239,.2)">
+        <div onClick="{{ onModeInstrument }}" style="{{ tabInstStyle }}">Instrument</div>
+        <div onClick="{{ onModeFocus }}" style="{{ tabFocusStyle }}">Focus</div>
+      </div>
+
+      <!-- ══ INSTRUMENT MODE ══ -->
+      <sc-if value="{{ isInstrument }}" hint-placeholder-val="{{ true }}">
+      <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+      <!-- session volume strip -->
+      <div style="padding:4px 20px 13px;border-bottom:2px solid rgba(245,242,239,.2)">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:7px">
+          <span style="font:600 9.5px 'Archivo';letter-spacing:.1em;text-transform:uppercase;color:#7d7979">Session volume</span>
+          <span style="font:800 15px 'Archivo';font-variant-numeric:tabular-nums">{{ volLabel }}</span>
+        </div>
+        <div style="height:6px;background:rgba(245,242,239,.1);position:relative;overflow:hidden">
+          <div style="height:6px;background:#ec3013;transition:width .5s ease" style="{{ volBarStyle }}"></div>
+          <div style="position:absolute;top:0;left:25%;width:1px;height:6px;background:#131211"></div>
+          <div style="position:absolute;top:0;left:50%;width:1px;height:6px;background:#131211"></div>
+          <div style="position:absolute;top:0;left:75%;width:1px;height:6px;background:#131211"></div>
+        </div>
+      </div>
+
+      <!-- body -->
+      <div class="noscb" style="flex:1;overflow-y:auto;padding:0 20px;scrollbar-width:none">
+        <sc-for list="{{ exercises }}" as="ex" hint-placeholder-count="2">
+          <div style="padding-top:15px">
+            <div style="display:flex;align-items:flex-start;justify-content:space-between;padding-bottom:11px">
+              <div style="min-width:0">
+                <div style="font:800 18px 'Archivo';letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ ex.name }}</div>
+                <div style="font:400 10px 'Archivo';letter-spacing:.06em;text-transform:uppercase;color:#9b9797;margin-top:3px">{{ ex.sub }}</div>
+              </div>
+              <div style="display:flex;align-items:flex-start;gap:12px;flex-shrink:0">
+                <div style="text-align:right">
+                  <svg width="76" height="26" viewBox="0 0 76 26" fill="none" style="display:block">
+                    <polyline points="{{ ex.trend }}" stroke="{{ ex.sparkColor }}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></polyline>
+                    <polyline points="0,24 76,24" stroke="rgba(245,242,239,.14)" stroke-width="1"></polyline>
+                  </svg>
+                  <div style="font:700 10px 'Archivo';margin-top:3px" style="{{ ex.deltaStyle }}">{{ ex.deltaLabel }}</div>
+                </div>
+                <div onClick="{{ ex.onMenu }}" style="cursor:pointer;padding:2px">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="#9b9797"><circle cx="12" cy="5" r="1.6"></circle><circle cx="12" cy="12" r="1.6"></circle><circle cx="12" cy="19" r="1.6"></circle></svg>
+                </div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:34px 1fr 1fr 46px;gap:8px;padding-bottom:6px;border-bottom:2px solid rgba(245,242,239,.14);font:600 9.5px 'Archivo';letter-spacing:.1em;text-transform:uppercase;color:#7d7979">
+              <span>Set</span><span>Kg</span><span>Reps</span><span></span>
+            </div>
+            <sc-for list="{{ ex.sets }}" as="row" hint-placeholder-count="3">
+              <div style="{{ row.rowStyle }}">
+                <div style="{{ row.barStyle }}"></div>
+                <div style="position:relative;display:grid;grid-template-columns:34px 1fr 1fr 46px;gap:8px;align-items:center;width:100%">
+                  <span style="{{ row.setStyle }}">{{ row.setLabel }}</span>
+                  <span onClick="{{ row.onW }}" style="{{ row.numStyle }}">{{ row.wDisp }}<span style="font:400 11px 'Archivo';color:#7d7979"> {{ row.unitLabel }}</span></span>
+                  <span onClick="{{ row.onR }}" style="{{ row.numStyle }}">{{ row.rDisp }}</span>
+                  <span style="justify-self:end;display:flex;align-items:center;gap:6px">
+                    <sc-if value="{{ row.isPR }}" hint-placeholder-val="{{ false }}">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="#ec3013" style="animation:prflash 1.6s ease-in-out infinite"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"></path></svg>
+                    </sc-if>
+                    <div onClick="{{ row.onLog }}" style="{{ row.checkStyle }}">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+                    </div>
+                  </span>
+                </div>
+              </div>
+            </sc-for>
+            <div onClick="{{ ex.onAddSet }}" style="cursor:pointer;display:flex;align-items:center;gap:6px;padding:11px 0 4px;font:800 11px 'Archivo';letter-spacing:.06em;text-transform:uppercase;color:#ec3013">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>Add set
+            </div>
+            <div style="height:1px;background:rgba(245,242,239,.2);margin-top:14px"></div>
+          </div>
+        </sc-for>
+        <div onClick="{{ onAddExercise }}" style="cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin:16px 0 20px;padding:13px;border:1px solid rgba(245,242,239,.22);font:800 12px 'Archivo';letter-spacing:.06em;text-transform:uppercase;color:#f5f2ef" style-hover="border-color:#ec3013;color:#ec3013">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>Add exercise
+        </div>
+      </div>
+      </div>
+      </sc-if>
+
+      <!-- ══ FOCUS MODE ══ -->
+      <sc-if value="{{ isFocus }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;flex-direction:column;min-height:0">
+        <div style="display:flex;align-items:center;gap:6px;padding:14px 20px 18px">
+          <span style="font:600 10px 'Archivo';letter-spacing:.08em;text-transform:uppercase;color:#7d7979;margin-right:4px">{{ fx.exProgress }}</span>
+          <sc-for list="{{ fx.exSegs }}" as="seg" hint-placeholder-count="2">
+            <span style="{{ seg.style }}"></span>
+          </sc-for>
+        </div>
+        <div style="padding:0 22px">
+          <div style="font:600 10px 'Archivo';letter-spacing:.12em;text-transform:uppercase;color:#ec3013;margin-bottom:8px">{{ fx.kicker }}</div>
+          <div style="font:800 30px/1.02 'Archivo';letter-spacing:-.02em;margin-bottom:18px">{{ fx.name }}</div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font:800 12px 'Archivo';letter-spacing:.04em;text-transform:uppercase;color:#9b9797;white-space:nowrap">{{ fx.setLabel }}</span>
+            <span style="flex:1;display:flex;gap:5px">
+              <sc-for list="{{ fx.setSegs }}" as="seg" hint-placeholder-count="3">
+                <span style="{{ seg.style }}"></span>
+              </sc-for>
+            </span>
+          </div>
+        </div>
+        <div style="margin:18px 22px 0;display:flex;border-top:2px solid rgba(245,242,239,.16);border-bottom:2px solid rgba(245,242,239,.16)">
+          <div style="flex:1;padding:18px 6px 18px 0">
+            <div style="font:600 10px 'Archivo';letter-spacing:.1em;text-transform:uppercase;color:#7d7979;margin-bottom:6px">Weight</div>
+            <div onClick="{{ fx.onWTap }}" style="cursor:pointer;display:flex;align-items:baseline;gap:4px;margin-bottom:14px"><span style="font:800 46px/0.9 'Archivo';font-variant-numeric:tabular-nums">{{ fx.wDisp }}</span><span style="font:600 13px 'Archivo';color:#9b9797">{{ fx.unit }}</span></div>
+            <div style="display:flex;gap:8px">
+              <div onClick="{{ fx.onWMinus }}" style="cursor:pointer;width:44px;height:40px;display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(245,242,239,.24);color:#f5f2ef" style-hover="border-color:#ec3013;color:#ec3013"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"></path></svg></div>
+              <div onClick="{{ fx.onWPlus }}" style="cursor:pointer;width:44px;height:40px;display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(245,242,239,.24);color:#f5f2ef" style-hover="border-color:#ec3013;color:#ec3013"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></div>
+            </div>
+          </div>
+          <div style="width:2px;background:rgba(245,242,239,.16)"></div>
+          <div style="flex:1;padding:18px 0 18px 18px">
+            <div style="font:600 10px 'Archivo';letter-spacing:.1em;text-transform:uppercase;color:#7d7979;margin-bottom:6px">Reps</div>
+            <div onClick="{{ fx.onRTap }}" style="cursor:pointer;display:flex;align-items:baseline;gap:4px;margin-bottom:14px"><span style="font:800 46px/0.9 'Archivo';font-variant-numeric:tabular-nums">{{ fx.rDisp }}</span></div>
+            <div style="display:flex;gap:8px">
+              <div onClick="{{ fx.onRMinus }}" style="cursor:pointer;width:44px;height:40px;display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(245,242,239,.24);color:#f5f2ef" style-hover="border-color:#ec3013;color:#ec3013"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"></path></svg></div>
+              <div onClick="{{ fx.onRPlus }}" style="cursor:pointer;width:44px;height:40px;display:flex;align-items:center;justify-content:center;border:1.5px solid rgba(245,242,239,.24);color:#f5f2ef" style-hover="border-color:#ec3013;color:#ec3013"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg></div>
+            </div>
+          </div>
+        </div>
+        <div style="font:400 11px 'Archivo';color:#7d7979;padding:12px 22px 0;font-variant-numeric:tabular-nums">{{ fx.lastLabel }}</div>
+        <div style="padding:16px 22px 0">
+          <div onClick="{{ fx.onLog }}" style="cursor:pointer;background:#ec3013;color:#fff;height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 22px" style-hover="background:#ff563c">
+            <span style="font:800 15px 'Archivo';letter-spacing:.06em;text-transform:uppercase">{{ fx.logLabel }}</span>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+          </div>
+        </div>
+        <div style="flex:1"></div>
+        <div class="noscb" style="display:flex;gap:16px;overflow-x:auto;padding:12px 22px 14px;scrollbar-width:none;border-top:1px solid rgba(245,242,239,.12)">
+          <sc-for list="{{ fx.rail }}" as="tab" hint-placeholder-count="2">
+            <span onClick="{{ tab.on }}" style="{{ tab.style }}">{{ tab.name }}</span>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- rest gauge -->
+      <sc-if value="{{ restRunning }}" hint-placeholder-val="{{ true }}">
+        <div style="background:#1b1a18;border-top:1px solid rgba(245,242,239,.12);padding:12px 20px 13px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">
+            <div style="display:flex;align-items:baseline;gap:9px">
+              <span style="font:600 9.5px 'Archivo';letter-spacing:.1em;text-transform:uppercase;color:#9b9797">Rest</span>
+              <span style="font:800 20px 'Archivo';color:#ec3013;font-variant-numeric:tabular-nums;animation:restpulse 2s ease-in-out infinite">{{ restLabel }}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:16px;font:800 11px 'Archivo';letter-spacing:.04em;text-transform:uppercase;color:#9b9797">
+              <span onClick="{{ onRestMinus }}" style="cursor:pointer" style-hover="color:#f5f2ef">−15</span>
+              <span onClick="{{ onRestPlus }}" style="cursor:pointer" style-hover="color:#f5f2ef">+15</span>
+              <span onClick="{{ onRestSkip }}" style="cursor:pointer;color:#f5f2ef">Skip</span>
+            </div>
+          </div>
+          <div style="position:relative;height:14px;display:flex;align-items:center">
+            <div style="position:absolute;left:0;right:0;top:6px;height:2px;background:rgba(245,242,239,.14)"></div>
+            <div style="position:absolute;left:0;top:6px;height:2px;background:#ec3013;transition:width 1s linear" style="{{ restFillStyle }}"></div>
+            <div style="position:absolute;left:0;right:0;top:2px;display:flex;justify-content:space-between">
+              <span style="width:1px;height:10px;background:rgba(245,242,239,.22)"></span><span style="width:1px;height:6px;background:rgba(245,242,239,.16)"></span><span style="width:1px;height:6px;background:rgba(245,242,239,.16)"></span><span style="width:1px;height:6px;background:rgba(245,242,239,.16)"></span><span style="width:1px;height:10px;background:rgba(245,242,239,.22)"></span><span style="width:1px;height:6px;background:rgba(245,242,239,.16)"></span><span style="width:1px;height:6px;background:rgba(245,242,239,.16)"></span><span style="width:1px;height:6px;background:rgba(245,242,239,.16)"></span><span style="width:1px;height:10px;background:rgba(245,242,239,.22)"></span>
+            </div>
+            <div style="position:absolute;top:0;width:2px;height:14px;background:#ec3013;transition:left 1s linear" style="{{ restIndicatorStyle }}"></div>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ restIdle }}" hint-placeholder-val="{{ false }}">
+        <div style="background:#1b1a18;border-top:1px solid rgba(245,242,239,.12);padding:15px 20px;display:flex;align-items:center;gap:9px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7d7979" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"></circle><path d="M12 9v4l2 2"></path><path d="M10 2h4"></path></svg>
+          <span style="font:600 10px 'Archivo';letter-spacing:.08em;text-transform:uppercase;color:#7d7979">Rest timer idle · log a set to start</span>
+        </div>
+      </sc-if>
+
+      <div style="display:flex;align-items:center;justify-content:center;padding:9px 0 11px;background:#131211"><div style="width:132px;height:5px;border-radius:3px;background:rgba(245,242,239,.28)"></div></div>
+      </div>
+      </sc-if>
+
+      <!-- ══ keypad overlay ══ -->
+      <sc-if value="{{ kpOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;justify-content:flex-end">
+          <div onClick="{{ onKpCancel }}" style="position:absolute;inset:0;background:rgba(5,5,5,.5)"></div>
+          <div style="position:relative;background:#1b1a18;border-top:2px solid #ec3013;padding:16px 20px 20px;animation:sheetup .18s ease-out">
+            <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:14px">
+              <span style="font:600 9.5px 'Archivo';letter-spacing:.1em;text-transform:uppercase;color:#9b9797">{{ kpLabel }}</span>
+              <span style="font:800 40px/0.9 'Archivo';font-variant-numeric:tabular-nums;color:#f5f2ef">{{ kpDisplay }}</span>
+            </div>
+            <div style="display:flex;gap:8px;margin-bottom:12px">
+              <div onClick="{{ onKpStepDown }}" style="cursor:pointer;flex:1;height:38px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(245,242,239,.2);font:800 12px 'Archivo';color:#9b9797" style-hover="border-color:#ec3013;color:#ec3013">{{ kpStepDownLabel }}</div>
+              <div onClick="{{ onKpStepUp }}" style="cursor:pointer;flex:1;height:38px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(245,242,239,.2);font:800 12px 'Archivo';color:#9b9797" style-hover="border-color:#ec3013;color:#ec3013">{{ kpStepUpLabel }}</div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+              <sc-for list="{{ kpKeys }}" as="key" hint-placeholder-count="12">
+                <div onClick="{{ key.on }}" style="{{ key.style }}">{{ key.k }}</div>
+              </sc-for>
+            </div>
+            <div onClick="{{ onKpDone }}" style="cursor:pointer;margin-top:10px;height:52px;background:#ec3013;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 20px" style-hover="background:#ff563c">
+              <span style="font:800 14px 'Archivo';letter-spacing:.06em;text-transform:uppercase">Done</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ══ exercise menu ══ -->
+      <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;z-index:30;display:flex;flex-direction:column;justify-content:flex-end">
+          <div onClick="{{ onMenuClose }}" style="position:absolute;inset:0;background:rgba(5,5,5,.5)"></div>
+          <div style="position:relative;background:#1b1a18;border-top:2px solid #ec3013;padding:18px 20px 20px;animation:sheetup .18s ease-out">
+            <div style="font:800 15px 'Archivo';margin-bottom:14px">{{ menuName }}</div>
+            <div onClick="{{ onMenuWarmup }}" style="cursor:pointer;display:flex;align-items:center;gap:11px;padding:13px 0;border-top:1px solid rgba(245,242,239,.12);font:600 14px 'Archivo';color:#f5f2ef">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9b9797" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.3 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>Add warm-up set
+            </div>
+            <div onClick="{{ onMenuRemove }}" style="cursor:pointer;display:flex;align-items:center;gap:11px;padding:13px 0;border-top:1px solid rgba(245,242,239,.12);font:600 14px 'Archivo';color:#ec3013">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M8 6V4h8v2"></path><path d="M19 6l-1 14H6L5 6"></path></svg>Remove exercise
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ══ add-exercise sheet ══ -->
+      <sc-if value="{{ addOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;z-index:30;background:#131211;display:flex;flex-direction:column;animation:sheetup .18s ease-out">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px 14px;border-bottom:2px solid rgba(245,242,239,.2)">
+            <span style="font:800 15px 'Archivo';letter-spacing:.04em;text-transform:uppercase">Add exercise</span>
+            <div onClick="{{ onAddClose }}" style="cursor:pointer;color:#9b9797" style-hover="color:#ec3013"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18"></path><path d="M6 6l12 12"></path></svg></div>
+          </div>
+          <div style="padding:14px 20px">
+            <input value="{{ addSearch }}" onChange="{{ onAddSearch }}" placeholder="Search exercises" style="width:100%;background:#1b1a18;border:1px solid rgba(245,242,239,.18);color:#f5f2ef;font:400 15px 'Archivo';padding:11px 13px;outline:none" />
+          </div>
+          <div class="noscb" style="flex:1;overflow-y:auto;padding:0 20px 20px;scrollbar-width:none">
+            <sc-for list="{{ addList }}" as="cand" hint-placeholder-count="6">
+              <div onClick="{{ cand.on }}" style="cursor:pointer;display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid rgba(245,242,239,.1)" style-hover="background:rgba(245,242,239,.03)">
+                <div>
+                  <div style="font:700 15px 'Archivo'">{{ cand.n }}</div>
+                  <div style="font:400 10px 'Archivo';letter-spacing:.06em;text-transform:uppercase;color:#9b9797;margin-top:2px">{{ cand.sub }}</div>
+                </div>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ec3013" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ══ discard dialog ══ -->
+      <sc-if value="{{ discardOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;z-index:40;display:grid;place-items:center;padding:26px;background:rgba(5,5,5,.6)">
+          <div style="width:100%;background:#1b1a18;border-top:2px solid #ec3013;padding:22px;animation:sheetup .18s ease-out">
+            <div style="font:800 20px 'Archivo';margin-bottom:8px">Discard this workout?</div>
+            <div style="font:400 13px/1.5 'Archivo';color:#9b9797;margin-bottom:22px">All sets logged in this session will be deleted. This can't be undone.</div>
+            <div style="display:flex;gap:10px">
+              <div onClick="{{ onDiscardCancel }}" style="cursor:pointer;flex:1;height:46px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(245,242,239,.24);font:800 12px 'Archivo';letter-spacing:.06em;text-transform:uppercase;color:#f5f2ef">Cancel</div>
+              <div onClick="{{ onDiscardConfirm }}" style="cursor:pointer;flex:1;height:46px;display:flex;align-items:center;justify-content:center;background:#ec3013;color:#fff;font:800 12px 'Archivo';letter-spacing:.06em;text-transform:uppercase" style-hover="background:#ff563c">Discard</div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- ══ finish summary ══ -->
+      <sc-if value="{{ finishOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;inset:0;z-index:40;background:#131211;display:flex;flex-direction:column;animation:sheetup .2s ease-out">
+          <div style="padding:26px 22px 0">
+            <div style="font:800 10px 'Archivo';letter-spacing:.14em;text-transform:uppercase;color:#ec3013">Workout complete</div>
+            <div style="font:800 30px/1.05 'Archivo';letter-spacing:-.02em;margin-top:8px">{{ workoutName }}</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;margin:22px 22px 0;border-top:2px solid rgba(245,242,239,.2);border-left:2px solid rgba(245,242,239,.2)">
+            <div style="border-right:2px solid rgba(245,242,239,.2);border-bottom:2px solid rgba(245,242,239,.2);padding:16px"><div style="font:600 9.5px 'Archivo';letter-spacing:.1em;text-transform:uppercase;color:#7d7979">Duration</div><div style="font:800 26px 'Archivo';font-variant-numeric:tabular-nums;margin-top:5px">{{ finDur }}</div></div>
+            <div style="border-right:2px solid rgba(245,242,239,.2);border-bottom:2px solid rgba(245,242,239,.2);padding:16px"><div style="font:600 9.5px 'Archivo';letter-spacing:.1em;text-transform:uppercase;color:#7d7979">Volume</div><div style="font:800 26px 'Archivo';font-variant-numeric:tabular-nums;margin-top:5px">{{ finVol }}</div></div>
+            <div style="border-right:2px solid rgba(245,242,239,.2);border-bottom:2px solid rgba(245,242,239,.2);padding:16px"><div style="font:600 9.5px 'Archivo';letter-spacing:.1em;text-transform:uppercase;color:#7d7979">Sets</div><div style="font:800 26px 'Archivo';font-variant-numeric:tabular-nums;margin-top:5px">{{ finSets }}</div></div>
+            <div style="border-right:2px solid rgba(245,242,239,.2);border-bottom:2px solid rgba(245,242,239,.2);padding:16px"><div style="font:600 9.5px 'Archivo';letter-spacing:.1em;text-transform:uppercase;color:#7d7979">Records</div><div style="font:800 26px 'Archivo';font-variant-numeric:tabular-nums;margin-top:5px;color:#ec3013">{{ finPRCount }}</div></div>
+          </div>
+          <div style="padding:20px 22px 0;flex:1;overflow-y:auto" class="noscb">
+            <sc-if value="{{ hasPRs }}" hint-placeholder-val="{{ false }}">
+              <div style="font:600 9.5px 'Archivo';letter-spacing:.1em;text-transform:uppercase;color:#7d7979;margin-bottom:10px">New records</div>
+              <sc-for list="{{ finPRs }}" as="pr" hint-placeholder-count="1">
+                <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid rgba(245,242,239,.1)">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="#ec3013"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"></path></svg>
+                  <span style="font:700 14px 'Archivo';flex:1">{{ pr.name }}</span>
+                  <span style="font:600 12px 'Archivo';color:#9b9797;font-variant-numeric:tabular-nums">{{ pr.detail }}</span>
+                </div>
+              </sc-for>
+            </sc-if>
+          </div>
+          <div style="padding:0 22px 22px;display:flex;gap:10px">
+            <div onClick="{{ onFinishBack }}" style="cursor:pointer;flex:0 0 auto;height:52px;padding:0 20px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(245,242,239,.24);font:800 12px 'Archivo';letter-spacing:.06em;text-transform:uppercase;color:#f5f2ef">Back</div>
+            <div onClick="{{ onFinishConfirm }}" style="cursor:pointer;flex:1;height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:#ec3013;color:#fff" style-hover="background:#ff563c">
+              <span style="font:800 13px 'Archivo';letter-spacing:.06em;text-transform:uppercase">Save workout</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;unit&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;kg&quot;,&quot;lb&quot;],&quot;default&quot;:&quot;kg&quot;,&quot;tsType&quot;:&quot;'kg'|'lb'&quot;,&quot;section&quot;:&quot;Behavior&quot;},&quot;defaultRest&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:90,&quot;min&quot;:30,&quot;max&quot;:240,&quot;step&quot;:15,&quot;unit&quot;:&quot;s&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Behavior&quot;},&quot;showVolumeBars&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Data-viz&quot;}}">
+class Component extends DCLogic {
+  buildInitial() {
+    const now = Date.now();
+    return {
+      startedAt: now - (32 * 60 + 41) * 1000,
+      now,
+      restEndsAt: now + 84000,
+      restTotal: 90,
+      editing: null,
+      keypadBuf: '',
+      overlay: null,
+      menuFor: null,
+      addSearch: '',
+      unit: 'kg',
+      mode: 'instrument',
+      focusExId: 1,
+      screen: 'home',
+      homeTab: 'workout',
+      sessionLive: true,
+      workoutName: 'Push Day',
+      nextId: 900,
+      exercises: [
+        { id: 1, name: 'Bench Press', muscle: 'Chest', equip: 'Barbell', rest: 90, prevBest: 100,
+          trend: '0,20 15,17 30,18 45,11 60,9 74,4', spark: '#ec3013', delta: '+2.5%', up: true, prev: '80×8 · 80×8 · 80×7',
+          sets: [
+            { id: 11, w: 40, r: 10, type: 'warmup', done: true },
+            { id: 12, w: 80, r: 8, type: 'normal', done: true },
+            { id: 13, w: 80, r: 8, type: 'normal', done: true },
+            { id: 14, w: 80, r: 8, type: 'normal', done: false },
+          ] },
+        { id: 2, name: 'Incline DB Press', muscle: 'Chest', equip: 'Dumbbell', rest: 90, prevBest: 240,
+          trend: '0,14 15,15 30,11 45,13 60,10 74,12', spark: '#9b9797', delta: '0%', up: false, prev: '30×10 · 30×9',
+          sets: [
+            { id: 21, w: 30, r: 10, type: 'normal', done: false },
+            { id: 22, w: 30, r: 10, type: 'normal', done: false },
+          ] },
+      ],
+    };
+  }
+  state = this.buildInitial();
+
+  componentDidMount() { this._t = setInterval(() => this.setState({ now: Date.now() }), 1000); }
+  componentWillUnmount() { clearInterval(this._t); }
+
+  unit() { return this.props.unit ?? this.state.unit; }
+  trim(n) { return Number.isInteger(n) ? String(n) : String(Math.round(n * 10) / 10); }
+  wToDisp(kg) { return this.unit() === 'lb' ? String(Math.round(kg * 2.20462)) : this.trim(kg); }
+  dispToKg(v) { return this.unit() === 'lb' ? v / 2.20462 : v; }
+  fmtMS(ms) { const t = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(t / 60) + ':' + String(t % 60).padStart(2, '0'); }
+  fmtHMS(ms) { const t = Math.max(0, Math.floor(ms / 1000)); const p = (x) => String(x).padStart(2, '0'); return p(Math.floor(t / 3600)) + ':' + p(Math.floor((t % 3600) / 60)) + ':' + p(t % 60); }
+  e1rm(w, r) { return w * (1 + r / 30); }
+
+  mutate(exId, fn) {
+    this.setState((st) => ({ exercises: st.exercises.map((e) => (e.id === exId ? fn(e) : e)) }));
+  }
+  logSet(exId, setId) {
+    this.setState((st) => ({
+      exercises: st.exercises.map((e) => e.id !== exId ? e : { ...e, sets: e.sets.map((s) => s.id === setId ? { ...s, done: !s.done } : s) }),
+    }), () => {
+      const e = this.state.exercises.find((x) => x.id === exId);
+      const s = e && e.sets.find((y) => y.id === setId);
+      if (s && s.done && s.type === 'normal') this.startRest(e.rest);
+    });
+  }
+  startRest(sec) { this.setState({ restEndsAt: Date.now() + sec * 1000, restTotal: sec }); }
+  restAdjust(d) { this.setState((st) => st.restEndsAt ? { restEndsAt: Math.max(Date.now(), st.restEndsAt + d * 1000) } : {}); }
+  restSkip() { this.setState({ restEndsAt: null }); }
+
+  openKeypad(exId, setId, field) {
+    const e = this.state.exercises.find((x) => x.id === exId);
+    const s = e.sets.find((y) => y.id === setId);
+    const init = field === 'weight' ? this.wToDisp(s.w) : String(s.r);
+    this.setState({ editing: { exId, setId, field }, keypadBuf: init === '0' ? '' : init });
+  }
+  kpDigit(d) { this.setState((st) => { let b = st.keypadBuf; if (d === '.' && b.includes('.')) return {}; if (b.replace('.', '').length >= 5) return {}; return { keypadBuf: b + d }; }); }
+  kpBack() { this.setState((st) => ({ keypadBuf: st.keypadBuf.slice(0, -1) })); }
+  kpStep(delta) { this.setState((st) => { const v = parseFloat(st.keypadBuf || '0') || 0; const nv = Math.max(0, Math.round((v + delta) * 100) / 100); return { keypadBuf: String(nv) }; }); }
+  kpDone() {
+    const ed = this.state.editing; if (!ed) return;
+    const v = parseFloat(this.state.keypadBuf || '0') || 0;
+    this.setState((st) => ({
+      exercises: st.exercises.map((e) => e.id !== ed.exId ? e : { ...e, sets: e.sets.map((s) => {
+        if (s.id !== ed.setId) return s;
+        if (ed.field === 'weight') return { ...s, w: Math.max(0, Math.round(this.dispToKg(v) * 100) / 100) };
+        return { ...s, r: Math.max(0, Math.round(v)) };
+      }) }),
+      editing: null, keypadBuf: '',
+    }));
+  }
+  kpCancel() { this.setState({ editing: null, keypadBuf: '' }); }
+
+  addSet(exId) {
+    this.setState((st) => {
+      const nid = st.nextId;
+      return { nextId: nid + 1, exercises: st.exercises.map((e) => {
+        if (e.id !== exId) return e;
+        const last = [...e.sets].reverse().find((s) => s.type === 'normal') || e.sets[e.sets.length - 1];
+        return { ...e, sets: [...e.sets, { id: nid, w: last ? last.w : 0, r: last ? last.r : 0, type: 'normal', done: false }] };
+      }) };
+    });
+  }
+  addWarmup(exId) {
+    this.setState((st) => {
+      const nid = st.nextId;
+      return { nextId: nid + 1, menuFor: null, exercises: st.exercises.map((e) => {
+        if (e.id !== exId) return e;
+        const first = e.sets.find((s) => s.type === 'normal') || e.sets[0];
+        const w = first ? Math.round(first.w * 0.5 / 2.5) * 2.5 : 20;
+        return { ...e, sets: [{ id: nid, w, r: 10, type: 'warmup', done: false }, ...e.sets] };
+      }) };
+    });
+  }
+  removeExercise(exId) { this.setState((st) => ({ exercises: st.exercises.filter((e) => e.id !== exId), menuFor: null })); }
+  stepField(exId, setId, field, delta) {
+    this.setState((st) => ({ exercises: st.exercises.map((e) => e.id !== exId ? e : { ...e, sets: e.sets.map((s) => {
+      if (s.id !== setId) return s;
+      if (field === 'weight') return { ...s, w: Math.max(0, Math.round((s.w + delta) * 100) / 100) };
+      return { ...s, r: Math.max(0, s.r + delta) };
+    }) }) }));
+  }
+  focusLog(exId) {
+    const ex = this.state.exercises.find((e) => e.id === exId);
+    if (!ex) return;
+    const pending = ex.sets.find((s) => !s.done);
+    if (!pending) { this.addSet(exId); return; }
+    this.setState((st) => ({ exercises: st.exercises.map((e) => e.id !== exId ? e : { ...e, sets: e.sets.map((s) => s.id === pending.id ? { ...s, done: true } : s) }) }), () => {
+      if (pending.type === 'normal') this.startRest(ex.rest);
+      const cur = this.state.exercises.find((e) => e.id === exId);
+      if (cur && !cur.sets.some((s) => !s.done)) {
+        const idx = this.state.exercises.findIndex((e) => e.id === exId);
+        const after = this.state.exercises.slice(idx + 1).find((e) => e.sets.some((s) => !s.done));
+        if (after) this.setState({ focusExId: after.id });
+      }
+    });
+  }
+  emptySession() {
+    const now = Date.now();
+    return { startedAt: now, now, restEndsAt: null, restTotal: 90, editing: null, keypadBuf: '', overlay: null, menuFor: null, addSearch: '', mode: 'instrument', focusExId: null, nextId: 900, exercises: [], workoutName: 'New Workout' };
+  }
+  startTemplate(name) { this.setState({ ...this.buildInitial(), screen: 'active', homeTab: 'workout', workoutName: name }); }
+
+  pickExercise(c) {
+    this.setState((st) => {
+      const id = st.nextId;
+      return { nextId: id + 2, overlay: null, addSearch: '', exercises: [...st.exercises, {
+        id, name: c.n, muscle: c.m, equip: c.e, rest: (this.props.defaultRest ?? 90), prevBest: 1e9,
+        trend: '0,13 15,13 30,13 45,13 60,13 74,13', spark: '#605d5d', delta: '—', up: false,
+        sets: [{ id: id + 1, w: 0, r: 0, type: 'normal', done: false }],
+      }] };
+    });
+  }
+
+  renderVals() {
+    const RED = '#ec3013', INK = '#f5f2ef', MUT = '#7d7979';
+    const unit = this.unit();
+    const showBars = (this.props.showVolumeBars ?? true);
+    const now = this.state.now;
+
+    // rest
+    let restRunning = false, restLabel = '', restFill = 0;
+    if (this.state.restEndsAt) {
+      restRunning = true;
+      const rem = Math.max(0, this.state.restEndsAt - now);
+      restLabel = this.fmtMS(rem);
+      restFill = this.state.restTotal > 0 ? Math.min(100, Math.max(0, (1 - rem / (this.state.restTotal * 1000)) * 100)) : 100;
+    }
+
+    // exercises
+    let totalVol = 0, totalSets = 0; const prs = [];
+    const exercises = this.state.exercises.map((ex) => {
+      let best = ex.prevBest;
+      const firstPending = ex.sets.find((s) => !s.done && s.type === 'normal');
+      const currentId = firstPending ? firstPending.id : (ex.sets.find((s) => !s.done) || {}).id;
+      let exHasPR = false; let prDetail = '';
+      const sets = ex.sets.map((s) => {
+        const isWarm = s.type === 'warmup';
+        const isCurrent = s.id === currentId;
+        let isPR = false;
+        if (!isWarm && s.done) {
+          const e = this.e1rm(s.w, s.r);
+          if (e > best + 0.01) { isPR = true; best = e; exHasPR = true; prDetail = this.wToDisp(s.w) + (unit === 'lb' ? ' lb × ' : ' kg × ') + s.r; }
+          totalVol += s.w * s.r; totalSets += 1;
+        }
+        const numColor = isWarm ? 'rgba(245,242,239,.72)' : (s.done || isCurrent) ? INK : 'rgba(245,242,239,.5)';
+        const rowStyle = 'position:relative;min-height:' + (isCurrent ? '48px' : '46px') + ';border-bottom:1px solid rgba(245,242,239,.09);display:flex;align-items:center' + (isCurrent ? ';box-shadow:inset 3px 0 0 ' + RED + ';padding-left:5px;margin-left:-5px' : '');
+        let barStyle = 'display:none';
+        if (showBars && !isWarm && (s.done || isCurrent)) {
+          const wpct = Math.min(100, (s.w * s.r) / 800 * 100);
+          barStyle = 'position:absolute;left:0;top:0;bottom:1px;width:' + wpct.toFixed(1) + '%;background:rgba(236,48,19,' + (s.done ? '.09' : '.045') + ')';
+        }
+        const setStyle = isWarm
+          ? "font:700 11px 'Archivo';color:#9b9797;border:1px solid rgba(245,242,239,.22);width:20px;text-align:center;padding:1px 0;justify-self:start"
+          : "font:700 13px 'Archivo';color:#9b9797;font-variant-numeric:tabular-nums;padding-left:5px";
+        const numStyle = "cursor:pointer;font:800 19px 'Archivo';font-variant-numeric:tabular-nums;color:" + numColor;
+        const checkStyle = 'cursor:pointer;width:24px;height:24px;display:flex;align-items:center;justify-content:center;' +
+          (s.done ? 'background:' + RED + ';color:#fff' : 'border:1.5px solid ' + (isCurrent ? RED : 'rgba(245,242,239,.28)') + ';color:' + (isCurrent ? RED : 'rgba(245,242,239,.4)'));
+        return {
+          key: 's' + s.id, setLabel: isWarm ? 'W' : String(ex.sets.filter((x, i) => x.type === 'normal' && ex.sets.indexOf(x) <= ex.sets.indexOf(s)).length),
+          wDisp: this.wToDisp(s.w), rDisp: String(s.r), unitLabel: unit, isPR,
+          rowStyle, barStyle, setStyle, numStyle, checkStyle,
+          onLog: () => this.logSet(ex.id, s.id),
+          onW: () => this.openKeypad(ex.id, s.id, 'weight'),
+          onR: () => this.openKeypad(ex.id, s.id, 'reps'),
+        };
+      });
+      if (exHasPR) prs.push({ name: ex.name, detail: prDetail });
+      return {
+        id: ex.id, name: ex.name, sub: ex.muscle + ' · ' + ex.equip, trend: ex.trend, sparkColor: ex.spark,
+        deltaLabel: 'e1RM ' + (ex.up ? '↗ ' : ex.delta === '—' ? '' : '→ ') + ex.delta,
+        deltaStyle: 'color:' + (ex.up ? RED : MUT),
+        sets,
+        onMenu: () => this.setState({ menuFor: ex.id }),
+        onAddSet: () => this.addSet(ex.id),
+      };
+    });
+
+    const goal = 3000;
+    const dispVol = unit === 'lb' ? Math.round(totalVol * 2.20462) : Math.round(totalVol);
+    const volLabel = dispVol.toLocaleString('en-US') + (unit === 'lb' ? ' lb' : ' kg');
+
+    // keypad
+    const ed = this.state.editing;
+    const decimal = ed && ed.field === 'weight';
+    const kpKeys = [];
+    const keyBase = "cursor:pointer;height:46px;display:flex;align-items:center;justify-content:center;font:700 20px 'Archivo';color:#f5f2ef;background:rgba(245,242,239,.05);font-variant-numeric:tabular-nums";
+    ['1', '2', '3', '4', '5', '6', '7', '8', '9'].forEach((k) => kpKeys.push({ k, on: () => this.kpDigit(k), style: keyBase }));
+    kpKeys.push(decimal ? { k: '.', on: () => this.kpDigit('.'), style: keyBase } : { k: '', on: () => {}, style: 'height:46px' });
+    kpKeys.push({ k: '0', on: () => this.kpDigit('0'), style: keyBase });
+    kpKeys.push({ k: '⌫', on: () => this.kpBack(), style: keyBase.replace("20px", "17px") });
+    const stepAmt = ed && ed.field === 'reps' ? 1 : (unit === 'lb' ? 5 : 2.5);
+
+    // add list
+    const cands = [
+      { n: 'Overhead Press', m: 'Shoulders', e: 'Barbell' }, { n: 'Cable Fly', m: 'Chest', e: 'Cable' },
+      { n: 'Dumbbell Fly', m: 'Chest', e: 'Dumbbell' }, { n: 'Triceps Pushdown', m: 'Triceps', e: 'Cable' },
+      { n: 'Dips', m: 'Chest', e: 'Bodyweight' }, { n: 'Lateral Raise', m: 'Shoulders', e: 'Dumbbell' },
+      { n: 'Close-Grip Bench', m: 'Triceps', e: 'Barbell' }, { n: 'Push-Up', m: 'Chest', e: 'Bodyweight' },
+      { n: 'Skull Crusher', m: 'Triceps', e: 'Barbell' }, { n: 'Incline Bench Press', m: 'Chest', e: 'Barbell' },
+    ];
+    const q = (this.state.addSearch || '').trim().toLowerCase();
+    const addList = cands.filter((c) => !q || c.n.toLowerCase().includes(q) || c.m.toLowerCase().includes(q))
+      .map((c) => ({ n: c.n, sub: c.m + ' · ' + c.e, on: () => this.pickExercise(c) }));
+
+    // ── mode toggle ──
+    const mode = this.state.mode;
+    const isFocus = mode === 'focus';
+    const isInstrument = !isFocus;
+    const tabBase = "cursor:pointer;flex:1;text-align:center;padding:10px;font:800 10px 'Archivo';letter-spacing:.08em;text-transform:uppercase;margin-bottom:-2px;border-bottom:2px solid ";
+    const tabInstStyle = tabBase + (isInstrument ? RED + ';color:#f5f2ef' : 'transparent;color:#7d7979');
+    const tabFocusStyle = tabBase + (isFocus ? RED + ';color:#f5f2ef' : 'transparent;color:#7d7979');
+
+    // ── focus mode ──
+    const rawExs = this.state.exercises;
+    let fxId = this.state.focusExId;
+    if (!rawExs.some((e) => e.id === fxId)) fxId = rawExs.length ? rawExs[0].id : null;
+    const rawFex = rawExs.find((e) => e.id === fxId) || rawExs[0];
+    let fx = null;
+    if (rawFex) {
+      const norm = rawFex.sets.filter((s) => s.type === 'normal');
+      const pending = rawFex.sets.find((s) => !s.done);
+      const target = pending || rawFex.sets[rawFex.sets.length - 1];
+      const complete = !pending;
+      let setLabel;
+      if (target && target.type === 'warmup') setLabel = 'Warm-up set';
+      else { const i = norm.indexOf(target) + 1; setLabel = complete ? ('Complete · ' + norm.length + ' sets') : ('Set ' + (i || 1) + ' / ' + norm.length); }
+      const setSegs = norm.map((s) => {
+        const isCur = target && s.id === target.id && !complete;
+        const bg = s.done ? RED : (isCur ? RED : 'rgba(245,242,239,.16)');
+        const ring = isCur ? ';box-shadow:0 0 0 1.5px #131211,0 0 0 3px ' + RED : '';
+        return { key: 'ss' + s.id, style: 'flex:1;height:6px;background:' + bg + ring };
+      });
+      const exSegs = rawExs.map((e) => {
+        const allDone = e.sets.length > 0 && e.sets.every((s) => s.done);
+        return { key: 'es' + e.id, style: 'flex:1;height:3px;background:' + (allDone || e.id === fxId ? RED : 'rgba(245,242,239,.16)') };
+      });
+      const fIdx = rawExs.findIndex((e) => e.id === fxId);
+      const stepKg = unit === 'lb' ? 5 / 2.20462 : 2.5;
+      fx = {
+        exProgress: (fIdx + 1) + '/' + rawExs.length, exSegs,
+        kicker: rawFex.muscle + ' · ' + rawFex.equip, name: rawFex.name,
+        setLabel, setSegs,
+        wDisp: target ? this.wToDisp(target.w) : '0', rDisp: target ? String(target.r) : '0', unit,
+        lastLabel: rawFex.prev ? ('Last · ' + rawFex.prev) : 'No previous data',
+        logLabel: complete ? 'Add set' : (target && target.type === 'warmup' ? 'Log warm-up' : 'Log set'),
+        onWTap: () => target && this.openKeypad(fxId, target.id, 'weight'),
+        onRTap: () => target && this.openKeypad(fxId, target.id, 'reps'),
+        onWMinus: () => target && this.stepField(fxId, target.id, 'weight', -stepKg),
+        onWPlus: () => target && this.stepField(fxId, target.id, 'weight', stepKg),
+        onRMinus: () => target && this.stepField(fxId, target.id, 'reps', -1),
+        onRPlus: () => target && this.stepField(fxId, target.id, 'reps', 1),
+        onLog: () => this.focusLog(fxId),
+        rail: rawExs.map((e) => ({ key: 'r' + e.id, name: e.name, on: () => this.setState({ focusExId: e.id }),
+          style: "cursor:pointer;white-space:nowrap;padding-bottom:3px;font:" + (e.id === fxId ? '800' : '600') + " 12px 'Archivo';" + (e.id === fxId ? "border-bottom:2px solid " + RED + ";color:#f5f2ef" : "color:#7d7979") })),
+      };
+    }
+
+    // ── home ──
+    const now2 = new Date();
+    const todayLabel = now2.toLocaleDateString('en-US', { weekday: 'long' }) + ' · ' + now2.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const screen = this.state.screen;
+    const homeTab = this.state.homeTab;
+    const mins = Math.max(1, Math.round((now - this.state.startedAt) / 60000));
+    const resumeMeta = this.state.exercises.length + ' exercises · started ' + mins + ' min ago';
+    const stubMap = { history: 'History', exercises: 'Exercises', stats: 'Stats', more: 'More' };
+    const navBase = 'cursor:pointer;flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:11px 0 9px;';
+    const tabColor = (n) => navBase + 'color:' + (homeTab === n ? RED : '#7d7979');
+    const templates = [
+      { key: 'push', name: 'Push Day', meta: '5 exercises · Chest · Shoulders · Triceps', on: () => this.startTemplate('Push Day') },
+      { key: 'pull', name: 'Pull Day', meta: '6 exercises · Back · Biceps', on: () => this.startTemplate('Pull Day') },
+      { key: 'legs', name: 'Leg Day', meta: '5 exercises · Quads · Hamstrings · Calves', on: () => this.startTemplate('Leg Day') },
+    ];
+
+    return {
+      elapsedLabel: this.fmtHMS(now - this.state.startedAt),
+      volLabel, volBarStyle: 'width:' + Math.min(100, totalVol / goal * 100).toFixed(1) + '%',
+      exercises,
+      isInstrument, isFocus, tabInstStyle, tabFocusStyle, fx,
+      onModeInstrument: () => this.setState({ mode: 'instrument' }),
+      onModeFocus: () => this.setState({ mode: 'focus' }),
+      screen, isHomeScreen: screen === 'home', isActiveScreen: screen === 'active',
+      workoutName: this.state.workoutName, todayLabel, resumeMeta,
+      sessionLive: this.state.sessionLive, noSession: !this.state.sessionLive,
+      isHomeTabWorkout: homeTab === 'workout', isHomeTabStub: homeTab !== 'workout', stubLabel: stubMap[homeTab] || '',
+      tabWorkoutStyle: tabColor('workout'), tabHistoryStyle: tabColor('history'), tabExercisesStyle: tabColor('exercises'), tabStatsStyle: tabColor('stats'), tabMoreStyle: tabColor('more'),
+      onTabWorkout: () => this.setState({ homeTab: 'workout' }), onTabHistory: () => this.setState({ homeTab: 'history' }), onTabExercises: () => this.setState({ homeTab: 'exercises' }), onTabStats: () => this.setState({ homeTab: 'stats' }), onTabMore: () => this.setState({ homeTab: 'more' }),
+      templates,
+      onResume: () => this.setState({ screen: 'active' }),
+      onStartEmpty: () => this.setState({ ...this.emptySession(), screen: 'active', sessionLive: true }),
+      onStartHistory: () => this.startTemplate('Push Day'),
+      onStartProgram: () => this.startTemplate('Push Day'),
+      onMinimize: () => this.setState({ screen: 'home', homeTab: 'workout' }),
+      restRunning, restIdle: !restRunning, restLabel,
+      restFillStyle: 'width:' + restFill.toFixed(1) + '%', restIndicatorStyle: 'left:' + restFill.toFixed(1) + '%',
+      onRestMinus: () => this.restAdjust(-15), onRestPlus: () => this.restAdjust(15), onRestSkip: () => this.restSkip(),
+      onDiscard: () => this.setState({ overlay: 'discard' }), onFinish: () => this.setState({ overlay: 'finish' }),
+      onAddExercise: () => this.setState({ overlay: 'add', addSearch: '' }),
+      // keypad
+      kpOpen: !!ed, kpLabel: ed ? (ed.field === 'reps' ? 'Reps' : 'Weight · ' + unit) : '',
+      kpDisplay: this.state.keypadBuf || '0', kpKeys,
+      kpStepDownLabel: '−' + stepAmt, kpStepUpLabel: '+' + stepAmt,
+      onKpStepDown: () => this.kpStep(-stepAmt), onKpStepUp: () => this.kpStep(stepAmt),
+      onKpDone: () => this.kpDone(), onKpCancel: () => this.kpCancel(),
+      // menu
+      menuOpen: this.state.menuFor != null,
+      menuName: (this.state.exercises.find((e) => e.id === this.state.menuFor) || {}).name || '',
+      onMenuClose: () => this.setState({ menuFor: null }),
+      onMenuWarmup: () => this.addWarmup(this.state.menuFor),
+      onMenuRemove: () => this.removeExercise(this.state.menuFor),
+      // add
+      addOpen: this.state.overlay === 'add', addSearch: this.state.addSearch,
+      onAddSearch: (e) => this.setState({ addSearch: e.target.value }),
+      onAddClose: () => this.setState({ overlay: null }), addList,
+      // discard
+      discardOpen: this.state.overlay === 'discard',
+      onDiscardCancel: () => this.setState({ overlay: null }),
+      onDiscardConfirm: () => this.setState({ ...this.emptySession(), screen: 'home', sessionLive: false, homeTab: 'workout' }),
+      // finish
+      finishOpen: this.state.overlay === 'finish',
+      finDur: this.fmtHMS(now - this.state.startedAt), finVol: volLabel, finSets: String(totalSets),
+      finPRCount: String(prs.length), hasPRs: prs.length > 0, finPRs: prs,
+      onFinishBack: () => this.setState({ overlay: null }),
+      onFinishConfirm: () => this.setState({ ...this.emptySession(), screen: 'home', sessionLive: false, homeTab: 'workout' }),
+    };
+  }
+}
+</script>
+</body>
+</html>

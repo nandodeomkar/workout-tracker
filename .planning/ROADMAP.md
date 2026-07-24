@@ -262,6 +262,27 @@ Plans:
 - [x] 06-07-PLAN.md — Per-lift progression storage model: program_exercise_progress table (program_id, exercise_id → working_weight_kg + consecutive_fails) + additive migration 0005 + migration-safety test (PROG-02)
 - [x] 06-08-PLAN.md — Per-lift shared linear progression: applyProgressionAndAdvance reads/writes per-lift state + linear day-start prefill (prescribe sets from the lift's progressed weight) so a Day-A Squat bump reaches Day B (PROG-02)
 
+### Phase 06.1: UI Redesign — Active Workout (Modernist) (INSERTED)
+
+**Goal:** Rebuild the active-workout logging screen to the "Modernist" visual language from the Claude Design handoff bundle, and add a two-mode (Instrument / Focus) logging experience — without regressing any Phase-2/3/6 logging behavior (crash-safe writes, rest timer, calculators, program progression).
+**Mode:** ui
+**Depends on:** Phase 6
+**Requirements**: UI-01 (dark-first, zero-paywall UI), LOG-01/LOG-02/LOG-03 (fast crash-safe logging + rest timer — preserved), plus new REDESIGN-01..04 (see 06.1-CONTEXT.md)
+**UI hint**: yes
+
+**Success Criteria** (what must be TRUE):
+
+  1. The global theme (`theme.ts`) carries the Modernist tokens — near-black ground `#131211`, red accent `#ec3013`, Archivo font (400/600/800), zero border-radius, 2px section dividers — and the whole app inherits the new palette/typography without visual breakage.
+  2. The active-workout screen offers an **Instrument** mode (dense multi-exercise list: session-volume strip, per-set checkmark-to-log, per-exercise sparkline + e1RM delta, PR flash) and a **Focus** mode (one set at a time: giant weight/reps steppers, set + exercise progress bars, horizontal exercise rail), toggled from a header tab.
+  3. Every Phase-2/3/6 logging behavior still works unchanged: crash-safe per-checkmark SQLite writes, auto-starting rest timer with −15/+15/Skip, add/replace/remove exercise, drag-reorder, plate/1RM/warm-up calculators, discard/finish, program progression on finish.
+  4. The redesigned rest gauge, numeric keypad sheet, exercise menu, add-exercise sheet, discard dialog, and finish summary match the handoff prototype's layout and interaction states.
+
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 06.1 to break down)
+
 ### Phase 7: Backup & Export
 
 **Goal**: Users' data is never at risk of permanent loss — it can be backed up to their own Google Drive and exported on demand, without ever blocking core logging.
