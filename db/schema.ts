@@ -10,7 +10,7 @@
 // Phase-1 exercises-table additions required by D-04/D-10/D-11: seed_id,
 // is_custom, archived.
 
-import { index, int, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, int, primaryKey, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 
 export const exercises = sqliteTable(
   "exercises",
@@ -158,6 +158,32 @@ export const metricDefinitions = sqliteTable("metric_definitions", {
   position: int().notNull(),
 });
 
+// Phase-6 gap-closure addition (migration 0005, Test-3 approved resolution
+// in 06-UAT.md): per-LIFT-per-PROGRAM linear progression state. Keyed by
+// (program_id, exercise_id) rather than per-template-exercise-row, so a lift
+// that appears on multiple program days (e.g. StrongLifts A/B Squat) shares
+// one working weight + fail streak instead of two independent ones. Plan
+// 06-08 makes this table the single source of truth for linear progression,
+// replacing template_exercises.target_weight_kg/consecutive_fails for that
+// purpose.
+export const programExerciseProgress = sqliteTable(
+  "program_exercise_progress",
+  {
+    programId: int("program_id")
+      .notNull()
+      .references(() => programs.id),
+    exerciseId: int("exercise_id")
+      .notNull()
+      .references(() => exercises.id),
+    // Nullable: null means "unset" (before any finish has anchored the
+    // lift). Canonical kg (never display-unit), matching sets.weight_kg and
+    // lib/progression.ts, which round to nearest 0.5 kg.
+    workingWeightKg: real("working_weight_kg"),
+    consecutiveFails: int("consecutive_fails").notNull().default(0),
+  },
+  (table) => [primaryKey({ columns: [table.programId, table.exerciseId] })],
+);
+
 export const settings = sqliteTable("settings", {
   key: text().primaryKey(),
   value: text().notNull(),
@@ -193,6 +219,8 @@ export type BodyMeasurement = typeof bodyMeasurements.$inferSelect;
 export type NewBodyMeasurement = typeof bodyMeasurements.$inferInsert;
 export type MetricDefinition = typeof metricDefinitions.$inferSelect;
 export type NewMetricDefinition = typeof metricDefinitions.$inferInsert;
+export type ProgramExerciseProgress = typeof programExerciseProgress.$inferSelect;
+export type NewProgramExerciseProgress = typeof programExerciseProgress.$inferInsert;
 export type Setting = typeof settings.$inferSelect;
 export type NewSetting = typeof settings.$inferInsert;
 export type BackupMeta = typeof backupMeta.$inferSelect;
