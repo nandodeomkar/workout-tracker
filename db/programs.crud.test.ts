@@ -626,6 +626,85 @@ describe('applyProgressionAndAdvance', () => {
     const rows = await db.select().from(programExerciseProgress);
     expect(rows).toHaveLength(0);
   });
+
+  // Task 2 (PROG-02 blocker close): starting a linear day must now PRESCRIBE
+  // sets at the lift's current per-lift working weight — mirrors %TM prefill.
+  it('prescribes linear straight-sets at day start from the per-lift working weight', async () => {
+    const { program, squat } = await setupTwoDayLinearProgram(100);
+    const workoutA = await startWorkoutFromProgramDay(db, program.id, 0);
+    await logSets(workoutA.id, 100, 5);
+    await finishWorkout(db, workoutA.id);
+    await applyProgressionAndAdvance(db, workoutA.id);
+
+    const progress = await getProgramExerciseProgress(db, program.id, squat.id);
+    expect(progress?.workingWeightKg).toBe(102.5);
+
+    // Re-starting Day A (same lift) must now prescribe the bumped weight.
+    const rerunWorkout = await startWorkoutFromProgramDay(db, program.id, 0);
+    const detail = await loadWorkoutDetail(db, rerunWorkout.id);
+    const sets = detail!.exercises[0]!.sets;
+    expect(sets).toHaveLength(5); // targetSets
+    for (const set of sets) {
+      expect(set.weightKg).toBe(102.5);
+      expect(set.reps).toBe(5); // targetReps
+      expect(set.type).toBe('normal');
+    }
+  });
+
+  // HEADLINE cross-day regression (the Test-3 blocker, defects A+B together):
+  // setupTwoDayLinearProgram's Day A and Day B share the SAME squat exercise.
+  it('HEADLINE: a Squat bump on Day A is prescribed on Day B (cross-day sharing)', async () => {
+    const { program } = await setupTwoDayLinearProgram(100);
+
+    const workoutA = await startWorkoutFromProgramDay(db, program.id, 0);
+    await logSets(workoutA.id, 100, 5);
+    await finishWorkout(db, workoutA.id);
+    await applyProgressionAndAdvance(db, workoutA.id);
+
+    const workoutB = await startWorkoutFromProgramDay(db, program.id, 1);
+    const detailB = await loadWorkoutDetail(db, workoutB.id);
+    const setsB = detailB!.exercises[0]!.sets;
+    expect(setsB).toHaveLength(5);
+    for (const set of setsB) {
+      expect(set.weightKg).toBe(102.5); // NOT 100, NOT unchanged
+    }
+  });
+
+  it('FIRST RUN: a fresh program with no prior finish inserts zero linear sets (falls back to last-performance/target)', async () => {
+    const { program } = await setupTwoDayLinearProgram(100);
+    const workout = await startWorkoutFromProgramDay(db, program.id, 0);
+    const detail = await loadWorkoutDetail(db, workout.id);
+    expect(detail!.exercises[0]!.sets).toHaveLength(0);
+  });
+
+  it('honors targetSets (a 1-set linear exercise prescribes exactly 1 set, not a fixed 5)', async () => {
+    const deadlift = await seedExercise(db, 'Barbell Deadlift', 'barbell-deadlift');
+    const template = await createTemplate(db, { name: 'Deadlift Day', position: 0 });
+    await setTemplateExercises(db, template.id, [
+      {
+        exerciseId: deadlift.id,
+        position: 0,
+        targetSets: 1,
+        targetReps: 5,
+        targetWeightKg: 100,
+        progression: JSON.stringify({ type: 'linear', incrementKg: 5 }),
+      },
+    ]);
+    const program = await createProgram(db, { name: 'Deadlift Only' });
+    await addProgramDay(db, { programId: program.id, position: 0, templateId: template.id });
+
+    const workout1 = await startWorkoutFromProgramDay(db, program.id, 0);
+    await logSets(workout1.id, 100, 5, 1);
+    await finishWorkout(db, workout1.id);
+    await applyProgressionAndAdvance(db, workout1.id);
+
+    const workout2 = await startWorkoutFromProgramDay(db, program.id, 0);
+    const detail2 = await loadWorkoutDetail(db, workout2.id);
+    const sets2 = detail2!.exercises[0]!.sets;
+    expect(sets2).toHaveLength(1);
+    expect(sets2[0]!.weightKg).toBe(105);
+    expect(sets2[0]!.reps).toBe(5);
+  });
 });
 
 describe('bundled program seed mapping (seed mapping)', () => {
