@@ -30,6 +30,7 @@ import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core';
 import {
   exercises,
   programDays,
+  programExerciseProgress,
   programs,
   programState,
   templateExercises,
@@ -38,6 +39,7 @@ import {
   workouts,
   type Program,
   type ProgramDay,
+  type ProgramExerciseProgress,
   type ProgramState,
   type TrainingMax,
   type Workout,
@@ -139,6 +141,21 @@ function assertValidTrainingMaxKg(maxKg: number): number {
     throw new Error(`Training max must be ${MAX_WEIGHT_KG}kg or less`);
   }
   return maxKg;
+}
+
+/**
+ * Rejects negative/NaN/non-finite/zero per-lift working weights and caps at
+ * a sane upper bound (T-08-01/ASVS V5) before any program_exercise_progress
+ * write — mirrors assertValidTrainingMaxKg's invariant.
+ */
+function assertValidWorkingWeightKg(weightKg: number): number {
+  if (!Number.isFinite(weightKg) || weightKg <= 0) {
+    throw new Error('Working weight must be a positive number');
+  }
+  if (weightKg > MAX_WEIGHT_KG) {
+    throw new Error(`Working weight must be ${MAX_WEIGHT_KG}kg or less`);
+  }
+  return weightKg;
 }
 
 /**
@@ -374,6 +391,10 @@ export async function deleteProgram(db: AnyDrizzleDb, programId: number): Promis
       .where(eq(workouts.programId, programId))
       .run();
     tx.delete(programState).where(eq(programState.programId, programId)).run();
+    // Plan 06-08: also detach the per-lift linear progression state
+    // (program_exercise_progress, Plan 06-07) — leaving no orphan rows
+    // behind for a deleted program.
+    tx.delete(programExerciseProgress).where(eq(programExerciseProgress.programId, programId)).run();
     tx.delete(programDays).where(eq(programDays.programId, programId)).run();
     tx.delete(programs).where(eq(programs.id, programId)).run();
   });
@@ -627,6 +648,24 @@ export async function getTrainingMax(db: AnyDrizzleDb, exerciseId: number): Prom
 }
 
 /**
+ * Plan 06-08: reads the per-LIFT-per-PROGRAM shared linear progression state
+ * (composite key program_id+exercise_id, added in Plan 06-07), or `undefined`
+ * if the lift has never had a finish anchor it (first run). Mirrors
+ * getTrainingMax's single-row-select shape.
+ */
+export async function getProgramExerciseProgress(
+  db: AnyDrizzleDb,
+  programId: number,
+  exerciseId: number,
+): Promise<ProgramExerciseProgress | undefined> {
+  const [row] = await db
+    .select()
+    .from(programExerciseProgress)
+    .where(and(eq(programExerciseProgress.programId, programId), eq(programExerciseProgress.exerciseId, exerciseId)));
+  return row;
+}
+
+/**
  * D-10/D-12: validated upsert of an exercise's training max, stamping
  * `updatedAt`. `training_maxes.exercise_id` is the primary key, so this never
  * crashes on a duplicate-key insert (mirrors db/settings.ts#setSetting's
@@ -845,7 +884,11 @@ export async function applyProgressionAndAdvance(db: AnyDrizzleDb, workoutId: nu
   }
 
   const outcomes: ProgressionOutcome[] = [];
-  const writes: Array<{ templateExerciseId: number; targetWeightKg: number; consecutiveFails: number }> = [];
+  // Plan 06-08: linear writes now go to program_exercise_progress, keyed
+  // per-LIFT (program_id, exercise_id) — never the per-row template_exercises
+  // columns (defect B: two program days sharing one lift must share one
+  // write, not progress independently).
+  const linearWrites: Array<{ exerciseId: number; workingWeightKg: number; consecutiveFails: number }> = [];
 
   for (const { templateExercise } of day.template.exercises) {
     if (!templateExercise.progression) {
@@ -877,25 +920,33 @@ export async function applyProgressionAndAdvance(db: AnyDrizzleDb, workoutId: nu
         type: s.type,
       }));
 
+      // Plan 06-08: read the per-lift shared state (may be undefined on the
+      // very first finish for this lift in this program).
+      const prior = await getProgramExerciseProgress(db, programId, templateExercise.exerciseId);
+
       // CR-01: anchor the linear "current weight" on the weight actually
       // logged this session (the lightest working set), falling back to the
-      // stored target only when there are no working sets. Bundled AND custom
-      // programs seed target_weight_kg = null, so keying off the template row
-      // alone (`targetWeightKg ?? 0`) progressed from 0 kg on the first finish
-      // — prescribing 2.5 kg regardless of the real lift. Success is evaluated
-      // against the stored target when present (subsequent finishes), else
-      // against the logged anchor so reps alone decide the first session.
+      // per-lift prior working weight, then the template's own target, only
+      // when there are no working sets. Bundled AND custom programs seed
+      // target_weight_kg = null, so keying off a stale/absent anchor alone
+      // progressed from 0 kg on the first finish — prescribing 2.5 kg
+      // regardless of the real lift. Success is evaluated against the prior
+      // per-lift working weight when present (subsequent finishes), else the
+      // template's stored target, else the logged anchor so reps alone
+      // decide the first session.
       const workingSets = setsForEval.filter((s) => s.type !== 'warmup');
       const loggedWeightKg =
         workingSets.length > 0
           ? Math.min(...workingSets.map((s) => s.weightKg))
-          : (templateExercise.targetWeightKg ?? 0);
-      const success = evaluateLinearSuccess(setsForEval, templateExercise.targetWeightKg ?? loggedWeightKg);
-      const result = resolveLinearProgression(loggedWeightKg, linearRule, success, templateExercise.consecutiveFails);
+          : (prior?.workingWeightKg ?? templateExercise.targetWeightKg ?? 0);
+      const successTarget = prior?.workingWeightKg ?? templateExercise.targetWeightKg ?? loggedWeightKg;
+      const success = evaluateLinearSuccess(setsForEval, successTarget);
+      const priorFails = prior?.consecutiveFails ?? 0;
+      const result = resolveLinearProgression(loggedWeightKg, linearRule, success, priorFails);
 
-      writes.push({
-        templateExerciseId: templateExercise.id,
-        targetWeightKg: result.nextWeightKg,
+      linearWrites.push({
+        exerciseId: templateExercise.exerciseId,
+        workingWeightKg: result.nextWeightKg,
         consecutiveFails: result.nextConsecutiveFails,
       });
 
@@ -977,10 +1028,22 @@ export async function applyProgressionAndAdvance(db: AnyDrizzleDb, workoutId: nu
   const tmUpdatedAt = new Date().toISOString();
 
   db.transaction((tx) => {
-    for (const write of writes) {
-      tx.update(templateExercises)
-        .set({ targetWeightKg: write.targetWeightKg, consecutiveFails: write.consecutiveFails })
-        .where(eq(templateExercises.id, write.templateExerciseId))
+    for (const write of linearWrites) {
+      // T-08-01: validate before writing — reject a non-finite/non-positive
+      // working weight and cap it, same discipline as assertValidTrainingMaxKg.
+      const validatedWorkingWeightKg = assertValidWorkingWeightKg(write.workingWeightKg);
+      const validatedConsecutiveFails = assertValidConsecutiveFails(write.consecutiveFails);
+      tx.insert(programExerciseProgress)
+        .values({
+          programId,
+          exerciseId: write.exerciseId,
+          workingWeightKg: validatedWorkingWeightKg,
+          consecutiveFails: validatedConsecutiveFails,
+        })
+        .onConflictDoUpdate({
+          target: [programExerciseProgress.programId, programExerciseProgress.exerciseId],
+          set: { workingWeightKg: validatedWorkingWeightKg, consecutiveFails: validatedConsecutiveFails },
+        })
         .run();
     }
     for (const bump of bumpedTrainingMaxes) {
