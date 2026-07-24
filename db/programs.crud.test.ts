@@ -498,6 +498,39 @@ describe('applyProgressionAndAdvance', () => {
     expect(progress?.consecutiveFails).toBe(1);
   });
 
+  // CR-01 (BLOCKER regression, gap-closure re-review): a first finish that
+  // logs NO working sets for a null-target linear lift (skipped exercise /
+  // warmup-only day) resolves the anchor to 0. The write path must SKIP that
+  // lift, never queue a 0 kg working weight — assertValidWorkingWeightKg(0)
+  // throws INSIDE the finish transaction, rolling it back so the pointer never
+  // advances and workouts.program_id never clears, then every re-entry
+  // re-throws and the program is permanently wedged.
+  it('CR-01: a finish with no working sets for a null-target linear lift advances without wedging (no 0 kg write)', async () => {
+    const { program, squat } = await setupTwoDayLinearProgram(null);
+    const workout = await startWorkoutFromProgramDay(db, program.id, 0);
+    // Deliberately log NOTHING for the lift (skipped), then finish.
+    await finishWorkout(db, workout.id);
+
+    // Must not throw — a 0 kg write would roll back the whole finish.
+    const result = await applyProgressionAndAdvance(db, workout.id);
+
+    expect(result.applied).toBe(true);
+    expect(result.outcomes).toHaveLength(0); // nothing to progress for an unlogged lift
+    expect(result.nextPosition).toBe(1); // pointer advanced (finish committed)
+
+    const active = await loadActiveProgram(db);
+    expect(active?.state.currentDayPosition).toBe(1);
+
+    const [reloaded] = await db.select().from(workouts).where(eq(workouts.id, workout.id));
+    expect(reloaded?.programId).toBeNull(); // origin marker cleared — not re-entrant
+
+    const rows = await db
+      .select()
+      .from(programExerciseProgress)
+      .where(eq(programExerciseProgress.programId, program.id));
+    expect(rows).toHaveLength(0); // no garbage 0 kg per-lift row
+  });
+
   it('a miss holds the weight and increments the fail counter', async () => {
     const { program, squat } = await setupTwoDayLinearProgram(100);
     const workout = await startWorkoutFromProgramDay(db, program.id, 0);
