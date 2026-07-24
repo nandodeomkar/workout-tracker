@@ -166,6 +166,75 @@ describe('D-08: migration 0001 -> 0002 (rest_seconds) preserves data (simulated 
   });
 });
 
+describe('PROG-02: migration 0004 -> 0005 (program_exercise_progress) preserves data (simulated app upgrade)', () => {
+  it('applies migration 0005 on top of a populated 0004 database without losing programs/program_days rows, adding program_exercise_progress', () => {
+    // 1. Open a fresh in-memory DB and apply only migrations 0000..0004
+    //    (the schema BEFORE 0005).
+    const sqlite = new Database(':memory:');
+    applyMigrationsUpTo(sqlite, 5);
+
+    // 2. Populate with a known, deterministic dataset via raw SQL
+    //    (program_exercise_progress does not exist on the physical DB yet
+    //    at this migration point). A throwaway templates row satisfies
+    //    program_days' template_id shape -- this project does not enforce
+    //    FK constraints at write time.
+    sqlite
+      .prepare('INSERT INTO templates (name, position) VALUES (?, ?)')
+      .run('Upgrade Test Template', 0);
+    sqlite.prepare('INSERT INTO programs (name, notes) VALUES (?, ?)').run('Upgrade Test Program', null);
+    sqlite
+      .prepare('INSERT INTO program_days (program_id, position, template_id) VALUES (?, ?, ?)')
+      .run(1, 0, 1);
+
+    const beforePrograms = sqlite.prepare('SELECT * FROM programs ORDER BY id').all() as Record<
+      string,
+      unknown
+    >[];
+    const beforeProgramDays = sqlite
+      .prepare('SELECT * FROM program_days ORDER BY id')
+      .all() as Record<string, unknown>[];
+    expect(beforePrograms.length).toBe(1);
+    expect(beforeProgramDays.length).toBe(1);
+
+    const tablesBefore = sqlite
+      .prepare("SELECT name FROM sqlite_master WHERE type='table'")
+      .all() as { name: string }[];
+    expect(tablesBefore.map((t) => t.name)).not.toContain('program_exercise_progress');
+
+    // 3. Apply the idx-5 migration in the journal (simulated app upgrade to 0005).
+    const journal = readJournal();
+    expect(journal.entries.length).toBeGreaterThanOrEqual(6);
+    const nextEntry = journal.entries[5]!;
+    applyMigrationEntry(sqlite, nextEntry);
+
+    // 4. Assert every previously-inserted programs/program_days row
+    //    survives unchanged.
+    const afterPrograms = sqlite.prepare('SELECT * FROM programs ORDER BY id').all() as Record<
+      string,
+      unknown
+    >[];
+    const afterProgramDays = sqlite
+      .prepare('SELECT * FROM program_days ORDER BY id')
+      .all() as Record<string, unknown>[];
+    expect(afterPrograms).toEqual(beforePrograms);
+    expect(afterProgramDays).toEqual(beforeProgramDays);
+
+    // 5. Assert the new program_exercise_progress table now exists
+    //    (additive-only, no ALTER on any existing table), with the
+    //    expected columns.
+    const columns = sqlite.prepare('PRAGMA table_info(program_exercise_progress)').all() as {
+      name: string;
+    }[];
+    const columnNames = columns.map((c) => c.name);
+    expect(columnNames).toContain('program_id');
+    expect(columnNames).toContain('exercise_id');
+    expect(columnNames).toContain('working_weight_kg');
+    expect(columnNames).toContain('consecutive_fails');
+
+    sqlite.close();
+  });
+});
+
 describe('MEAS-01: migration 0002 -> 0003 (metric_definitions) preserves data (simulated app upgrade)', () => {
   it('applies migration 0003 on top of a populated 0002 database without losing body_measurements rows, adding metric_definitions', () => {
     // 1. Open a fresh in-memory DB and apply only migrations 0000+0001+0002.
