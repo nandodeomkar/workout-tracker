@@ -12,7 +12,7 @@ import { eq } from 'drizzle-orm';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { createTestDb } from './test/fixture';
-import { exercises, programDays, programState, workouts } from './schema';
+import { exercises, programDays, programExerciseProgress, programState, workouts } from './schema';
 import { createTemplate, setTemplateExercises, startWorkoutFromTemplate } from './templates';
 import { finishWorkout, insertSet, loadWorkoutDetail } from './workouts';
 import {
@@ -20,6 +20,7 @@ import {
   applyProgressionAndAdvance,
   createProgram,
   deleteProgram,
+  getProgramExerciseProgress,
   getTrainingMax,
   listProgramTrainingMaxes,
   loadActiveProgram,
@@ -396,7 +397,7 @@ describe('applyProgressionAndAdvance', () => {
   }
 
   it('linear success bumps weight, resets fails, and advances the pointer', async () => {
-    const { program } = await setupTwoDayLinearProgram(100);
+    const { program, squat } = await setupTwoDayLinearProgram(100);
     const workout = await startWorkoutFromProgramDay(db, program.id, 0);
     await logSets(workout.id, 100, 5);
     await finishWorkout(db, workout.id);
@@ -413,13 +414,51 @@ describe('applyProgressionAndAdvance', () => {
     expect(result.wrapped).toBe(false);
     expect(result.totalDays).toBe(2);
 
-    const detail = await loadProgramDetail(db, program.id);
-    const updatedTe = detail!.days[0]!.template.exercises[0]!.templateExercise;
-    expect(updatedTe.targetWeightKg).toBe(102.5);
-    expect(updatedTe.consecutiveFails).toBe(0);
+    const progress = await getProgramExerciseProgress(db, program.id, squat.id);
+    expect(progress?.workingWeightKg).toBe(102.5);
+    expect(progress?.consecutiveFails).toBe(0);
 
     const active = await loadActiveProgram(db);
     expect(active?.state.currentDayPosition).toBe(1);
+  });
+
+  // Cross-day write sharing (defect B): setupTwoDayLinearProgram's Day A and
+  // Day B both use the SAME squat exercise. Finishing Day A success must
+  // write exactly ONE program_exercise_progress row keyed (program, squat) —
+  // never two independent per-day rows.
+  it('CROSS-DAY WRITE SHARING: finishing Day A success writes exactly one shared per-lift row', async () => {
+    const { program, squat } = await setupTwoDayLinearProgram(100);
+    const workout = await startWorkoutFromProgramDay(db, program.id, 0);
+    await logSets(workout.id, 100, 5);
+    await finishWorkout(db, workout.id);
+    await applyProgressionAndAdvance(db, workout.id);
+
+    const rows = await db
+      .select()
+      .from(programExerciseProgress)
+      .where(eq(programExerciseProgress.programId, program.id));
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.exerciseId).toBe(squat.id);
+    expect(rows[0]!.workingWeightKg).toBe(102.5);
+  });
+
+  it('deleteProgram removes the program_exercise_progress rows it wrote', async () => {
+    const { program, squat } = await setupTwoDayLinearProgram(100);
+    const workout = await startWorkoutFromProgramDay(db, program.id, 0);
+    await logSets(workout.id, 100, 5);
+    await finishWorkout(db, workout.id);
+    await applyProgressionAndAdvance(db, workout.id);
+
+    const before = await getProgramExerciseProgress(db, program.id, squat.id);
+    expect(before?.workingWeightKg).toBe(102.5);
+
+    await deleteProgram(db, program.id);
+
+    const rows = await db
+      .select()
+      .from(programExerciseProgress)
+      .where(eq(programExerciseProgress.programId, program.id));
+    expect(rows).toHaveLength(0);
   });
 
   // CR-01 regression: every program-creation path (bundled materialization,
@@ -427,7 +466,7 @@ describe('applyProgressionAndAdvance', () => {
   // must anchor on the weight actually logged this session, not 0 — otherwise
   // a 100 kg squat prescribes 2.5 kg next (0 + increment) and crawls up forever.
   it('CR-01: null target anchors on the logged weight so success prescribes lifted+increment (not 2.5)', async () => {
-    const { program } = await setupTwoDayLinearProgram(null);
+    const { program, squat } = await setupTwoDayLinearProgram(null);
     const workout = await startWorkoutFromProgramDay(db, program.id, 0);
     await logSets(workout.id, 100, 5);
     await finishWorkout(db, workout.id);
@@ -438,13 +477,12 @@ describe('applyProgressionAndAdvance', () => {
     expect(outcome.outcome).toBe('success');
     expect(outcome.nextWeightKg).toBe(102.5); // 100 + 2.5, never 0 + 2.5
 
-    const detail = await loadProgramDetail(db, program.id);
-    const updatedTe = detail!.days[0]!.template.exercises[0]!.templateExercise;
-    expect(updatedTe.targetWeightKg).toBe(102.5);
+    const progress = await getProgramExerciseProgress(db, program.id, squat.id);
+    expect(progress?.workingWeightKg).toBe(102.5);
   });
 
   it('CR-01: a missed-reps finish with null target holds at the logged weight, not 0', async () => {
-    const { program } = await setupTwoDayLinearProgram(null);
+    const { program, squat } = await setupTwoDayLinearProgram(null);
     const workout = await startWorkoutFromProgramDay(db, program.id, 0);
     await logSets(workout.id, 100, 3); // missed target reps (5)
     await finishWorkout(db, workout.id);
@@ -455,14 +493,13 @@ describe('applyProgressionAndAdvance', () => {
     expect(outcome.outcome).toBe('hold');
     expect(outcome.nextWeightKg).toBe(100); // holds at the logged weight, NOT 0
 
-    const detail = await loadProgramDetail(db, program.id);
-    const updatedTe = detail!.days[0]!.template.exercises[0]!.templateExercise;
-    expect(updatedTe.targetWeightKg).toBe(100);
-    expect(updatedTe.consecutiveFails).toBe(1);
+    const progress = await getProgramExerciseProgress(db, program.id, squat.id);
+    expect(progress?.workingWeightKg).toBe(100);
+    expect(progress?.consecutiveFails).toBe(1);
   });
 
   it('a miss holds the weight and increments the fail counter', async () => {
-    const { program } = await setupTwoDayLinearProgram(100);
+    const { program, squat } = await setupTwoDayLinearProgram(100);
     const workout = await startWorkoutFromProgramDay(db, program.id, 0);
     await logSets(workout.id, 100, 3); // missed target reps
     await finishWorkout(db, workout.id);
@@ -473,14 +510,13 @@ describe('applyProgressionAndAdvance', () => {
     expect(outcome.nextWeightKg).toBe(100);
     expect(outcome.consecutiveFails).toBe(1);
 
-    const detail = await loadProgramDetail(db, program.id);
-    const updatedTe = detail!.days[0]!.template.exercises[0]!.templateExercise;
-    expect(updatedTe.targetWeightKg).toBe(100);
-    expect(updatedTe.consecutiveFails).toBe(1);
+    const progress = await getProgramExerciseProgress(db, program.id, squat.id);
+    expect(progress?.workingWeightKg).toBe(100);
+    expect(progress?.consecutiveFails).toBe(1);
   });
 
   it('three consecutive misses trigger exactly one deload on the third', async () => {
-    const { program } = await setupTwoDayLinearProgram(100);
+    const { program, squat } = await setupTwoDayLinearProgram(100);
 
     let workout = await startWorkoutFromProgramDay(db, program.id, 0);
     await logSets(workout.id, 100, 3);
@@ -502,10 +538,9 @@ describe('applyProgressionAndAdvance', () => {
     expect(outcome.outcome).toBe('deload');
     expect(outcome.nextWeightKg).toBe(90);
 
-    const detail = await loadProgramDetail(db, program.id);
-    const updatedTe = detail!.days[0]!.template.exercises[0]!.templateExercise;
-    expect(updatedTe.targetWeightKg).toBe(90);
-    expect(updatedTe.consecutiveFails).toBe(0);
+    const progress = await getProgramExerciseProgress(db, program.id, squat.id);
+    expect(progress?.workingWeightKg).toBe(90);
+    expect(progress?.consecutiveFails).toBe(0);
   });
 
   it('wraps the pointer from the last day back to 0 with wrapped:true', async () => {
@@ -564,9 +599,32 @@ describe('applyProgressionAndAdvance', () => {
     expect(applied.applied).toBe(true);
     expect(applied.outcomes).toHaveLength(0);
 
-    const detail = await loadProgramDetail(db, program.id);
-    const te = detail!.days[0]!.template.exercises[0]!.templateExercise;
-    expect(te.targetWeightKg).toBe(100);
+    const progress = await getProgramExerciseProgress(db, program.id, squat.id);
+    expect(progress).toBeUndefined();
+  });
+
+  it('an ad-hoc finish (program_id null) writes nothing to program_exercise_progress', async () => {
+    const squat = await seedExercise(db, 'Barbell Squat', 'barbell-squat');
+    const template = await createTemplate(db, { name: 'Ad-hoc', position: 0 });
+    await setTemplateExercises(db, template.id, [
+      {
+        exerciseId: squat.id,
+        position: 0,
+        targetSets: 5,
+        targetReps: 5,
+        targetWeightKg: 100,
+        progression: JSON.stringify({ type: 'linear', incrementKg: 2.5 }),
+      },
+    ]);
+    const workout = await startWorkoutFromTemplate(db, template.id);
+    await logSets(workout.id, 100, 5);
+    await finishWorkout(db, workout.id);
+
+    const result = await applyProgressionAndAdvance(db, workout.id);
+    expect(result.applied).toBe(false);
+
+    const rows = await db.select().from(programExerciseProgress);
+    expect(rows).toHaveLength(0);
   });
 });
 
