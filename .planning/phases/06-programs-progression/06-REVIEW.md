@@ -1,141 +1,206 @@
 ---
 phase: 06-programs-progression
-reviewed: 2026-07-24T00:00:00Z
+reviewed: 2026-07-24T05:14:42Z
 depth: standard
-files_reviewed: 22
+files_reviewed: 4
 files_reviewed_list:
-  - lib/progression.ts
-  - lib/progression.test.ts
   - db/programs.ts
-  - db/programs.crud.test.ts
   - db/schema.ts
-  - db/templates.ts
-  - drizzle/0004_bent_moondragon.sql
-  - drizzle/meta/0004_snapshot.json
-  - drizzle/meta/_journal.json
-  - drizzle/migrations.js
-  - data/bundledPrograms/index.ts
-  - data/bundledPrograms/linear5x5.json
-  - data/bundledPrograms/percentWave.json
-  - app/_layout.tsx
-  - app/(tabs)/index.tsx
-  - app/(tabs)/settings.tsx
-  - app/active-workout/summary.tsx
-  - app/programs/_layout.tsx
-  - app/programs/index.tsx
-  - app/programs/[programId].tsx
-  - app/programs/training-maxes.tsx
-  - components/TemplateBuilderForm.tsx
+  - db/programs.crud.test.ts
+  - db/migrations.test.ts
 findings:
   critical: 1
   warning: 2
-  info: 2
-  total: 5
+  info: 1
+  total: 4
 status: issues_found
 ---
 
 # Phase 6: Code Review Report
 
-**Reviewed:** 2026-07-24
+**Reviewed:** 2026-07-24T05:14:42Z
 **Depth:** standard
-**Files Reviewed:** 22
+**Files Reviewed:** 4
 **Status:** issues_found
 
 ## Summary
 
-Reviewed the Programs & Progression phase: the pure progression math (`lib/progression.ts`), the transactional data layer (`db/programs.ts`), migration 0004, bundled program JSON, and the programs/summary UI.
+Gaps-only re-review of the Phase-06 Test-3 blocker fix (PROG-02): the new
+`program_exercise_progress` table (`db/schema.ts` + migration `0005`), the
+per-lift shared linear progression in `db/programs.ts`
+(`prefillLinearSets`, `getProgramExerciseProgress`, and the linear branch of
+`applyProgressionAndAdvance`), plus the CRUD/migration tests.
 
-The isolated, pure-function progression math in `lib/progression.ts` is correct and well-tested, and the transaction discipline / parameterized-query / parse-and-skip guards in `db/programs.ts` are solid. Migration 0004 is genuinely additive-safe (the `programs`/`program_days`/`program_state`/`training_maxes` tables are created in migration 0000; 0004 only adds one `NOT NULL DEFAULT 0` column plus two nullable columns).
+The cross-day sharing guarantee is implemented correctly: linear reads/writes
+are keyed on `(program_id, exercise_id)` via a composite-PK upsert, so a Squat
+bump on Day A carries to Day B (verified by the `HEADLINE` and
+`CROSS-DAY WRITE SHARING` tests). CR-01 anchoring on the logged weight is
+preserved for the success/hold happy paths, `deleteProgram` cleans up the new
+table, and the migration is additive-only.
 
-However, there is one **BLOCKER**: the linear-progression orchestration anchors the next prescribed weight on `template_exercises.target_weight_kg`, and **every** code path that creates a program (bundled materialization *and* the custom template builder) hard-codes that column to `null`. On the first finish the "current weight" is therefore read as `0`, and the flagship "Linear 5x5" program prescribes `2.5 kg` next — completely divorced from what the user actually lifted. This case is never covered by tests (all fixtures pre-seed `target_weight_kg = 100`), which is why it passed CI.
+However, the **write path lacks the defensive skip that the read path has**:
+when no valid working-weight anchor exists, `applyProgressionAndAdvance` pushes
+a `0` working weight into the transaction where `assertValidWorkingWeightKg`
+throws, aborting the entire finish and leaving the program pointer stuck. This
+is the notable regression relative to the `%TM` path, which skips gracefully.
+There is also a behavioral quirk where a hold/deload can move the shared
+working weight in the wrong direction when the logged weight differs from the
+prescription.
 
-Two WARNINGs cover a missing idempotency guard on the finish-time write path and a template-deletion integrity gap that desyncs the program pointer.
+## Structural Findings (fallow)
+
+No structural pre-pass (`<structural_findings>`) was provided for this review.
+
+## Narrative Findings (AI reviewer)
 
 ## Critical Issues
 
-### CR-01: Linear progression computes next weight from 0 — never from the weight actually lifted
+### CR-01: Linear finish with no positive anchor throws inside the transaction and permanently wedges the program pointer
 
-**File:** `db/programs.ts:880-882` (with `db/programs.ts:451`, `components/TemplateBuilderForm.tsx:446`)
+**File:** `db/programs.ts:1026-1040` (write path) vs. `db/programs.ts:656-660` (read-path guard it fails to mirror); throw at `db/programs.ts:1123`
 
 **Issue:**
-`applyProgressionAndAdvance` derives the working weight for the linear resolver from the template row:
+On a `linear` finish the branch computes an anchor and unconditionally queues a
+write:
 
 ```ts
-const currentWeightKg = templateExercise.targetWeightKg ?? 0;
-const success = evaluateLinearSuccess(setsForEval, currentWeightKg);
-const result = resolveLinearProgression(currentWeightKg, linearRule, success, templateExercise.consecutiveFails);
+const loggedWeightKg =
+  workingSets.length > 0
+    ? Math.min(...workingSets.map((s) => s.weightKg))
+    : (prior?.workingWeightKg ?? templateExercise.targetWeightKg ?? 0);
+// ...
+const result = resolveLinearProgression(loggedWeightKg, linearRule, success, priorFails);
+linearWrites.push({ exerciseId: ..., workingWeightKg: result.nextWeightKg, ... });
 ```
 
-`result.nextWeightKg` is then written back as the new `target_weight_kg`. This only works if `target_weight_kg` was seeded with a real starting weight. It never is:
+Consider the reachable first-run case: no `program_exercise_progress` row yet
+(`prior` undefined), `targetWeightKg == null` (the default for **every**
+bundled and custom program per the CR-01 comment), and the user finishes the
+day **without any working (non-warmup) set** — an empty workout, a warmup-only
+day, or a bodyweight lift logged at `0` kg. Then:
 
-- `materializeBundledProgram` writes every bundled row with `targetWeightKg: null` (`db/programs.ts:451`), and `data/bundledPrograms/linear5x5.json` carries no weight.
-- The custom builder writes `targetWeightKg: null` for every row (`components/TemplateBuilderForm.tsx:446`) and exposes **no UI at all** to set a target weight.
+- `workingSets` is empty → `loggedWeightKg = 0`
+- `evaluateLinearSuccess([], 0)` returns `false` (no working sets, `lib/progression.ts:114`)
+- `resolveLinearProgression(0, rule, false, 0)` holds → `nextWeightKg = 0`
+- `linearWrites.push({ workingWeightKg: 0 })`
 
-So on the first finish, `currentWeightKg = null ?? 0 = 0`. `evaluateLinearSuccess` compares each logged set to `0` (`weightKg >= 0` is always true), so success rides on reps alone; `resolveLinearProgression(0, {incrementKg: 2.5}, true, 0)` returns `nextWeightKg = 2.5`. The template now says the next squat target is **2.5 kg**, regardless of the 100 kg actually performed, and it crawls up by the increment (2.5 → 5 → 7.5…) forever, never tracking reality. A deload (`currentWeightKg * (1 - deloadPct)`) would deload from ~0. This breaks the core auto-progression promise for both bundled and custom linear programs. The bug is masked because every test fixture (`db/programs.crud.test.ts:369`, `:380`) pre-sets `targetWeightKg: initialWeightKg`.
+Inside `db.transaction`, `assertValidWorkingWeightKg(0)` throws
+`"Working weight must be a positive number"` (`db/programs.ts:151-159`,
+called at line `1123`). The throw rolls back the **whole** transaction: the
+pointer never advances, `workouts.program_id` is never cleared, and the
+exception propagates to the caller. Because `program_id` stays set, the WR-01
+idempotency guard never engages — re-entering `applyProgressionAndAdvance` for
+the same workout deterministically re-throws, so the workout can never be
+finished through this path and the program is stuck. In a mixed program this
+also suppresses the `%TM` training-max bumps that would otherwise fire on the
+same finish.
 
-**Fix:** Anchor the linear "current weight" on the weight the user actually logged this session (falling back to the template target only when there are no working sets), and/or seed `target_weight_kg` at start time. For example, derive the anchor from the just-finished working sets:
+The `%TM` prefill and the linear **prefill** (`db/programs.ts:658`) both
+already handle "no valid anchor" by skipping gracefully; only the linear
+**write** path pushes the bad value and lets the write-time guard throw. No
+test covers a program-linked linear finish with zero working sets, so this is
+untested.
+
+**Fix:** mirror the read-path guard — skip queuing the write and its outcome
+when the anchor is not a positive finite number, rather than pushing `0` and
+throwing at write time:
 
 ```ts
-const workingSets = setsForEval.filter((s) => s.type !== 'warmup');
-const loggedWeightKg = workingSets.length > 0
-  ? Math.min(...workingSets.map((s) => s.weightKg))
-  : (templateExercise.targetWeightKg ?? 0);
-const success = evaluateLinearSuccess(setsForEval, templateExercise.targetWeightKg ?? loggedWeightKg);
-const result = resolveLinearProgression(loggedWeightKg, linearRule, success, templateExercise.consecutiveFails);
+if (!Number.isFinite(loggedWeightKg) || loggedWeightKg <= 0) {
+  continue; // No valid anchor (first run, no working sets) — skip, never a 0-weight write.
+}
+const result = resolveLinearProgression(loggedWeightKg, linearRule, success, priorFails);
 ```
-
-Add a regression test that starts a bundled/custom linear program with `target_weight_kg = null`, logs 100 kg × 5, finishes, and asserts the stored next target is `102.5`, not `2.5`.
 
 ## Warnings
 
-### WR-01: `applyProgressionAndAdvance` is not idempotent — a summary remount double-advances the pointer and re-bumps training maxes
+### WR-01: Hold/deload anchors on the logged weight, so a miss can move the shared working weight in the wrong direction
 
-**File:** `db/programs.ts:816-981` (caller: `app/active-workout/summary.tsx:147-148`)
+**File:** `db/programs.ts:1026-1034`
 
-**Issue:** The finish-time write path keys entirely off `workout.programId != null`, which stays set after progression runs. Nothing records that a given workout has already been progressed. The only thing preventing a second application is that the summary screen's load effect happens to run once per mount:
+**Issue:**
+Success is evaluated against `successTarget` (the prior per-lift working
+weight), but the next weight is always resolved from `loggedWeightKg` (the
+lightest logged working set), regardless of outcome:
 
 ```ts
-if (detail.workout.programId != null) {
-  progressResult = await applyProgressionAndAdvance(db, workoutId);
+const successTarget = prior?.workingWeightKg ?? templateExercise.targetWeightKg ?? loggedWeightKg;
+const success = evaluateLinearSuccess(setsForEval, successTarget);
+// ...
+const result = resolveLinearProgression(loggedWeightKg, linearRule, success, priorFails);
 ```
 
-The effect's `cancelled` flag guards `setState`, not the in-flight DB write. If the summary component remounts for the same `workoutId` (React StrictMode double-invoke in dev, fast-refresh, or any re-navigation to `/active-workout/summary?workoutId=X`), `applyProgressionAndAdvance` runs again: it advances the pointer a second time and, on a cycle-wrapping finish, bumps every `%TM` training max again (e.g. squat 100 → 105 → 110). For an app whose core value is "never lose/corrupt data," a mutation this consequential should be structurally idempotent, not reliant on mount timing. The code comment at `summary.tsx:140-141` asserts "runs exactly once … never re-invoked" but nothing enforces it.
+When the user logs a weight different from the prescription, this decouples the
+"hold" from the weight they were supposed to be at:
 
-**Fix:** Make the operation idempotent. Cheapest option: guard on a marker so a re-run is a no-op — e.g. after applying, clear the origin marker (`workouts.program_id`/`program_day_position`) inside the same transaction, or add a `progression_applied_at` column and early-return `EMPTY_PROGRESS_RESULT` when it is already set. A stored flag is preferable to clearing `program_id` since history/reporting may want the origin.
+- **Miss at a heavier weight raises the working weight.** Prior working weight
+  `102.5`; user edits all sets to `110` and misses reps (`110x3`, target `5`).
+  `success` is `false`, but `loggedWeightKg = 110`, so the hold writes
+  `workingWeightKg = 110` — the shared per-lift weight is bumped **up to a
+  weight the user just failed**, and Day B will now prescribe `110`.
+- **Miss at a lighter weight lowers the working weight.** Prior `102.5`; user
+  logs `100` and misses. Hold writes `100`, silently ratcheting the shared
+  weight down below the established working weight.
 
-### WR-02: Deleting a template leaves dangling `program_days`, silently desyncing the program pointer and cycle-wrap math
+This is a consequence of the deliberate "anchor on the lightest working set"
+design (CR-01 comment), which is correct for the *first* finish (no prior). But
+once a prior working weight exists, StrongLifts-style linear progression should
+*hold at the prescribed working weight* on a miss, not adopt whatever was
+logged. Practical exposure is limited because the prefill now defaults sets to
+the prescribed weight, but any manual edit before a missed day triggers it.
 
-**File:** `db/templates.ts:263-278` (consumed by `db/programs.ts:241-246` and `:916`)
+**Fix:** on a non-success outcome, anchor on the prior working weight when one
+exists; only fall back to the logged weight on the first finish:
 
-**Issue:** `deleteTemplate` detaches `workouts.template_id` but never touches `program_days`, even though `program_days.template_id` references `templates.id`. SQLite here does not enforce FKs at write time (per the module's own Pitfall-3 note), so deleting a template that a program uses as a day leaves a dangling `program_days` row. Downstream:
+```ts
+const holdAnchorKg = success
+  ? loggedWeightKg
+  : (prior?.workingWeightKg ?? templateExercise.targetWeightKg ?? loggedWeightKg);
+const result = resolveLinearProgression(holdAnchorKg, linearRule, success, priorFails);
+```
 
-- `loadProgramDetail` (`db/programs.ts:241-246`) silently skips any day whose template fails to load, so `detail.days` shrinks and its positions become non-contiguous.
-- `applyProgressionAndAdvance` computes the wrap boundary from that filtered length: `nextDayPosition(dayPosition, detail.days.length)` (`db/programs.ts:916`). A dropped day therefore shifts the modulo boundary, mistiming the cycle-wrap (and thus the `%TM` training-max bump), or `day = detail.days.find(d => d.day.position === dayPosition)` returns `undefined` and the finish silently no-ops (`db/programs.ts:830-833`), stranding the active pointer.
+### WR-02: Upper-bound write guards throw inside the finish transaction instead of skipping the offending exercise
 
-This mirrors exactly the "dangling reference on delete" class of bug that `deleteTemplate`/`deleteProgram` were written to prevent for workouts, but the program_days edge was missed.
+**File:** `db/programs.ts:1119-1144`
 
-**Fix:** In `deleteTemplate`, refuse to delete (or detach) a template still referenced by `program_days` inside the same transaction — e.g. throw a clear "template is used by a program" error, or null/remove the referencing `program_days` rows. Separately, base the wrap math on the true `program_days` count rather than the post-filter `detail.days.length` so a transiently unloadable day cannot move the wrap boundary.
+**Issue:**
+Same failure mode as CR-01 but for the upper bounds: if an accumulated working
+weight exceeds `MAX_WEIGHT_KG` (1000) or a bumped TM exceeds it,
+`assertValidWorkingWeightKg` / `assertValidTrainingMaxKg` throw *inside*
+`db.transaction`, rolling back the entire finish (pointer advance + every
+write) rather than skipping the one offending exercise. `MAX_INCREMENT_KG`
+(100) already bounds a single jump, so 1000 kg is not reachable in normal
+training — hence WARNING, not BLOCKER — but the "validate-inside-transaction so
+one bad value aborts everything" pattern is the same latent hazard as CR-01 and
+should be resolved consistently.
+
+**Fix:** perform the range validation while building `linearWrites` /
+`bumpedTrainingMaxes` (before entering the transaction) and skip any entry that
+fails validation, so a single out-of-range value never aborts the whole finish.
 
 ## Info
 
-### IN-01: Stale comment claims `%TM` never bumps training maxes
+### IN-01: Migration test asserts columns exist but not the composite PK or the nullable `working_weight_kg`
 
-**File:** `app/active-workout/summary.tsx:177-178`
+**File:** `db/migrations.test.ts:225-233`
 
-**Issue:** The comment reads "percent_tm — informational only (Plan 05 adds the TM-bump-on-wrap extension; this task never bumps training_maxes)." The TM-bump-on-wrap is now fully implemented in this same file (`cycleCompleteRows`, lines 195-203) and in `db/programs.ts:922-951`. The comment is misleading to the next reader.
+**Issue:**
+The `PROG-02: migration 0004 -> 0005` test verifies the four column *names*
+exist via `PRAGMA table_info`, but does not assert the two properties the
+gap-closure design specifically depends on: the composite primary key
+`(program_id, exercise_id)` (the mechanism that enforces one shared row per
+lift and backs the `onConflictDoUpdate`) and the nullability of
+`working_weight_kg` (the "unset until first anchor" contract). A regression that
+dropped the composite PK or made the column `NOT NULL` would still pass this
+test.
 
-**Fix:** Update the comment to reflect that the cycle-wrap TM bump is implemented and surfaced via the cycle-complete banner.
-
-### IN-02: `load()` in program detail writes state without honoring the effect's `cancelled` flag
-
-**File:** `app/programs/[programId].tsx:97-131`
-
-**Issue:** The `useFocusEffect` wrapper creates a `cancelled` flag and checks it in the `.then()` callback, but `load()` itself calls `setDetail`/`setActiveProgramState`/`setTrainingMaxes`/`setLoading` unconditionally (lines 104-115). If the screen loses focus mid-load, these fire after teardown, producing a potential "set state on unmounted component" warning and a wasted render. The `.then(() => { if (cancelled) return; })` guard is effectively a no-op because it guards nothing.
-
-**Fix:** Pass the `cancelled` flag (or an `AbortController`/mounted ref) into `load()` and gate every `setState` behind it, matching the cancelled-guard pattern used correctly in `app/(tabs)/index.tsx`.
+**Fix:** extend the assertions — check the `pk` ordinals from
+`PRAGMA table_info(program_exercise_progress)` for `program_id`/`exercise_id`,
+and assert `working_weight_kg` has `notnull === 0` while `consecutive_fails`
+has `notnull === 1`.
 
 ---
 
-_Reviewed: 2026-07-24_
+_Reviewed: 2026-07-24T05:14:42Z_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_
