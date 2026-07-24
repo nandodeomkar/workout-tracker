@@ -1,14 +1,22 @@
 ---
-status: issues_found
+status: testing
 phase: 06-programs-progression
-source: [06-03-SUMMARY.md, 06-04-SUMMARY.md, 06-05-SUMMARY.md, 06-06-SUMMARY.md]
+source: [06-03-SUMMARY.md, 06-04-SUMMARY.md, 06-05-SUMMARY.md, 06-06-SUMMARY.md, 06-07-SUMMARY.md, 06-08-SUMMARY.md]
 started: 2026-07-23T19:54:03Z
-updated: 2026-07-23T20:20:00Z
+updated: 2026-07-24T11:05:00Z
 ---
 
 ## Current Test
 
-[testing complete] — 7/8 passed. 1 BLOCKER open (Test 3: linear progression never prescribed). Approved fix: per-lift shared progression. Awaiting gap-closure fix round.
+number: 3
+name: Linear progression on finish — next weight prescribed at day start, shared per-lift across days (PROG-02)
+expected: |
+  Gap-closure (06-07 + 06-08 + CR-01 fix) has landed. Re-run Test 3 on a physical device.
+  Start the pointed Linear 5×5 day, log all working sets at a real weight (e.g. 100 kg × 5), Finish.
+  Confirm the finish screen "+2.5 kg" badge AND that starting the NEXT program day (any day using
+  that lift — including a DIFFERENT day than the one just finished) prescribes sets pre-filled at the
+  incremented weight (102.5 kg), not the same weight as before.
+awaiting: user response
 
 ## Tests
 
@@ -22,7 +30,7 @@ result: [pass] — device 2026-07-23; Programs manager → Add → Linear 5×5 p
 
 ### 3. Linear progression on finish — next weight tracks the weight lifted (PROG-02)
 expected: Start the pointed Linear 5×5 day, log all working sets at a REAL weight (e.g. 100 kg × 5 for every set), Finish. The finish screen's "Program progress" section shows a success line with a "+2.5 kg" badge, and the pointer-advance caption "Next up: Day 2 of {M} — {label}." Re-open that program day / template: the exercise's next prescribed target is the weight you lifted + increment (e.g. 102.5 kg) — NOT 2.5 kg, and NOT unchanged. (Regression guard for the CR-01 fix — a bundled program seeds no starting weight, so a first finish must anchor on what you actually lifted.)
-result: [issue] — device 2026-07-23; finish screen DID show the "+2.5 kg" success badge (applyProgressionAndAdvance computes + stores the bump correctly), but starting the next program day prefilled the SAME weight as before, not the incremented target. Root-caused below.
+result: [pending] — original device run 2026-07-23 FAILED (finish badge shown but next day prefilled the same weight). Gap-closure fix landed 2026-07-24: linear prefill at day start (prefillLinearSets) + per-lift shared progression keyed (program_id, exercise_id) via new program_exercise_progress table (06-07 migration 0005, 06-08), plus the CR-01 no-working-sets wedge guard (fix 5ae086b, regression 9ce96c7). Unit coverage green (HEADLINE cross-day, CROSS-DAY WRITE SHARING, FIRST RUN, CR-01 regressions; 526/526 full suite). Awaiting device re-test.
 reported: "The finish screen showed a +2.5kg badge but on starting next days workout in the program the weight prefilled was same as before"
 severity: blocker
 
@@ -50,15 +58,17 @@ result: [pass] — device 2026-07-23; custom builder creates + activates a progr
 
 total: 8
 passed: 7
-issues: 1
-pending: 0
+issues: 0
+pending: 1
 skipped: 0
 blocked: 0
 
 ## Gaps
 
 - truth: "Completing a linear-progression program day auto-increments its PRESCRIBED weight on success — next session prescribes lifted+increment."
-  status: failed
+  status: resolved
+  resolved_by: [06-07, 06-08]
+  resolved_note: "Fixed via per-lift shared progression: program_exercise_progress table + migration 0005 (06-07), prefillLinearSets + composite-key read/write in applyProgressionAndAdvance (06-08), and the CR-01 no-working-sets wedge guard (fix 5ae086b, regression 9ce96c7). Code/test verified 6/6 (06-VERIFICATION.md); on-device re-test of Test 3 outstanding before final sign-off."
   reason: "User reported: The finish screen showed a +2.5kg badge but on starting next days workout in the program the weight prefilled was same as before"
   severity: blocker
   test: 3
