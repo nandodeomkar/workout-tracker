@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 06-06-PLAN.md
-last_updated: "2026-07-24T04:55:33.040Z"
+status: verifying
+stopped_at: Completed 06-08-PLAN.md
+last_updated: "2026-07-24T05:07:50.825Z"
 last_activity: 2026-07-24 -- Phase 06 execution started
 progress:
   total_phases: 8
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 41
-  completed_plans: 39
-  percent: 63
+  completed_plans: 41
+  percent: 75
 ---
 
 # Project State
@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-07-19)
 ## Current Position
 
 Phase: 06 (programs-progression) — EXECUTING
-Plan: 1 of 8
-Status: Executing Phase 06
+Plan: 8 of 8
+Status: Phase complete — ready for verification
 Last activity: 2026-07-24 -- Phase 06 execution started
 
 Progress: [██████░░░░] 63% (5/8 phases)
@@ -88,6 +88,7 @@ Progress: [██████░░░░] 63% (5/8 phases)
 | Phase 06 P04 | 8min | 2 tasks | 3 files |
 | Phase 06-programs-progression P05 | 16min | 3 tasks | 6 files |
 | Phase 06-programs-progression P06 | 20min | 2 tasks | 2 files |
+| Phase 06-programs-progression P08 | 10min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -177,6 +178,8 @@ Recent decisions affecting current work:
 - [Phase 06-programs-progression]: training-maxes.tsx Compute-from-1RM helper is an inline expandable menu (not a separate route) offering both manual-1RM and best-logged-e1RM sources into the same editable TM field, scoped to a program via an explicit ?programId= query param
 - [Phase 06-programs-progression]: Linear-increment stepper stores display-unit-native state, converting to canonical kg only via displayToKg/kgToDisplay at save/hydrate boundaries (Measurements-phase precedent)
 - [Phase 06-programs-progression]: Custom program builder's %TM detection re-fetches loadTemplateDetail per distinct picked template id at save time rather than threading progression data through the picker's lightweight exercise-count projection
+- [Phase ?]: 06-08: applyProgressionAndAdvance's linear branch now reads/writes program_exercise_progress (per-lift, keyed program+exercise) instead of per-row template_exercises columns, so a lift shared across program days progresses once instead of independently — Closes the Test-3 PROG-02 blocker (defect B: cross-day sharing)
+- [Phase ?]: 06-08: prefillLinearSets prescribes targetSets straight-sets at day start from the lift's per-lift working weight, passed straight to insertSet with no unit conversion / plate-solving (already plate-loadable, anchored on what was actually lifted) — Closes the Test-3 PROG-02 blocker (defect A: linear sets were never prescribed at day start)
 
 ### Pending Todos
 
@@ -197,6 +200,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-23T19:08:14.508Z
-Stopped at: Completed 06-06-PLAN.md
+Last session: 2026-07-24T05:07:50.806Z
+Stopped at: Completed 06-08-PLAN.md
 Resume file: None
