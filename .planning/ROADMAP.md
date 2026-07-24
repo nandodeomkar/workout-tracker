@@ -277,11 +277,39 @@ Plans:
   3. Every Phase-2/3/6 logging behavior still works unchanged: crash-safe per-checkmark SQLite writes, auto-starting rest timer with −15/+15/Skip, add/replace/remove exercise, drag-reorder, plate/1RM/warm-up calculators, discard/finish, program progression on finish.
   4. The redesigned rest gauge, numeric keypad sheet, exercise menu, add-exercise sheet, discard dialog, and finish summary match the handoff prototype's layout and interaction states.
 
-**Plans:** 0 plans
+**Plans:** 9 plans (7 waves)
 
 Plans:
 
-- [ ] TBD (run /gsd-plan-phase 06.1 to break down)
+**Wave 1** *(parallel — disjoint files, no deps)*
+
+- [ ] 06.1-01-PLAN.md — Global theme.ts dark-Modernist token rewrite (keys preserved, +textDim/accentHover/divider/dividerHairline, Archivo typography, radius 0)
+- [ ] 06.1-02-PLAN.md — Pure-logic libs + vitest: findCurrentRowKey, sessionVolume, focusAdvance, e1rmDelta
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 06.1-03-PLAN.md — New deps (react-native-svg, @expo-google-fonts/archivo, [SUS]-gated lucide-react-native) + Archivo font gate + dev-client rebuild
+
+**Wave 3** *(blocked on Wave 2 — parallel component work)*
+
+- [ ] 06.1-04-PLAN.md — Restyle SetRow (states + current rail + PR flash) / RestTimerBar (idle branch + tick track) / NumericKeypad (step row)
+- [ ] 06.1-05-PLAN.md — New components: Sparkline (SVG), ExerciseMenuSheet (5-entry consolidation), themed DiscardDialog
+
+**Wave 4** *(blocked on Wave 3)*
+
+- [ ] 06.1-06-PLAN.md — Screen frame: store viewMode/focusExId + Modernist header + mode-toggle tabs + session-volume strip + always-mounted rest bar + discard/keypad wiring
+
+**Wave 5** *(blocked on Wave 4 — same screen file)*
+
+- [ ] 06.1-07-PLAN.md — Instrument cards: sparkline+e1RM delta, current-rail/PR wiring, Set/Kg/Reps grid, ⋮ ExerciseMenuSheet, add-exercise sheet restyle
+
+**Wave 6** *(blocked on Wave 5 — same screen file)*
+
+- [ ] 06.1-08-PLAN.md — Focus mode: single-set view + giant steppers + exercise rail + focusLog advance wiring
+
+**Wave 7** *(blocked on Wave 6)*
+
+- [ ] 06.1-09-PLAN.md — Regression Guard: full vitest suite + on-device Phase-2/3/6 behavior re-verify + cross-screen theme sweep
 
 ### Phase 7: Backup & Export
 
