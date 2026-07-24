@@ -9,12 +9,29 @@ files_reviewed_list:
   - db/programs.crud.test.ts
   - db/migrations.test.ts
 findings:
-  critical: 1
+  critical: 0
   warning: 2
   info: 1
-  total: 4
+  total: 3
+resolved:
+  - "CR-01 (was BLOCKER) — fixed in 5ae086b, regression test 9ce96c7"
 status: issues_found
 ---
+
+## Resolution (gap-closure follow-up)
+
+- **CR-01 (BLOCKER) — FIXED.** Applied the reviewer's suggested guard: the linear
+  branch of `applyProgressionAndAdvance` now `continue`s when the resolved anchor
+  (`loggedWeightKg`) is not a positive finite number, so no `0` kg write reaches
+  the transaction. RED regression `db/programs.crud.test.ts` ("a finish with no
+  working sets for a null-target linear lift advances without wedging") committed
+  in `9ce96c7`, fix in `5ae086b`. Full suite 526/526.
+- **WR-01, WR-02, IN-01 — OPEN (advisory).** Not addressed in this run: WR-01 is a
+  deliberate anchor-on-logged design tradeoff that also backs the passing CR-01
+  hold test (changing it needs a design decision); WR-02 is unreachable in normal
+  training (`MAX_INCREMENT_KG` bounds a single jump, 1000 kg unreachable); IN-01 is
+  a minor migration-test coverage gap. Left for user decision — run
+  `/gsd-code-review 06 --fix` to auto-apply, or address individually.
 
 # Phase 6: Code Review Report
 
