@@ -1,3 +1,10 @@
+import {
+  Archivo_400Regular,
+  Archivo_600SemiBold,
+  Archivo_700Bold,
+  Archivo_800ExtraBold,
+  useFonts,
+} from '@expo-google-fonts/archivo';
 import { useMigrations } from 'drizzle-orm/expo-sqlite/migrator';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -11,13 +18,20 @@ import migrations from '../drizzle/migrations';
 import { theme } from '../theme';
 
 // Root layout: gates the app shell on the migration + silent-seed pipeline
-// (FNDN-01/FNDN-02/D-16). While migrations are pending or the first-launch
-// seed is still running, render null — silent, no progress screen. On
-// migration error, hard-stop with an error screen (never a silent crash or
-// partial-migrated render, per T-1-01).
+// (FNDN-01/FNDN-02/D-16) plus the Archivo font-load (Phase 06.1, UI-01).
+// While migrations are pending, the first-launch seed is still running, or
+// the Archivo font families haven't loaded, render null — silent, no
+// progress screen. On migration error, hard-stop with an error screen
+// (never a silent crash or partial-migrated render, per T-1-01).
 export default function RootLayout() {
   const { success, error } = useMigrations(db, migrations);
   const [seeded, setSeeded] = useState(false);
+  const [fontsLoaded] = useFonts({
+    Archivo_400Regular,
+    Archivo_600SemiBold,
+    Archivo_700Bold,
+    Archivo_800ExtraBold,
+  });
 
   useEffect(() => {
     if (!success || seeded) {
@@ -38,7 +52,7 @@ export default function RootLayout() {
     return <MigrationErrorScreen error={error} />;
   }
 
-  if (!success || !seeded) {
+  if (!success || !seeded || !fontsLoaded) {
     return null;
   }
 
