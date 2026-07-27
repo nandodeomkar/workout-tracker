@@ -65,7 +65,7 @@
 
 ### UI & Distribution
 
-- [ ] **UI-01**: Dark-first clean UI with StrengthLog-style 5-tab layout, zero paywalls, ads, or upsell anywhere
+- [x] **UI-01**: Dark-first clean UI with StrengthLog-style 5-tab layout, zero paywalls, ads, or upsell anywhere
 - [ ] **DIST-01**: Friends can install and update the app via direct APK (EAS build) with onboarding notes for Play Protect warnings
 
 ## v2 Requirements
@@ -124,7 +124,7 @@ Which phases cover which requirements. Filled by roadmap creation.
 | BAK-01 | Phase 7 | Pending |
 | BAK-02 | Phase 7 | Pending |
 | BAK-03 | Phase 7 | Pending |
-| UI-01 | Phase 8 | Pending |
+| UI-01 | Phase 8 | Complete |
 | DIST-01 | Phase 8 | Pending |
 
 **Coverage:** 33/33 v1 requirements mapped ✓

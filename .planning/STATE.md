@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Phase 06.1 UI-SPEC approved
-last_updated: "2026-07-24T17:35:48.897Z"
-last_activity: 2026-07-24 -- Phase 06 execution started
+last_updated: "2026-07-27T10:18:23.717Z"
+last_activity: 2026-07-27 -- Phase 06.1 execution started
 progress:
   total_phases: 9
   completed_phases: 6
-  total_plans: 41
-  completed_plans: 41
+  total_plans: 50
+  completed_plans: 42
   percent: 67
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-19)
 
 **Core value:** Logging a strength workout in the gym must be fast, offline, and never lose data — free, with no clutter or upsell.
-**Current focus:** Phase 06 — programs-progression
+**Current focus:** Phase 06.1 — ui-redesign-active-workout-modernist
 
 ## Current Position
 
-Phase: 06 (programs-progression) — EXECUTING
-Plan: 8 of 8
+Phase: 06.1 (ui-redesign-active-workout-modernist) — EXECUTING
+Plan: 2 of 9
 Status: Ready to execute
-Last activity: 2026-07-24 -- Phase 06 execution started
+Last activity: 2026-07-27 -- Phase 06.1 execution started
 
 Progress: [██████░░░░] 63% (5/8 phases)
 
@@ -89,6 +89,7 @@ Progress: [██████░░░░] 63% (5/8 phases)
 | Phase 06-programs-progression P05 | 16min | 3 tasks | 6 files |
 | Phase 06-programs-progression P06 | 20min | 2 tasks | 2 files |
 | Phase 06-programs-progression P08 | 10min | 2 tasks | 2 files |
+| Phase 06.1 P01 | 12min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -180,6 +181,8 @@ Recent decisions affecting current work:
 - [Phase 06-programs-progression]: Custom program builder's %TM detection re-fetches loadTemplateDetail per distinct picked template id at save time rather than threading progression data through the picker's lightweight exercise-count projection
 - [Phase ?]: 06-08: applyProgressionAndAdvance's linear branch now reads/writes program_exercise_progress (per-lift, keyed program+exercise) instead of per-row template_exercises columns, so a lift shared across program days progresses once instead of independently — Closes the Test-3 PROG-02 blocker (defect B: cross-day sharing)
 - [Phase ?]: 06-08: prefillLinearSets prescribes targetSets straight-sets at day start from the lift's per-lift working weight, passed straight to insertSet with no unit conversion / plate-solving (already plate-loadable, anchored on what was actually lifted) — Closes the Test-3 PROG-02 blocker (defect A: linear sets were never prescribed at day start)
+- [Phase ?]: danger and badge unified to accent red #ec3013 across all consumers (D-04 mono-scheme, intentional)
+- [Phase ?]: [Phase 06.1-01] border revalued to equal the new divider token so existing hairline borders read Modernist automatically
 
 ### Pending Todos
 
@@ -200,6 +203,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-24T16:48:48.359Z
+Last session: 2026-07-27T10:16:46.938Z
 Stopped at: Phase 06.1 UI-SPEC approved
 Resume file: .planning/phases/06.1-ui-redesign-active-workout-modernist/06.1-UI-SPEC.md

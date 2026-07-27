@@ -277,13 +277,13 @@ Plans:
   3. Every Phase-2/3/6 logging behavior still works unchanged: crash-safe per-checkmark SQLite writes, auto-starting rest timer with −15/+15/Skip, add/replace/remove exercise, drag-reorder, plate/1RM/warm-up calculators, discard/finish, program progression on finish.
   4. The redesigned rest gauge, numeric keypad sheet, exercise menu, add-exercise sheet, discard dialog, and finish summary match the handoff prototype's layout and interaction states.
 
-**Plans:** 9 plans (7 waves)
+**Plans:** 1/9 plans executed
 
 Plans:
 
 **Wave 1** *(parallel — disjoint files, no deps)*
 
-- [ ] 06.1-01-PLAN.md — Global theme.ts dark-Modernist token rewrite (keys preserved, +textDim/accentHover/divider/dividerHairline, Archivo typography, radius 0)
+- [x] 06.1-01-PLAN.md — Global theme.ts dark-Modernist token rewrite (keys preserved, +textDim/accentHover/divider/dividerHairline, Archivo typography, radius 0)
 - [ ] 06.1-02-PLAN.md — Pure-logic libs + vitest: findCurrentRowKey, sessionVolume, focusAdvance, e1rmDelta
 
 **Wave 2** *(blocked on Wave 1)*
