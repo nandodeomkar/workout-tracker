@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 06.1 UI-SPEC approved
-last_updated: "2026-07-27T10:18:23.717Z"
+stopped_at: Completed 06.1-02-PLAN.md
+last_updated: "2026-07-27T10:25:00.543Z"
 last_activity: 2026-07-27 -- Phase 06.1 execution started
 progress:
   total_phases: 9
   completed_phases: 6
   total_plans: 50
-  completed_plans: 42
+  completed_plans: 43
   percent: 67
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-07-19)
 ## Current Position
 
 Phase: 06.1 (ui-redesign-active-workout-modernist) — EXECUTING
-Plan: 2 of 9
+Plan: 3 of 9
 Status: Ready to execute
 Last activity: 2026-07-27 -- Phase 06.1 execution started
 
@@ -90,6 +90,7 @@ Progress: [██████░░░░] 63% (5/8 phases)
 | Phase 06-programs-progression P06 | 20min | 2 tasks | 2 files |
 | Phase 06-programs-progression P08 | 10min | 2 tasks | 2 files |
 | Phase 06.1 P01 | 12min | 2 tasks | 1 files |
+| Phase 06.1 P02 | 12min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -183,6 +184,9 @@ Recent decisions affecting current work:
 - [Phase ?]: 06-08: prefillLinearSets prescribes targetSets straight-sets at day start from the lift's per-lift working weight, passed straight to insertSet with no unit conversion / plate-solving (already plate-loadable, anchored on what was actually lifted) — Closes the Test-3 PROG-02 blocker (defect A: linear sets were never prescribed at day start)
 - [Phase ?]: danger and badge unified to accent red #ec3013 across all consumers (D-04 mono-scheme, intentional)
 - [Phase ?]: [Phase 06.1-01] border revalued to equal the new divider token so existing hairline borders read Modernist automatically
+- [Phase 06.1-02]: computeSessionVolumeKg delegates to lib/volume.ts#workingSetVolume rather than re-implementing the reduce, keeping one formula source
+- [Phase 06.1-02]: e1rmDeltaPct accepts a plain number[] (not ChartPoint[]) to stay decoupled from lib/chartSeries.ts
+- [Phase 06.1-02]: advanceFocus's currentWeId-not-in-exerciseOrder case falls out of Array.indexOf returning -1 rather than needing a separate branch
 
 ### Pending Todos
 
@@ -203,6 +207,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-27T10:16:46.938Z
-Stopped at: Phase 06.1 UI-SPEC approved
-Resume file: .planning/phases/06.1-ui-redesign-active-workout-modernist/06.1-UI-SPEC.md
+Last session: 2026-07-27T10:25:00.528Z
+Stopped at: Completed 06.1-02-PLAN.md
+Resume file: None
