@@ -37,18 +37,30 @@ export const theme = {
     // as separate rather than as one card's internal padding.
     '2xl': 32,
   },
+  // Archivo typography (Phase 06.1, D-02/UI-01). RN applies custom fonts by
+  // family name, not numeric fontWeight, so weight is encoded in the family
+  // string on every role (fontWeight stays as a cosmetic platform fallback).
+  // Existing roles keep their fontSize/fontWeight/lineHeight unchanged — only
+  // fontFamily is threaded in — so other screens' proportions are untouched.
+  // Two new roles are added: `label` (uppercase kicker/tertiary text) and
+  // `heading` (section/screen titles). The active-workout screen's
+  // pixel-faithful sizes are composed inline from these fontFamily strings
+  // plus explicit px, not added here as new per-pixel roles.
   typography: {
     title: {
       fontSize: 20,
       fontWeight: '700' as const,
+      fontFamily: 'Archivo_700Bold',
     },
     body: {
       fontSize: 16,
       fontWeight: '400' as const,
+      fontFamily: 'Archivo_400Regular',
     },
     caption: {
       fontSize: 13,
       fontWeight: '400' as const,
+      fontFamily: 'Archivo_400Regular',
     },
     // Rest-timer countdown digits only (UI-SPEC "1. Active workout screen" —
     // Rest timer). The largest type on screen; nothing else uses this token.
@@ -56,12 +68,30 @@ export const theme = {
       fontSize: 32,
       fontWeight: '700' as const,
       lineHeight: 35,
+      fontFamily: 'Archivo_800ExtraBold',
+    },
+    // Uppercase kicker / tertiary label role (new, D-02 typography extension).
+    label: {
+      fontSize: 10,
+      fontWeight: '600' as const,
+      letterSpacing: 1,
+      textTransform: 'uppercase' as const,
+      fontFamily: 'Archivo_600SemiBold',
+    },
+    // Screen/section title role (new).
+    heading: {
+      fontSize: 30,
+      fontWeight: '800' as const,
+      letterSpacing: -0.6,
+      fontFamily: 'Archivo_800ExtraBold',
     },
   },
+  // Zero radius everywhere (Phase 06.1, D-02/D-04 dark Modernist rendition) —
+  // the Modernist language never rounds a corner.
   radius: {
-    sm: 6,
-    md: 10,
-    lg: 16,
+    sm: 0,
+    md: 0,
+    lg: 0,
   },
 } as const;
 
