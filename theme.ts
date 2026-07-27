@@ -1,18 +1,29 @@
 // Dark-only design tokens (D-14). No light theme in Phase 1 — deferred.
 // Every screen/component must import from here rather than using ad-hoc
 // inline color/spacing literals.
-
+//
+// This is the dark Modernist rendition (Phase 06.1, D-02/D-04): every existing
+// color/spacing/typography/radius key is revalued in place so all consumer
+// files keep compiling with no missing-token errors, while four new color
+// keys and two new typography roles are additive. `danger` and `badge` are
+// intentionally unified to the single accent red (`#ec3013`) across every
+// consumer in the app — this is a deliberate mono-hue scheme change, not a
+// regression (was `#EF4444` / `#F59E0B`).
 export const theme = {
   colors: {
-    background: '#0B0E11',
-    surface: '#161A1F',
-    surfaceAlt: '#1E232A',
-    text: '#F5F7FA',
-    textMuted: '#8B94A3',
-    accent: '#4F8EF7',
-    border: '#262C34',
-    danger: '#EF4444',
-    badge: '#F59E0B',
+    background: '#131211',
+    surface: '#1b1a18',
+    surfaceAlt: '#242220',
+    text: '#f5f2ef',
+    textMuted: '#9b9797',
+    textDim: '#7d7979',
+    accent: '#ec3013',
+    accentHover: '#ff563c',
+    border: 'rgba(245,242,239,0.2)',
+    danger: '#ec3013',
+    badge: '#ec3013',
+    divider: 'rgba(245,242,239,0.2)',
+    dividerHairline: 'rgba(245,242,239,0.1)',
   },
   spacing: {
     xs: 4,
