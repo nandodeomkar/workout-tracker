@@ -36,8 +36,7 @@
         }
       ],
       "expo-sqlite",
-      "./plugins/withDebuggableRelease",
-      "./plugins/withWindowsLongPathFix"
+      "./plugins/withDebuggableRelease"
     ],
     "experiments": {
       "typedRoutes": true
