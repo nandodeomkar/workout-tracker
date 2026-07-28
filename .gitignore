@@ -42,3 +42,6 @@ yarn-error.*
 
 # test coverage
 coverage/
+
+# vendored ninja (see docs/device-testing.md)
+tools/ninja/
