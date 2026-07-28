@@ -28,7 +28,7 @@ See: .planning/PROJECT.md (updated 2026-07-19)
 Phase: 06 (programs-progression) — EXECUTING
 Plan: 8 of 8
 Status: Phase complete — ready for verification
-Last activity: 2026-07-24 -- Phase 06 execution started
+Last activity: 2026-07-29 -- Completed quick task 260729-0yl: standalone debuggable release build
 
 Progress: [██████░░░░] 63% (5/8 phases)
 
@@ -189,6 +189,12 @@ None yet.
 
 - Phase 6 (Programs & Progression) and Phase 7 (Backup & Export) are flagged by research as needing a focused research pass before planning (progression JSON schema design; Google Sign-In/Credential Manager deprecation target) — re-verify at the start of those phases.
 - Exercise-library muscle-group tagging consistency (needed for Phase 4 stats) was not directly verified against the actual seed dataset — validate before building weekly-volume-by-muscle-group.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260729-0yl | Standalone debuggable release build for on-device testing | 2026-07-29 | 0c85087 | [260729-0yl-standalone-debuggable-release-build-for-](./quick/260729-0yl-standalone-debuggable-release-build-for-/) |
 
 ## Deferred Items
 
