@@ -16,7 +16,17 @@ This shell has no `java` or `adb` on `PATH` by default. Every command below assu
 export JAVA_HOME="/c/Program Files/Android/Android Studio/jbr" ANDROID_HOME="$HOME/AppData/Local/Android/Sdk" PATH="$JAVA_HOME/bin:$ANDROID_HOME/platform-tools:$PATH"
 ```
 
-Device adb serial is `5dqwzpdqemsc6xpb` (its display name is `25080RABDI` — pass the serial to `adb -s`, not the name). Package is `com.anonymous.workouttracker`, scheme `workouttracker://`.
+Device adb serial is `5dqwzpdqemsc6xpb` (its display name is `25080RABDI` — pass the serial to `adb -s`, not the name; `expo run:android --device` wants the *name*, which is why the command below omits the flag and relies on there being a single device attached). Package is `com.anonymous.workouttracker`, scheme `workouttracker://`.
+
+### Vendored ninja (Windows only)
+
+The native build needs a long-path-aware ninja at `tools/ninja/ninja.exe`. It is gitignored, so fetch it once per machine:
+
+```bash
+curl -L -o /tmp/ninja-win.zip https://github.com/ninja-build/ninja/releases/download/v1.13.2/ninja-win.zip && unzip -o /tmp/ninja-win.zip -d tools/ninja
+```
+
+Without it, `plugins/withWindowsNinja.js` warns and falls back to the SDK's ninja 1.10.2, and the build fails with `Filename longer than 260 characters`. CMake mirrors each source file's absolute path under the target's `.dir` directory, so react-native-gesture-handler's autolinked codegen yields object paths of 288 characters — over ninja 1.10.2's limit, and past the point where shortening the repo path or setting `CMAKE_OBJECT_PATH_MAX` can help. Windows' `LongPathsEnabled` is already on; the limit is ninja's own.
 
 ## Build and install
 
